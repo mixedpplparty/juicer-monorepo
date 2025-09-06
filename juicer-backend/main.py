@@ -26,7 +26,8 @@ REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_FAILE
 app = FastAPI()
 # allowed origins(cors)
 origins = [
-    "http://127.0.0.1:5173",
+    "http://localhost:8080",
+    "http://localhost",
 ]
 
 app.add_middleware(
