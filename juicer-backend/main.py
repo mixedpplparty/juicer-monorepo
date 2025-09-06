@@ -186,7 +186,7 @@ async def discord_revoke(token: str, response: Response):
         return {"error": str(e)}
 
 
-@app.get("/discord/auth/remove_cookies")
+@app.get("/discord/auth/remove-cookies")
 async def discord_remove_cookies(response: Response):
     response.delete_cookie("discord_access_token")
     response.delete_cookie("discord_refresh_token")
@@ -248,7 +248,7 @@ async def get_db_member_data(member_id: int, discord_access_token: Optional[str]
 
 
 @discord_client.event
-@app.get("/db/servers/{server_id}")
+@app.get("/discord/server/{server_id}")
 async def get_db_server_data(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     # auth check
     try:
@@ -271,6 +271,14 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"User not in server."
         )
+
+    # determine if user has manage server permission
+    if not guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+        # admin
+        pass
+    else:
+        # user
+        pass
 
     try:
         async with db.cursor() as cursor:
