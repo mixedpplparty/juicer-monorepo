@@ -36,7 +36,7 @@ export const _fetchUserData = async () => {
 
 export const _fetchDiscordUserData = async () => {
 	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/user/me`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/user-data`,
 		{ withCredentials: true },
 	);
 	return _res.data;
