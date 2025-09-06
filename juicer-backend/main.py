@@ -9,13 +9,17 @@ from fastapi.responses import RedirectResponse
 from typing import Union
 import os
 import sys
-from private.tokens import REDIRECT_AFTER_SIGN_IN_URI, REDIRECT_AFTER_SIGN_IN_FAILED_URI
 from fastapi import Response
 from fastapi import Cookie, HTTPException, status
 from typing import Optional
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
+
+# load .env
+load_dotenv()
+REDIRECT_AFTER_SIGN_IN_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_URI')
+REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_FAILED_URI')
 
 
 app = FastAPI()

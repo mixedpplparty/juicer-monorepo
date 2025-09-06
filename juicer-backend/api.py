@@ -1,9 +1,17 @@
 import aiohttp
 import asyncio
-from private.tokens import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, API_ENDPOINT
 import requests
+from dotenv import load_dotenv
+import os
 
 # auth then redirect to callback
+
+# load .env
+load_dotenv()
+CLIENT_ID = os.environ.get('CLIENT_ID')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
+REDIRECT_URI = os.environ.get('REDIRECT_URI')
+API_ENDPOINT = os.environ.get('API_ENDPOINT')
 
 
 async def exchange_code_async(code: str) -> dict:
