@@ -3,6 +3,7 @@ import asyncio
 import requests
 from dotenv import load_dotenv
 import os
+from fastapi import Cookie, HTTPException, status
 
 # auth then redirect to callback
 
@@ -124,6 +125,12 @@ async def discord_user_get_data(access_token: str) -> dict:
             ) as response:
                 response.raise_for_status()
                 return await response.json()
+    except aiohttp.ClientResponseError as e:
+        if e.status == 401:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated.",
+            )
     except aiohttp.ClientError as e:
         print(f"HTTP client error: {e}")
         raise

@@ -1,8 +1,6 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
 import discord
 import asyncio
-import requests
-import aiohttp
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -13,23 +11,77 @@ from fastapi import Response
 from fastapi import Cookie, HTTPException, status
 from typing import Optional
 from dotenv import load_dotenv
-
+from psycopg_pool import AsyncConnectionPool
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+from fastapi import Depends, FastAPI, HTTPException
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
+
+# create intents
+intents = discord.Intents.default()
+intents.dm_messages = True
+intents.guilds = True
+intents.members = True
+
+# create client
+discord_client = discord.Client(intents=intents)
 
 # load .env
 load_dotenv()
 REDIRECT_AFTER_SIGN_IN_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_URI')
 REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get(
     'REDIRECT_AFTER_SIGN_IN_FAILED_URI')
+POSTGRES_DB = os.environ.get('POSTGRES_DB')
+POSTGRES_USER = os.environ.get(
+    'POSTGRES_USER')
+POSTGRES_PASSWORD = os.environ.get(
+    'POSTGRES_PASSWORD')
+POSTGRES_PORT = os.environ.get(
+    'POSTGRES_PORT')
 
-
-app = FastAPI()
 # allowed origins(cors)
 origins = [
     "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "http://localhost",
+    "http://127.0.0.1",
 ]
+
+
+# db-related
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@db:{POSTGRES_PORT}/{POSTGRES_DB}"
+print(DATABASE_URL)
+db_pool: AsyncConnectionPool | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Handles application startup and shutdown events.
+    """
+    global db_pool
+    print("Starting up and creating connection pool...")
+    # Initialize the connection pool
+    db_pool = AsyncConnectionPool(
+        conninfo=DATABASE_URL,
+        min_size=5,  # Minimum number of connections to keep open
+        max_size=20  # Maximum number of connections in the pool
+    )
+    print("Starting Discord client...")
+    asyncio.create_task(discord_client.start(
+        os.environ.get('DISCORD_BOT_TOKEN')))
+    print("Discord client started")
+    yield
+    # This part runs on shutdown
+    print("Shutting down and closing connection pool...")
+    if db_pool:
+        await db_pool.close()
+    await discord_client.close()
+    print("Discord client stopped")
+
+# fastapi
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +90,23 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
+
+
+async def get_db() -> AsyncGenerator[any, any]:
+    """
+    Dependency to get a database connection from the pool.
+    This ensures the connection is returned to the pool after the request is finished.
+    """
+    if db_pool is None:
+        raise RuntimeError("Database connection pool is not initialized.")
+
+    # Borrow a connection from the pool for the duration of one request
+    async with db_pool.connection() as conn:
+        try:
+            yield conn
+        finally:
+            # The 'async with' block automatically returns the connection to the pool
+            pass
 
 
 # USER OAuth Endpoints
@@ -142,4 +211,44 @@ async def get_discord_user_data(discord_access_token: Optional[str] = Cookie(Non
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch user data: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.get("/db/servers/{server_id}")
+async def get_db_server_data(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth check
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        return None  # do we really need this?
+
+    # check if bot is in that server and user is in that server
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+
+    try:
+        async with db.cursor() as cursor:
+            await cursor.execute(f"SELECT * FROM servers WHERE server_id = {server_id}")
+            result = await cursor.fetchone()
+            # if fetchone is None, raise 404
+            if result is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Server not found."
+                )
+            return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch server data: {str(e)}"
         )
