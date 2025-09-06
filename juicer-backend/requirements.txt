@@ -4,3 +4,5 @@ aiohttp
 fastapi[standard]
 uvicorn
 python-dotenv
+psycopg[binary]
+psycopg[pool]
