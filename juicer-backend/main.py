@@ -12,6 +12,7 @@ import sys
 from fastapi import Response
 from fastapi import Cookie, HTTPException, status
 from typing import Optional
+from dotenv import load_dotenv
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)

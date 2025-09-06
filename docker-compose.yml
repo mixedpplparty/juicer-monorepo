@@ -12,7 +12,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persists database data
     ports:
-      - '5432:5432' # Expose port to host for development/debugging
+      - '8008:8008' # Expose port to host for development/debugging
+    command: -p 8008
 
   # Backend Service
   backend:
