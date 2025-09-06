@@ -1,4 +1,4 @@
-from api import exchange_code_async, refresh_token_async, revoke_token_async
+from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
 import discord
 import asyncio
 import requests
@@ -20,7 +20,8 @@ sys.path.append(file_dir)
 # load .env
 load_dotenv()
 REDIRECT_AFTER_SIGN_IN_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_URI')
-REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_FAILED_URI')
+REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get(
+    'REDIRECT_AFTER_SIGN_IN_FAILED_URI')
 
 
 app = FastAPI()
@@ -41,15 +42,6 @@ app.add_middleware(
 
 # USER OAuth Endpoints
 
-
-# @app.get("/discord/auth/callback")
-# async def discord_callback(code: str):
-#     try:
-#         # redirect to POST REDIRECT_AFTER_SIGN_IN_URI with code
-#         token = await exchange_code_async(code)
-#         return RedirectResponse(url=f"{REDIRECT_AFTER_SIGN_IN_URI}?token={token}", status_code=302)
-#     except Exception as e:
-#         return {"error": str(e)}
 
 @app.get("/discord/auth/callback")
 async def discord_callback(code: str, response: Response):
@@ -130,3 +122,24 @@ async def discord_remove_cookies(response: Response):
     response.delete_cookie("discord_access_token")
     response.delete_cookie("discord_refresh_token")
     return {"message": "Cookies removed"}
+
+
+@app.get("/discord/user/me")
+async def get_discord_user_data(discord_access_token: Optional[str] = Cookie(None)):
+    """
+    Fetches the current user's Discord data using the access token from cookies.
+    """
+    if discord_access_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. No access token found in cookies.",
+        )
+
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+        return user_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch user data: {str(e)}"
+        )

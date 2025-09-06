@@ -98,3 +98,35 @@ async def revoke_token_async(token: str) -> dict:
     except Exception as e:
         print(f"Unexpected error: {e}")
         raise
+
+
+async def discord_user_get_data(access_token: str) -> dict:
+    """
+    Fetches Discord user data from the Discord API using the provided access token.
+
+    Args:
+        access_token (str): The Discord access token
+
+    Returns:
+        dict: The user data JSON response from Discord API
+
+    Raises:
+        aiohttp.ClientError: If there's an HTTP client error
+        Exception: If there's an unexpected error
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://discordapp.com/api/users/@me",
+                headers={
+                    "Authorization": f"Bearer {access_token}"
+                }
+            ) as response:
+                response.raise_for_status()
+                return await response.json()
+    except aiohttp.ClientError as e:
+        print(f"HTTP client error: {e}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise
