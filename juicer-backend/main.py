@@ -252,3 +252,26 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch server data: {str(e)}"
         )
+
+
+@discord_client.event
+@app.get("/db/members/{member_id}")
+async def get_db_member_data(member_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth check
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        return None  # do we really need this?
+
+    user = await discord_client.fetch_user(int(member_id))
+    guilds = user.mutual_guilds
+    res = []
+    for guild in guilds:
+        res.append({
+            "id": guild.id,
+            "name": guild.name,
+            "icon": guild.icon,
+            "owner": guild.owner_id,
+            "member_count": guild.member_count,
+        })
+    return res
