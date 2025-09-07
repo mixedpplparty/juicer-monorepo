@@ -321,12 +321,12 @@ async def get_discord_user_data(discord_access_token: Optional[str] = Cookie(Non
             detail=f"Failed to fetch user data: {str(e)}"
         )
 
-# server that both the user requested and the bot is in
+# server that both the user and the bot is in
 
 
 @discord_client.event
-@app.get("/discord/user/{member_id}")
-async def get_db_member_data(member_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+@app.get("/discord/user/me")
+async def get_db_member_data(discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     # auth check
     try:
         user_data = await discord_user_get_data(discord_access_token)
@@ -336,11 +336,11 @@ async def get_db_member_data(member_id: int, discord_access_token: Optional[str]
             detail="Not authenticated."
         )
     try:
-        user = await discord_client.fetch_user(int(member_id))
-    except discord.errors.NotFound:
+        user = await discord_client.fetch_user(int(user_data.get("id")))
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch user data: {str(e)}"
         )
     guilds = user.mutual_guilds
     res = []
