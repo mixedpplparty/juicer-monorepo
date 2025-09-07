@@ -323,9 +323,19 @@ async def remove_tag_from_game(db: AsyncConnection, game_id: int, server_id: int
         return cursor.rowcount > 0
 
 
+# remove tag from DB, by ID
+async def remove_tag_by_id(db: AsyncConnection, tag_id: int) -> bool:
+    """
+    Removes a tag from the database.
+    """
+    async with db.cursor() as cursor:
+        await cursor.execute("DELETE FROM tags WHERE tag_id = %s", (tag_id,))
+        return cursor.rowcount > 0
+
 # ============================================================================
 # ROLE OPERATIONS
 # ============================================================================
+
 
 async def map_roles_to_game(db: AsyncConnection, game_id: int, server_id: int, role_ids: List[int]) -> bool:
     """
@@ -749,6 +759,46 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
             GROUP BY g.game_id, g.name, g.description, g.category_id, c.name
             ORDER BY g.name
         """, (server_id, server_id, *tag_names, len(tag_names)))
+        results = await cursor.fetchall()
+        return [
+            {
+                'game_id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'category_id': row[3],
+                'category_name': row[4],
+                'tags': row[5]
+            }
+            for row in results
+        ]
+
+
+async def search_games_by_name(db: AsyncConnection, server_id: int, name_query: str) -> List[Dict[str, Any]]:
+    """
+    Searches for games by name within a server.
+    """
+    async with db.cursor() as cursor:
+        await cursor.execute("""
+            SELECT 
+                g.game_id,
+                g.name,
+                g.description,
+                g.category_id,
+                c.name as category_name,
+                COALESCE(
+                    json_agg(
+                        json_build_object('id', t.tag_id, 'name', t.name)
+                    ) FILTER (WHERE t.tag_id IS NOT NULL),
+                    '[]'::json
+                ) as tags
+            FROM games g
+            LEFT JOIN categories c ON g.category_id = c.category_id
+            LEFT JOIN game_tags gt ON g.game_id = gt.game_id
+            LEFT JOIN tags t ON gt.tag_id = t.tag_id
+            WHERE g.server_id = %s AND g.name ILIKE %s
+            GROUP BY g.game_id, g.name, g.description, g.category_id, c.name
+            ORDER BY g.name
+        """, (server_id, f"%{name_query}%"))
         results = await cursor.fetchall()
         return [
             {
