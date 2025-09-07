@@ -11,7 +11,14 @@ export const Landing = () => {
 				<h1 css={{ margin: 0 }}>juicer</h1>
 				<div>
 					<AnchorNoStyle href={import.meta.env.VITE_USER_AUTH_URI}>
-						<Button css={{ background: "#5865F2" }}>
+						<Button
+							css={{
+								background: "#5865F2",
+								display: "flex",
+								alignItems: "center",
+								gap: "8px",
+							}}
+						>
 							<DiscordLogoSVG css={{ width: "16px" }} /> Discord로 로그인
 						</Button>
 					</AnchorNoStyle>

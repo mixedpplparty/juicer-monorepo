@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { MyInfo, ServerData } from "../types/types";
 
 axios.defaults.withCredentials = true;
 
@@ -18,7 +19,7 @@ export const _fetchMyTokens = async () => {
 	}
 };
 
-export const _fetchMyInfo = async () => {
+export const _fetchMyInfo = async (): Promise<MyInfo | null> => {
 	try {
 		const _res = await axios.get(
 			`${import.meta.env.VITE_BACKEND_URI}/discord/user/me`,
@@ -34,7 +35,9 @@ export const _fetchMyInfo = async () => {
 	}
 };
 
-export const _fetchServerData = async (serverId: string | undefined) => {
+export const _fetchServerData = async (
+	serverId: string | null,
+): Promise<ServerData | null> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`,
 		{ withCredentials: true },
