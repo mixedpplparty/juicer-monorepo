@@ -127,7 +127,9 @@ export const Server = () => {
 			</FullPageBase>
 			{isAddGameModalOpen && (
 				<ModalPortal>
-					<Modal />
+					<Modal title="게임 추가" onClose={() => setIsAddGameModalOpen(false)}>
+						<div>게임 추가</div>
+					</Modal>
 				</ModalPortal>
 			)}
 		</Suspense>
