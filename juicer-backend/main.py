@@ -328,8 +328,10 @@ async def get_discord_user_data(discord_access_token: Optional[str] = Cookie(Non
 @app.get("/discord/user/me")
 async def get_db_member_data(discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     # auth check
+    res = {"me": {}, "guilds": []}
     try:
         user_data = await discord_user_get_data(discord_access_token)
+        res["me"] = user_data
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -343,13 +345,14 @@ async def get_db_member_data(discord_access_token: Optional[str] = Cookie(None),
             detail=f"Failed to fetch user data: {str(e)}"
         )
     guilds = user.mutual_guilds
-    res = []
     for guild in guilds:
-        res.append({
+        res["guilds"].append({
             "id": guild.id,
             "name": guild.name,
             "icon": guild.icon.url if guild.icon else None,
-            "owner": guild.owner_id,
+            "owner_id": guild.owner_id,
+            "owner_name": guild.owner.name,
+            "owner_nick": guild.owner.nick,
             "member_count": guild.member_count,
         })
     return res
@@ -378,7 +381,9 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
         "id": guild.id,
         "name": guild.name,
         "icon": guild.icon.url if guild.icon else None,
-        "owner": guild.owner_id,
+        "owner_id": guild.owner_id,
+        "owner_name": guild.owner.name,
+        "owner_nick": guild.owner.nick,
         "member_count": guild.member_count,
     }
 

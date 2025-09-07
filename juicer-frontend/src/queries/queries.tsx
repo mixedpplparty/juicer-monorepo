@@ -2,7 +2,7 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 
 
-export const _fetchUserData = async () => {
+export const _fetchMyTokens = async () => {
 	try {
 		const _res = await axios.get(
 			`${import.meta.env.VITE_BACKEND_URI}/discord/auth/me`,
@@ -18,10 +18,10 @@ export const _fetchUserData = async () => {
 	}
 };
 
-export const _fetchDiscordUserData = async () => {
+export const _fetchMyInfo = async () => {
 	try {
 		const _res = await axios.get(
-			`${import.meta.env.VITE_BACKEND_URI}/discord/user-data`,
+			`${import.meta.env.VITE_BACKEND_URI}/discord/user/me`,
 			{ withCredentials: true },
 		);
 		return _res.data;
