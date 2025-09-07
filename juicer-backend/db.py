@@ -20,7 +20,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
   -- Aggregate all top-level info for the server
   SELECT
     s.server_id,
-    (SELECT json_agg(json_build_object('id', r.role_id)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
+    (SELECT json_agg(json_build_object('id', r.role_id::text)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
     (SELECT json_agg(json_build_object('id', c.category_id, 'name', c.name)) FROM categories c WHERE c.server_id = s.server_id) AS categories,
     (SELECT json_agg(json_build_object('id', t.tag_id, 'name', t.name)) FROM tags t WHERE t.server_id = s.server_id) AS tags,
     -- Aggregate all games and their nested details
@@ -40,7 +40,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
           ) AS tags,
           -- Nested aggregation for each game's roles
           (
-            SELECT json_agg(json_build_object('id', r.role_id))
+            SELECT json_agg(json_build_object('id', r.role_id::text))
             FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
             WHERE gr.game_id = g.game_id
           ) AS roles_to_add
@@ -57,7 +57,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
 -- Final SELECT to build the complete object and handle NULLs
 SELECT
   json_build_object(
-    'server_id', server_id,
+    'server_id', server_id::text,
     'roles', COALESCE(roles, '[]'::json),
     'categories', COALESCE(categories, '[]'::json),
     'tags', COALESCE(tags, '[]'::json),
@@ -337,7 +337,7 @@ async def remove_tag_by_id(db: AsyncConnection, tag_id: int) -> bool:
 # ============================================================================
 
 
-async def map_roles_to_game(db: AsyncConnection, game_id: int, server_id: int, role_ids: List[int]) -> bool:
+async def map_roles_to_game(db: AsyncConnection, game_id: int, server_id: int, role_ids: List[str]) -> bool:
     """
     Maps one or more roles to a game.
 
@@ -359,7 +359,8 @@ async def map_roles_to_game(db: AsyncConnection, game_id: int, server_id: int, r
         if not await cursor.fetchone():
             raise ValueError(f"Game {game_id} not found in server {server_id}")
 
-        for role_id in role_ids:
+        for role_id_str in role_ids:
+            role_id = int(role_id_str)
             # Verify role exists in the server
             await cursor.execute(
                 "SELECT 1 FROM roles WHERE role_id = %s AND server_id = %s",
@@ -393,7 +394,7 @@ async def get_game_roles(db: AsyncConnection, game_id: int, server_id: int) -> L
     """
     async with db.cursor() as cursor:
         await cursor.execute("""
-            SELECT r.role_id
+            SELECT r.role_id::text
             FROM game_roles gr
             JOIN roles r ON gr.role_id = r.role_id
             JOIN games g ON gr.game_id = g.game_id
@@ -440,7 +441,7 @@ async def get_all_roles_in_server(db: AsyncConnection, server_id: int) -> List[D
     """
     async with db.cursor() as cursor:
         await cursor.execute("""
-            SELECT role_id
+            SELECT role_id::text
             FROM roles
             WHERE server_id = %s
             ORDER BY role_id

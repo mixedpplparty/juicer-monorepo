@@ -466,7 +466,7 @@ async def sync_roles(server_id: int, db: AsyncGenerator[any, any] = Depends(get_
     try:
         db_roles = await get_all_roles_in_server(db, server_id)
         for role in roles:
-            if role.id in [int(db_role['role_id']) for db_role in db_roles]:
+            if str(role.id) in [db_role['role_id'] for db_role in db_roles]:
                 continue
             else:  # role not in db
                 await create_role_in_db(db, server_id, role.id)
@@ -474,10 +474,10 @@ async def sync_roles(server_id: int, db: AsyncGenerator[any, any] = Depends(get_
                 res["roles_created"].append(str(role.id))
         # if role in db but not in discord, delete it from db
         for db_role in db_roles:
-            if db_role['role_id'] not in [int(role.id) for role in roles]:
-                await handle_discord_role_removed(db, db_role['role_id'], server_id)
+            if db_role['role_id'] not in [str(role.id) for role in roles]:
+                await handle_discord_role_removed(db, int(db_role['role_id']), server_id)
                 # add role deleted message to res
-                res["roles_deleted"].append(str(db_role['role_id']))
+                res["roles_deleted"].append(db_role['role_id'])
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -593,7 +593,7 @@ async def delete_tag_by_id_request(server_id: int, tag_id: int, discord_access_t
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/roles/add")
-async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List[int], discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List[str], discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:

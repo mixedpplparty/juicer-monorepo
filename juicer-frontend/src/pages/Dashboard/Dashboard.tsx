@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useEffect } from "react";
+import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { _fetchMyInfo } from "../../queries/queries";
 import type { Guild } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
@@ -41,13 +42,29 @@ export const Dashboard = () => {
 							maxHeight: "100%",
 						}}
 					>
+						<div>봇과 나 자신 모두가 있는 서버만 표시됩니다.</div>
 						{_myInfo.data?.guilds.map((guild: Guild) => (
 							<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
-								<Card css={{ border: "1px solid rgb(255, 255, 255)" }}>
-									<h2 css={{ margin: 0 }}>{guild.name}</h2>
-									<p css={{ margin: 0 }}>
-										by {guild.owner_name}, {guild.member_count}명
-									</p>
+								<Card
+									css={{
+										border: "1px solid rgb(255, 255, 255)",
+										display: "flex",
+										flexDirection: "row",
+										alignItems: "center",
+										gap: "12px",
+									}}
+								>
+									<img
+										src={guild.icon || serverPlaceholderIcon}
+										alt={guild.name}
+										css={{ width: "48px", height: "48px", borderRadius: "50%" }}
+									/>
+									<div css={{ display: "flex", flexDirection: "column" }}>
+										<h2 css={{ margin: 0 }}>{guild.name}</h2>
+										<p css={{ margin: 0 }}>
+											by {guild.owner_name}, {guild.member_count}명
+										</p>
+									</div>
 								</Card>
 							</LinkNoStyle>
 						))}
