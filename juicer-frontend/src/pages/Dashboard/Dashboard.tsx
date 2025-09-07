@@ -42,7 +42,7 @@ export const Dashboard = () => {
 						}}
 					>
 						{_myInfo.data?.guilds.map((guild: Guild) => (
-							<LinkNoStyle to={`/server/${guild.id}`} key={guild.id}>
+							<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
 								<Card css={{ border: "1px solid rgb(255, 255, 255)" }}>
 									<h2 css={{ margin: 0 }}>{guild.name}</h2>
 									<p css={{ margin: 0 }}>

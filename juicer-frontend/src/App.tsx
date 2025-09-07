@@ -5,6 +5,7 @@ import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
 import { Landing } from "./pages/Landing/Landing";
 import { Loading } from "./pages/Loading/Loading";
+import { Server } from "./pages/Server/Server";
 import { _fetchMyTokens } from "./queries/queries";
 
 // TODO Determine if it's user's first time
@@ -22,12 +23,12 @@ const App = () => {
 		...(isAuthenticated
 			? [
 					{ path: "*", element: <Dashboard /> },
-					{ path: "server/:server_id", element: <div /> },
+					{ path: "/server", element: <Server /> },
 				]
 			: [
 					{ path: "*", element: <Landing /> },
 					{
-						path: "sign-in-failed",
+						path: "/sign-in-failed",
 						element: <SignInFailed />,
 					},
 				]),

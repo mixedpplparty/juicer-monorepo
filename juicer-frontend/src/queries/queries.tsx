@@ -1,6 +1,6 @@
 import axios from "axios";
-axios.defaults.withCredentials = true;
 
+axios.defaults.withCredentials = true;
 
 export const _fetchMyTokens = async () => {
 	try {
@@ -32,4 +32,12 @@ export const _fetchMyInfo = async () => {
 		}
 		throw error;
 	}
+};
+
+export const _fetchServerData = async (serverId: string | undefined) => {
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`,
+		{ withCredentials: true },
+	);
+	return _res.data;
 };
