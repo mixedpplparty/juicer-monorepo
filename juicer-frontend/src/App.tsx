@@ -6,6 +6,7 @@ import { Dashboard } from "./pages/Dashboard/Dashboard";
 import { Landing } from "./pages/Landing/Landing";
 import { Loading } from "./pages/Loading/Loading";
 import { Server } from "./pages/Server/Server";
+import { ServerSettings } from "./pages/Server/ServerSettings";
 import { _fetchMyTokens } from "./queries/queries";
 
 // TODO Determine if it's user's first time
@@ -24,6 +25,7 @@ const App = () => {
 			? [
 					{ path: "*", element: <Dashboard /> },
 					{ path: "/server", element: <Server /> },
+					{ path: "/server/settings", element: <ServerSettings /> },
 				]
 			: [
 					{ path: "*", element: <Landing /> },
