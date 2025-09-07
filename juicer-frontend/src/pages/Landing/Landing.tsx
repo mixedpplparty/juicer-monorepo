@@ -7,7 +7,7 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 export const Landing = () => {
 	return (
 		<FullPageBase>
-			<ResponsiveCard>
+			<ResponsiveCard css={{ gap: "12px" }}>
 				<h1 css={{ margin: 0 }}>juicer</h1>
 				<div>
 					<AnchorNoStyle href={import.meta.env.VITE_USER_AUTH_URI}>
@@ -15,8 +15,10 @@ export const Landing = () => {
 							css={{
 								background: "#5865F2",
 								display: "flex",
-								alignItems: "center",
 								gap: "8px",
+								width: "100%",
+								justifyContent: "center",
+								alignItems: "center",
 							}}
 						>
 							<DiscordLogoSVG css={{ width: "16px" }} /> Discord로 로그인

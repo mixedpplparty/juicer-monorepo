@@ -21,7 +21,7 @@ export const Modal = ({
 			css={{
 				width: "100vw",
 				height: "100vh",
-				backgroundColor: "rgba(0, 0, 0, 0.5)",
+				backgroundColor: "rgba(0, 0, 0, 0.75)",
 				position: "absolute",
 				zIndex: 3,
 				display: "flex",
@@ -30,7 +30,14 @@ export const Modal = ({
 			}}
 			onClick={handleBackgroundClick}
 		>
-			<Card css={{ display: "flex", flexDirection: "column", minWidth: "50%" }}>
+			<Card
+				css={{
+					display: "flex",
+					flexDirection: "column",
+					minWidth: "50%",
+					border: "1px solid rgba(255, 255, 255, 0.66)",
+				}}
+			>
 				<div
 					css={{
 						display: "flex",
@@ -44,6 +51,7 @@ export const Modal = ({
 						css={{ cursor: "pointer", width: "18px", height: "18px" }}
 					/>
 				</div>
+				{children}
 			</Card>
 		</div>
 	);
