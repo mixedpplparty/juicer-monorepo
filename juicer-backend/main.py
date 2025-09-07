@@ -247,6 +247,9 @@ async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), r
         response.delete_cookie("discord_refresh_token")
         return response
     try:
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Token refreshed."})
         refresh_token = await refresh_token_async(discord_refresh_token)
         response.set_cookie(
             key="discord_access_token",
