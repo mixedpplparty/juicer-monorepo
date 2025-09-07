@@ -166,6 +166,18 @@ export const Server = () => {
 						<label htmlFor="game-category">카테고리 (선택)</label>
 						<Select id="game-category"></Select>
 						<div>태그와 역할은 생성 후 추가할 수 있습니다.</div>
+						<Button
+							css={{
+								background: "#5865F2",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								width: "100%",
+								gap: "8px",
+							}}
+						>
+							게임 추가
+						</Button>
 					</Modal>
 				</ModalPortal>
 			)}
