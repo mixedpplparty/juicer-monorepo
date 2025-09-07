@@ -280,9 +280,18 @@ async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), r
 @app.post("/discord/auth/revoke")
 async def discord_revoke(token: str, response: Response):
     try:
-        return await revoke_token_async(token)
+        res = await revoke_token_async(token)
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Token revoked."})
+        response.delete_cookie("discord_access_token")
+        response.delete_cookie("discord_refresh_token")
+        return response
     except Exception as e:
-        return {"error": str(e)}
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to revoke token: {str(e)}"}
+        )
 
 
 @app.get("/discord/auth/remove-cookies")
@@ -490,10 +499,10 @@ async def get_games(server_id: int, discord_access_token: Optional[str] = Cookie
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/create")
 async def create_game_request(server_id: int, name: str, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await create_game(db, server_id, name, description, category_id, require_manage_guild=True)
+        res = await create_game(db, server_id, name, description, category_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -505,10 +514,10 @@ async def create_game_request(server_id: int, name: str, description: Optional[s
 @discord_client.event
 @app.put("/discord/server/{server_id}/games/{game_id}")
 async def update_game_request(server_id: int, game_id: int, name: Optional[str] = None, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await update_game(db, game_id, server_id, name, category_id, require_manage_guild=True)
+        res = await update_game(db, game_id, server_id, name, category_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -520,10 +529,10 @@ async def update_game_request(server_id: int, game_id: int, name: Optional[str] 
 @discord_client.event
 @app.delete("/discord/server/{server_id}/games/{game_id}")
 async def delete_game_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await delete_game(db, game_id, server_id, require_manage_guild=True)
+        res = await delete_game(db, game_id, server_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -535,10 +544,10 @@ async def delete_game_request(server_id: int, game_id: int, discord_access_token
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/tags/add")
 async def add_tag_request(server_id: int, game_id: int, name: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await add_tags_to_game(db, game_id, server_id, [name], require_manage_guild=True)
+        res = await add_tags_to_game(db, game_id, server_id, [name])
         return res
     except Exception as e:
         raise HTTPException(
@@ -550,10 +559,10 @@ async def add_tag_request(server_id: int, game_id: int, name: str, discord_acces
 @discord_client.event
 @app.delete("/discord/server/{server_id}/games/{game_id}/tags/{tag_id}")
 async def delete_tag_request(server_id: int, game_id: int, tag_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await remove_tag_from_game(db, game_id, server_id, tag_id, require_manage_guild=True)
+        res = await remove_tag_from_game(db, game_id, server_id, tag_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -565,10 +574,10 @@ async def delete_tag_request(server_id: int, game_id: int, tag_id: int, discord_
 @discord_client.event
 @app.delete("/discord/server/{server_id}/tags/{tag_id}")
 async def delete_tag_by_id_request(server_id: int, tag_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await remove_tag_by_id(db, tag_id, require_manage_guild=True)
+        res = await remove_tag_by_id(db, tag_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -580,10 +589,10 @@ async def delete_tag_by_id_request(server_id: int, tag_id: int, discord_access_t
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/roles/add")
 async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List[int], discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await map_roles_to_game(db, game_id, server_id, role_ids, require_manage_guild=True)
+        res = await map_roles_to_game(db, game_id, server_id, role_ids)
         return res
     except Exception as e:
         raise HTTPException(
@@ -595,10 +604,10 @@ async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List
 @discord_client.event
 @app.get("/discord/server/{server_id}/games/{game_id}/roles")
 async def get_game_roles_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await get_game_roles(db, game_id, server_id, require_manage_guild=True)
+        res = await get_game_roles(db, game_id, server_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -610,10 +619,10 @@ async def get_game_roles_request(server_id: int, game_id: int, discord_access_to
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/categories/create")
 async def create_category_request(server_id: int, game_id: int, name: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await create_category(db, server_id, name, require_manage_guild=True)
+        res = await create_category(db, server_id, name)
         return res
     except Exception as e:
         raise HTTPException(
@@ -625,10 +634,10 @@ async def create_category_request(server_id: int, game_id: int, name: str, disco
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/categories/add")
 async def add_category_request(server_id: int, game_id: int, category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await map_category_to_game(db, game_id, server_id, category_id, require_manage_guild=True)
+        res = await map_category_to_game(db, game_id, server_id, category_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -640,10 +649,10 @@ async def add_category_request(server_id: int, game_id: int, category_id: int, d
 @discord_client.event
 @app.delete("/discord/server/{server_id}/categories/{category_id}")
 async def delete_category_request(server_id: int, game_id: int, category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token)
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await delete_category(db, category_id, server_id, require_manage_guild=True)
+        res = await delete_category(db, category_id, server_id)
         return res
     except Exception as e:
         raise HTTPException(

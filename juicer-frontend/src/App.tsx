@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
@@ -16,8 +16,10 @@ const App = () => {
 		queryFn: _fetchUserData,
 	});
 
+	const isAuthenticated = _auth.data?.discord_access_token && !_auth.isError;
+
 	const router = createBrowserRouter([
-		...(_auth.data?.discord_access_token
+		...(isAuthenticated
 			? [{ path: "*", element: <Dashboard /> }]
 			: [
 					{ path: "*", element: <Landing /> },
