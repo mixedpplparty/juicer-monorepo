@@ -1,14 +1,15 @@
 import AddIcon from "@mui/icons-material/Add";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { _createServer, _fetchServerData } from "../../queries/queries";
-import { AnchorNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Modal } from "../../ui/components/Modal";
+import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	const navigate = useNavigate();
@@ -30,6 +31,8 @@ export const Server = () => {
 	useEffect(() => {
 		console.log(_serverData.data);
 	}, [_serverData.data]);
+
+	const [isAddGameModalOpen, setIsAddGameModalOpen] = useState<boolean>(false);
 
 	return (
 		<Suspense fallback={<Loading />}>
@@ -78,20 +81,19 @@ export const Server = () => {
 					</div>
 
 					{_serverData.data?.server_data_db ? (
-						<AnchorNoStyle href="">
-							<Card
-								css={{
-									border: "1px solid rgba(255, 255, 255, 0.66)",
-									alignItems: "center",
-									cursor: "pointer",
-									display: "flex",
-									flexDirection: "row",
-								}}
-							>
-								<AddIcon css={{ width: "16px", height: "16px" }} />
-								게임 추가하기
-							</Card>
-						</AnchorNoStyle>
+						<Card
+							css={{
+								border: "1px solid rgba(255, 255, 255, 0.66)",
+								alignItems: "center",
+								cursor: "pointer",
+								display: "flex",
+								flexDirection: "row",
+							}}
+							onClick={() => setIsAddGameModalOpen(true)}
+						>
+							<AddIcon css={{ width: "16px", height: "16px" }} />
+							게임 추가하기
+						</Card>
 					) : (
 						<div
 							css={{
@@ -123,6 +125,11 @@ export const Server = () => {
 					)}
 				</ResponsiveCard>
 			</FullPageBase>
+			{isAddGameModalOpen && (
+				<ModalPortal>
+					<Modal />
+				</ModalPortal>
+			)}
 		</Suspense>
 	);
 };
