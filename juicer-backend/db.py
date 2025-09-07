@@ -773,7 +773,7 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
         ]
 
 
-async def search_games_by_name(db: AsyncConnection, server_id: int, name_query: str) -> List[Dict[str, Any]]:
+async def find_games_by_name(db: AsyncConnection, server_id: int, name_query: str) -> List[Dict[str, Any]]:
     """
     Searches for games by name within a server.
     """
