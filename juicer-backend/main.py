@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import create_role_in_db, create_server, get_all_roles_in_server, get_server_data_with_details, handle_discord_role_removed
+from db import create_game, create_role_in_db, create_server, delete_game, get_all_roles_in_server, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, update_game
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -241,7 +241,7 @@ async def get_db_member_data(member_id: int, discord_access_token: Optional[str]
         res.append({
             "id": guild.id,
             "name": guild.name,
-            "icon": guild.icon,
+            "icon": guild.icon.url if guild.icon else None,
             "owner": guild.owner_id,
             "member_count": guild.member_count,
         })
@@ -283,9 +283,19 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
         # user
         res["admin"] = False
 
+    # server data from discord.py
+    # assumes roles are synced
+    res["server_data_discord"] = {
+        "id": guild.id,
+        "name": guild.name,
+        "icon": guild.icon.url if guild.icon else None,
+        "owner": guild.owner_id,
+        "member_count": guild.member_count,
+    }
+
     try:
         server_data = await get_server_data_with_details(db, server_id)
-        res["server_data"] = server_data
+        res["server_data_db"] = server_data
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -295,7 +305,7 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
 
 
 @discord_client.event
-@app.get("/discord/server/{server_id}/create")
+@app.post("/discord/server/{server_id}/create")
 async def create_server_request(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     # auth check
     try:
@@ -439,3 +449,131 @@ async def sync_roles(server_id: int, db: AsyncGenerator[any, any] = Depends(get_
             detail=f"Failed to sync roles: {str(e)}"
         )
     return res
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/games")
+async def get_games(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth required
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+    try:
+        games = await get_games_by_server(db, server_id)
+        return games
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get games: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.post("/discord/server/{server_id}/games/create")
+async def create_game_request(server_id: int, name: str, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth required
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+    try:
+        res = await create_game(db, server_id, name, description, category_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create game: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.put("/discord/server/{server_id}/games/{game_id}")
+async def update_game_request(server_id: int, game_id: int, name: Optional[str] = None, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth required
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+    try:
+        res = await update_game(db, game_id, server_id, name, category_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update game: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.delete("/discord/server/{server_id}/games/{game_id}")
+async def delete_game_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth required
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+    try:
+        res = await delete_game(db, game_id, server_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete game: {str(e)}"
+        )
