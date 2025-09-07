@@ -7,8 +7,7 @@ CREATE TABLE servers (
 -- Table for roles within a server (needed for referential integrity)
 CREATE TABLE roles (
     role_id BIGINT PRIMARY KEY,
-    server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL
+    server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE
 );
 
 -- Table for game categories, specific to each server

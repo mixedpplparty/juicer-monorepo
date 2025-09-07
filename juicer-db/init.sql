@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VkR2mbPcKDKTBSttyzvyVb1vD6MlvouDDgzU4VZaFpBjRgYCF6996GhCbdYCWjU
+\restrict UtIX80bggTiaIHd33ZHKoEUjRinKz9UqCz4dnx5lvuN7bSYYefRaqFbx4VwKdfR
 
 -- Dumped from database version 15.14
 -- Dumped by pg_dump version 15.14
@@ -17,6 +17,22 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: juicer_postgres_user
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO juicer_postgres_user;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: juicer_postgres_user
+--
+
+COMMENT ON SCHEMA public IS '';
+
 
 SET default_tablespace = '';
 
@@ -124,8 +140,7 @@ ALTER SEQUENCE public.games_game_id_seq OWNED BY public.games.game_id;
 
 CREATE TABLE public.roles (
     role_id bigint NOT NULL,
-    server_id bigint NOT NULL,
-    name character varying(100) NOT NULL
+    server_id bigint NOT NULL
 );
 
 
@@ -235,7 +250,7 @@ COPY public.games (game_id, server_id, category_id, name, description) FROM stdi
 -- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
-COPY public.roles (role_id, server_id, name) FROM stdin;
+COPY public.roles (role_id, server_id) FROM stdin;
 \.
 
 
@@ -427,10 +442,9 @@ ALTER TABLE ONLY public.roles
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(server_id) ON DELETE CASCADE;
 
-
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VkR2mbPcKDKTBSttyzvyVb1vD6MlvouDDgzU4VZaFpBjRgYCF6996GhCbdYCWjU
+\unrestrict UtIX80bggTiaIHd33ZHKoEUjRinKz9UqCz4dnx5lvuN7bSYYefRaqFbx4VwKdfR
 
