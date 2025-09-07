@@ -183,7 +183,7 @@ async def get_games_by_server(db: AsyncConnection, server_id: int) -> List[Dict[
         ]
 
 
-async def update_game_name(db: AsyncConnection, game_id: int, server_id: int, new_name: str) -> bool:
+async def update_game(db: AsyncConnection, game_id: int, server_id: int, new_name: Optional[str] = None, new_category_id: Optional[int] = None) -> bool:
     """
     Updates a game's name.
 
@@ -191,8 +191,8 @@ async def update_game_name(db: AsyncConnection, game_id: int, server_id: int, ne
         db: Database connection
         game_id: The game ID
         server_id: The server ID (for security)
-        new_name: New game name
-
+        new_name: New game name (optional)
+        new_category_id: New category ID (optional)
     Returns:
         True if updated successfully, False if game not found
     """
@@ -206,8 +206,9 @@ async def update_game_name(db: AsyncConnection, game_id: int, server_id: int, ne
             return False
 
         await cursor.execute(
-            "UPDATE games SET name = %s WHERE game_id = %s AND server_id = %s",
-            (new_name, game_id, server_id)
+            "UPDATE games SET name = %s, category_id = %s WHERE game_id = %s AND server_id = %s",
+            (new_name, new_category_id, game_id, server_id) if new_name and new_category_id else (
+                new_name, game_id, server_id) if new_name else (new_category_id, game_id, server_id)
         )
         return cursor.rowcount > 0
 
