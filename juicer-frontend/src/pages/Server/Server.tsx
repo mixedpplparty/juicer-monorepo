@@ -1,4 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useEffect, useState } from "react";
@@ -8,8 +10,10 @@ import { _createServer, _fetchServerData } from "../../queries/queries";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	const navigate = useNavigate();
@@ -46,6 +50,12 @@ export const Server = () => {
 							gap: "12px",
 						}}
 					>
+						<Button
+							css={{ background: "none", alignItems: "center" }}
+							onClick={() => navigate("/")}
+						>
+							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+						</Button>
 						<img
 							src={
 								_serverData.data?.server_data_discord.icon ||
@@ -66,17 +76,38 @@ export const Server = () => {
 							</div>
 						</div>
 						{_serverData.data?.server_data_db && (
-							<Button
+							<div
 								css={{
-									background: "#5865F2",
 									display: "flex",
 									alignItems: "center",
 									gap: "8px",
+									flexDirection: "row",
 								}}
 							>
-								<SyncIcon css={{ width: "16px", height: "16px" }} />
-								Sync
-							</Button>
+								<Button
+									css={{
+										background: "#5865F2",
+										display: "flex",
+										alignItems: "center",
+										gap: "8px",
+									}}
+								>
+									<SyncIcon css={{ width: "20px", height: "20px" }} />
+								</Button>
+								<Button
+									css={{
+										background: "rgba(255, 255, 255, 0.25)",
+										display: "flex",
+										alignItems: "center",
+										gap: "8px",
+									}}
+									onClick={() =>
+										navigate(`/server/settings?serverId=${serverId}`)
+									}
+								>
+									<SettingsIcon css={{ width: "20px", height: "20px" }} />
+								</Button>
+							</div>
 						)}
 					</div>
 
@@ -128,7 +159,13 @@ export const Server = () => {
 			{isAddGameModalOpen && (
 				<ModalPortal>
 					<Modal title="게임 추가" onClose={() => setIsAddGameModalOpen(false)}>
-						<div>게임 추가</div>
+						<label htmlFor="game-name">게임 이름</label>
+						<Input id="game-name" />
+						<label htmlFor="game-description">설명 (선택)</label>
+						<Input id="game-description" />
+						<label htmlFor="game-category">카테고리 (선택)</label>
+						<Select id="game-category"></Select>
+						<div>태그와 역할은 생성 후 추가할 수 있습니다.</div>
 					</Modal>
 				</ModalPortal>
 			)}

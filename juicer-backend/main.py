@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game
+from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -522,7 +522,7 @@ async def update_game_request(server_id: int, game_id: int, name: Optional[str] 
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await update_game(db, game_id, server_id, name, category_id)
+        res = await update_game(db, game_id, server_id, name, category_id, description)
         return res
     except Exception as e:
         raise HTTPException(
@@ -560,6 +560,8 @@ async def add_tag_request(server_id: int, game_id: int, name: str, discord_acces
             detail=f"Failed to create tag: {str(e)}"
         )
 
+# UNTAG
+
 
 @discord_client.event
 @app.delete("/discord/server/{server_id}/games/{game_id}/tags/{tag_id}")
@@ -572,8 +574,10 @@ async def delete_tag_request(server_id: int, game_id: int, tag_id: int, discord_
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete tag: {str(e)}"
+            detail=f"Failed to untag game: {str(e)}"
         )
+
+# DELETE TAG
 
 
 @discord_client.event
@@ -588,6 +592,22 @@ async def delete_tag_by_id_request(server_id: int, tag_id: int, discord_access_t
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete tag: {str(e)}"
+        )
+
+# FIND ALL TAGS
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/tags")
+async def get_all_tags_in_server_request(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+    try:
+        res = await get_all_tags_in_server(db, server_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get all tags: {str(e)}"
         )
 
 
