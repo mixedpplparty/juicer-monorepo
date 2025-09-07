@@ -44,3 +44,13 @@ export const _fetchServerData = async (
 	);
 	return _res.data;
 };
+
+export const _createServer = async (
+	serverId: string | null,
+): Promise<unknown> => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/create`,
+		{ withCredentials: true },
+	);
+	return _res.data;
+};
