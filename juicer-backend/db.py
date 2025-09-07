@@ -20,7 +20,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
   -- Aggregate all top-level info for the server
   SELECT
     s.server_id,
-    (SELECT json_agg(json_build_object('id', r.role_id, 'name', r.name)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
+    (SELECT json_agg(json_build_object('id', r.role_id)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
     (SELECT json_agg(json_build_object('id', c.category_id, 'name', c.name)) FROM categories c WHERE c.server_id = s.server_id) AS categories,
     (SELECT json_agg(json_build_object('id', t.tag_id, 'name', t.name)) FROM tags t WHERE t.server_id = s.server_id) AS tags,
     -- Aggregate all games and their nested details
@@ -40,7 +40,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
           ) AS tags,
           -- Nested aggregation for each game's roles
           (
-            SELECT json_agg(json_build_object('id', r.role_id, 'name', r.name))
+            SELECT json_agg(json_build_object('id', r.role_id))
             FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
             WHERE gr.game_id = g.game_id
           ) AS roles_to_add
@@ -382,15 +382,140 @@ async def get_game_roles(db: AsyncConnection, game_id: int, server_id: int) -> L
     """
     async with db.cursor() as cursor:
         await cursor.execute("""
-            SELECT r.role_id, r.name
+            SELECT r.role_id
             FROM game_roles gr
             JOIN roles r ON gr.role_id = r.role_id
             JOIN games g ON gr.game_id = g.game_id
             WHERE g.game_id = %s AND g.server_id = %s
-            ORDER BY r.name
+            ORDER BY r.role_id
         """, (game_id, server_id))
         results = await cursor.fetchall()
-        return [{'role_id': row[0], 'name': row[1]} for row in results]
+        return [{'role_id': row[0]} for row in results]
+
+
+async def create_role_in_db(db: AsyncConnection, server_id: int, role_id: int) -> bool:
+    """
+    Creates a role in the database.
+
+    Args:
+        db: Database connection
+        server_id: The Discord server ID
+        role_id: The Discord role ID
+
+    Returns:
+        True if role was created, False if it already exists
+    """
+    try:
+        async with db.cursor() as cursor:
+            await cursor.execute(
+                "INSERT INTO roles (role_id, server_id) VALUES (%s, %s)",
+                (role_id, server_id)
+            )
+            return True
+    except UniqueViolation:
+        return False  # Role already exists
+
+
+async def get_all_roles_in_server(db: AsyncConnection, server_id: int) -> List[Dict[str, Any]]:
+    """
+    Gets all roles for a given server.
+
+    Args:
+        db: Database connection
+        server_id: The Discord server ID
+
+    Returns:
+        List of role dictionaries with role_id
+    """
+    async with db.cursor() as cursor:
+        await cursor.execute("""
+            SELECT role_id
+            FROM roles
+            WHERE server_id = %s
+            ORDER BY role_id
+        """, (server_id,))
+        results = await cursor.fetchall()
+        return [{'role_id': row[0]} for row in results]
+
+
+async def handle_discord_role_removed(db: AsyncConnection, role_id: int, server_id: int, delete_role_record: bool = True) -> Dict[str, Any]:
+    """
+    Handles the removal of a Discord role from a server.
+    This function can either delete the role record (which cascades to game mappings)
+    or just clean up the game mappings while keeping the role record.
+
+    Args:
+        db: Database connection
+        role_id: The Discord role ID that was removed
+        server_id: The server ID (for security)
+        delete_role_record: If True, deletes the role from roles table (cascades to mappings).
+                          If False, only removes mappings but keeps role record.
+
+    Returns:
+        Dictionary with operation results including affected games
+    """
+    async with db.cursor() as cursor:
+        # Verify role exists in the specified server
+        await cursor.execute(
+            "SELECT 1 FROM roles WHERE role_id = %s AND server_id = %s",
+            (role_id, server_id)
+        )
+        role_result = await cursor.fetchone()
+        if not role_result:
+            return {
+                'success': False,
+                'message': f"Role {role_id} not found in server {server_id}",
+                'affected_games': []
+            }
+
+        # Get all games that have this role mapped (for reporting)
+        await cursor.execute("""
+            SELECT DISTINCT g.game_id, g.name
+            FROM game_roles gr
+            JOIN games g ON gr.game_id = g.game_id
+            WHERE gr.role_id = %s AND g.server_id = %s
+            ORDER BY g.name
+        """, (role_id, server_id))
+        affected_games = await cursor.fetchall()
+        games_list = [{'game_id': row[0], 'name': row[1]}
+                      for row in affected_games]
+
+        if delete_role_record:
+            # Delete the role from roles table - this will cascade delete all mappings
+            await cursor.execute(
+                "DELETE FROM roles WHERE role_id = %s AND server_id = %s",
+                (role_id, server_id)
+            )
+
+            if cursor.rowcount > 0:
+                return {
+                    'success': True,
+                    'message': f"Role {role_id} deleted from server {server_id}. {len(games_list)} game(s) had this role mapped.",
+                    'affected_games': games_list,
+                    'action': 'deleted_role_and_mappings'
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': f"Failed to delete role {role_id}",
+                    'affected_games': games_list
+                }
+        else:
+            # Only remove the mappings, keep the role record
+            await cursor.execute(
+                "DELETE FROM game_roles WHERE role_id = %s",
+                (role_id,)
+            )
+
+            mappings_removed = cursor.rowcount
+
+            return {
+                'success': True,
+                'message': f"Removed role {role_id} from {mappings_removed} game mapping(s). Role record kept in database.",
+                'affected_games': games_list,
+                'mappings_removed': mappings_removed,
+                'action': 'removed_mappings_only'
+            }
 
 
 # ============================================================================

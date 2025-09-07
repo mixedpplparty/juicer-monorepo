@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import get_server_data_with_details
+from db import create_role_in_db, create_server, get_all_roles_in_server, get_server_data_with_details, handle_discord_role_removed
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -290,5 +290,152 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch server data: {str(e)}"
+        )
+    return res
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/create")
+async def create_server_request(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth check
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+
+    # check if bot is in that server and user is in that server
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+
+    # determine if user has manage server permission
+    if guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+        # admin
+        pass
+    else:
+        # user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User does not have manage server permission in that server."
+        )
+
+    try:
+        res = await create_server(db, server_id)
+        if res:
+            return {"message": "Server created. Roles need to be synced."}
+        elif not res:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Server already exists."
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create server."
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create server: {str(e)}"
+        )
+
+# assume all role-related jobs will be done on the Discord side
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/roles")
+async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth required
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated."
+        )
+    guild = discord_client.get_guild(server_id)
+
+    if guild.get_member(int(user_data.get("id"))) is None:  # must be int
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User not in server."
+        )
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+
+    if guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+        # admin
+        pass
+    else:
+        # user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User does not have manage server permission in that server."
+        )
+
+    roles = guild.roles
+    res = []
+    for role in roles:
+        res.append({
+            "id": role.id,
+            "name": role.name,
+            "color": role.color.to_rgb(),
+            "is_default": role.is_default(),
+            "icon": role.icon.url if role.icon else None
+        })
+    return res
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/sync-roles")
+async def sync_roles(server_id: int, db: AsyncGenerator[any, any] = Depends(get_db)):
+    # auth not required
+    # check if bot is in that server
+    guild = discord_client.get_guild(server_id)
+    if not guild:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found. Bot may not be in that server."
+        )
+
+    roles = guild.roles
+    # add try-catch for db operations
+    res = {
+        "roles_created": [],
+        "roles_deleted": []
+    }
+    try:
+        db_roles = await get_all_roles_in_server(db, server_id)
+        for role in roles:
+            if role.id in [db_role['role_id'] for db_role in db_roles]:
+                continue
+            else:  # role not in db
+                await create_role_in_db(db, server_id, role.id)
+                # add role created message to res
+                res["roles_created"].append(role.id)
+        # if role in db but not in discord, delete it from db
+        for db_role in db_roles:
+            if db_role['role_id'] not in [role.id for role in roles]:
+                await handle_discord_role_removed(db, db_role['role_id'], server_id)
+                # add role deleted message to res
+                res["roles_deleted"].append(db_role['role_id'])
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync roles: {str(e)}"
         )
     return res
