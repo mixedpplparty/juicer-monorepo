@@ -13,3 +13,14 @@ export const Button = styled.button({
 	outline: "inherit",
 	color: "inherit",
 });
+
+export const InlineButton = styled.button({
+	display: "flex",
+	background: "none",
+	border: "none",
+	font: "inherit",
+	cursor: "pointer",
+	outline: "inherit",
+	color: "inherit",
+	padding: 0,
+});
