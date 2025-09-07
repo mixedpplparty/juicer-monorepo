@@ -4,7 +4,7 @@ import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from typing import List, Union
 import os
 import sys
@@ -209,25 +209,69 @@ async def discord_callback(code: str, response: Response):
 
 
 @app.get("/discord/auth/me")
-async def read_current_user(discord_access_token: Optional[str] = Cookie(None), discord_refresh_token: Optional[str] = Cookie(None)):
+async def read_current_user(discord_access_token: Optional[str] = Cookie(None), discord_refresh_token: Optional[str] = Cookie(None), response: Response = Response):
     """
     Fetches the current user's data based on the access_token cookie.
     """
+
+    response = JSONResponse(content={"discord_access_token": discord_access_token,
+                            "discord_refresh_token": discord_refresh_token if discord_refresh_token else None})
+
     if discord_access_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated. No access token found in cookies.",
         )
 
-    return {"discord_access_token": discord_access_token, "discord_refresh_token": discord_refresh_token if discord_refresh_token else None}
+    try:
+        user_data = await discord_user_get_data(discord_access_token)
+    except Exception as e:
+        response = JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Not authenticated. Invalid access token. Cookies removed."})
+        response.delete_cookie("discord_access_token")
+        response.delete_cookie("discord_refresh_token")
+        return response
+    return response
 
 
 @app.post("/discord/auth/refresh")
-async def discord_refresh(refresh_token: str):
+async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), response: Response = Response):
     try:
-        return await refresh_token_async(refresh_token)
+        user_data = await discord_user_get_data(discord_refresh_token)
     except Exception as e:
-        return {"error": str(e)}
+        response = JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Not authenticated. Invalid refresh token. Cookies removed."})
+        response.delete_cookie("discord_access_token")
+        response.delete_cookie("discord_refresh_token")
+        return response
+    try:
+        refresh_token = await refresh_token_async(discord_refresh_token)
+        response.set_cookie(
+            key="discord_access_token",
+            value=refresh_token.get("access_token"),
+            httponly=True,  # prevents js access
+            samesite="lax",  # allow cross-site cookies for localhost:5173
+            secure=False,    # set True when serving over HTTPS
+            # Set cookie expiry from token
+            max_age=refresh_token.get("expires_in"),
+        )
+        response.set_cookie(
+            key="discord_refresh_token",
+            value=refresh_token.get("refresh_token"),
+            httponly=True,  # prevents js access
+            samesite="lax",  # allow cross-site cookies for localhost:5173
+            secure=False,    # set True when serving over HTTPS
+            # Set cookie expiry from token
+            max_age=refresh_token.get("expires_in"),
+        )
+        return response
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to refresh token: {str(e)}"}
+        )
 
 
 @app.post("/discord/auth/revoke")
@@ -446,7 +490,7 @@ async def create_game_request(server_id: int, name: str, description: Optional[s
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await create_game(db, server_id, name, description, category_id)
+        res = await create_game(db, server_id, name, description, category_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -461,7 +505,7 @@ async def update_game_request(server_id: int, game_id: int, name: Optional[str] 
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await update_game(db, game_id, server_id, name, category_id)
+        res = await update_game(db, game_id, server_id, name, category_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -476,7 +520,7 @@ async def delete_game_request(server_id: int, game_id: int, discord_access_token
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await delete_game(db, game_id, server_id)
+        res = await delete_game(db, game_id, server_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -491,7 +535,7 @@ async def add_tag_request(server_id: int, game_id: int, name: str, discord_acces
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await add_tags_to_game(db, game_id, server_id, [name])
+        res = await add_tags_to_game(db, game_id, server_id, [name], require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -506,7 +550,7 @@ async def delete_tag_request(server_id: int, game_id: int, tag_id: int, discord_
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await remove_tag_from_game(db, game_id, server_id, tag_id)
+        res = await remove_tag_from_game(db, game_id, server_id, tag_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -521,7 +565,7 @@ async def delete_tag_by_id_request(server_id: int, tag_id: int, discord_access_t
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await remove_tag_by_id(db, tag_id)
+        res = await remove_tag_by_id(db, tag_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -536,7 +580,7 @@ async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await map_roles_to_game(db, game_id, server_id, role_ids)
+        res = await map_roles_to_game(db, game_id, server_id, role_ids, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -551,7 +595,7 @@ async def get_game_roles_request(server_id: int, game_id: int, discord_access_to
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await get_game_roles(db, game_id, server_id)
+        res = await get_game_roles(db, game_id, server_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -566,7 +610,7 @@ async def create_category_request(server_id: int, game_id: int, name: str, disco
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await create_category(db, server_id, name)
+        res = await create_category(db, server_id, name, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -581,7 +625,7 @@ async def add_category_request(server_id: int, game_id: int, category_id: int, d
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await map_category_to_game(db, game_id, server_id, category_id)
+        res = await map_category_to_game(db, game_id, server_id, category_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(
@@ -596,7 +640,7 @@ async def delete_category_request(server_id: int, game_id: int, category_id: int
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
-        res = await delete_category(db, category_id, server_id)
+        res = await delete_category(db, category_id, server_id, require_manage_guild=True)
         return res
     except Exception as e:
         raise HTTPException(

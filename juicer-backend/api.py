@@ -129,7 +129,7 @@ async def discord_user_get_data(access_token: str) -> dict:
         if e.status == 401:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated.",
+                detail="Not authenticated. Invalid access token.",
             )
     except aiohttp.ClientError as e:
         print(f"HTTP client error: {e}")
