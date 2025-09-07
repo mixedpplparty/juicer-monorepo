@@ -1,4 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
+from db import get_server_data_with_details
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -272,27 +273,22 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
             detail=f"User not in server."
         )
 
+    res = {}
+
     # determine if user has manage server permission
-    if not guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+    if guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
         # admin
-        pass
+        res["admin"] = True
     else:
         # user
-        pass
+        res["admin"] = False
 
     try:
-        async with db.cursor() as cursor:
-            await cursor.execute(f"SELECT * FROM servers WHERE server_id = {server_id}")
-            result = await cursor.fetchone()
-            # if fetchone is None, raise 404
-            if result is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Server not found."
-                )
-            return result
+        server_data = await get_server_data_with_details(db, server_id)
+        res["server_data"] = server_data
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch server data: {str(e)}"
         )
+    return res

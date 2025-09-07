@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persists database data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./juicer-db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - '${POSTGRES_PORT}:${POSTGRES_PORT}' # Expose port to host for development/debugging
     expose:
