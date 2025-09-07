@@ -347,10 +347,10 @@ async def get_db_member_data(discord_access_token: Optional[str] = Cookie(None),
     guilds = user.mutual_guilds
     for guild in guilds:
         res["guilds"].append({
-            "id": guild.id,
+            "id": str(guild.id),
             "name": guild.name,
             "icon": guild.icon.url if guild.icon else None,
-            "owner_id": guild.owner_id,
+            "owner_id": str(guild.owner_id),
             "owner_name": guild.owner.name,
             "owner_nick": guild.owner.nick,
             "member_count": guild.member_count,
@@ -378,10 +378,10 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
     # server data from discord.py
     # assumes roles are synced
     res["server_data_discord"] = {
-        "id": guild.id,
+        "id": str(guild.id),
         "name": guild.name,
         "icon": guild.icon.url if guild.icon else None,
-        "owner_id": guild.owner_id,
+        "owner_id": str(guild.owner_id),
         "owner_name": guild.owner.name,
         "owner_nick": guild.owner.nick,
         "member_count": guild.member_count,
@@ -436,7 +436,7 @@ async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie
     res = []
     for role in roles:
         res.append({
-            "id": role.id,
+            "id": str(role.id),
             "name": role.name,
             "color": role.color.to_rgb(),
             "is_default": role.is_default(),
@@ -466,18 +466,18 @@ async def sync_roles(server_id: int, db: AsyncGenerator[any, any] = Depends(get_
     try:
         db_roles = await get_all_roles_in_server(db, server_id)
         for role in roles:
-            if role.id in [db_role['role_id'] for db_role in db_roles]:
+            if role.id in [int(db_role['role_id']) for db_role in db_roles]:
                 continue
             else:  # role not in db
                 await create_role_in_db(db, server_id, role.id)
                 # add role created message to res
-                res["roles_created"].append(role.id)
+                res["roles_created"].append(str(role.id))
         # if role in db but not in discord, delete it from db
         for db_role in db_roles:
-            if db_role['role_id'] not in [role.id for role in roles]:
+            if db_role['role_id'] not in [int(role.id) for role in roles]:
                 await handle_discord_role_removed(db, db_role['role_id'], server_id)
                 # add role deleted message to res
-                res["roles_deleted"].append(db_role['role_id'])
+                res["roles_deleted"].append(str(db_role['role_id']))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
