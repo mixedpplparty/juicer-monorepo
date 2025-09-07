@@ -54,3 +54,11 @@ export const _createServer = async (
 	);
 	return _res.data;
 };
+
+export const _signOut = async () => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/auth/revoke`,
+		{ withCredentials: true },
+	);
+	return _res.data;
+};

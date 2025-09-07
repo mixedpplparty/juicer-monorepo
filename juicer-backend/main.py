@@ -278,9 +278,9 @@ async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), r
 
 
 @app.post("/discord/auth/revoke")
-async def discord_revoke(token: str, response: Response):
+async def discord_revoke(response: Response, discord_access_token: Optional[str] = Cookie(None)):
     try:
-        res = await revoke_token_async(token)
+        res = await revoke_token_async(discord_access_token)
         response = JSONResponse(
             status_code=status.HTTP_200_OK,
             content={"detail": "Token revoked."})

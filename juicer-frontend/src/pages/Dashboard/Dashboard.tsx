@@ -1,8 +1,9 @@
 import AddIcon from "@mui/icons-material/Add";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useEffect } from "react";
+import { useNavigate } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
-import { _fetchMyInfo } from "../../queries/queries";
+import { _fetchMyInfo, _signOut } from "../../queries/queries";
 import type { Guild } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
@@ -15,9 +16,20 @@ export const Dashboard = () => {
 		queryFn: _fetchMyInfo,
 	});
 
+	const signOutMutation = useMutation({
+		mutationFn: _signOut,
+		onSuccess: () => {
+			window.location.reload();
+		},
+	});
+
 	useEffect(() => {
 		console.log(_myInfo.data);
 	}, [_myInfo.data]);
+
+	const signOut = () => {
+		signOutMutation.mutate();
+	};
 
 	return (
 		<Suspense fallback={<Loading />}>
@@ -30,8 +42,13 @@ export const Dashboard = () => {
 							alignItems: "center",
 						}}
 					>
-						<h1 css={{ margin: 0 }}>juicer</h1>
-						<Button css={{ background: "#ed5555" }}>로그아웃</Button>
+						<div css={{ display: "flex", flexDirection: "column" }}>
+							<h1 css={{ margin: 0 }}>juicer</h1>
+							<div>봇과 나 자신 모두가 있는 서버만 표시됩니다.</div>
+						</div>
+						<Button css={{ background: "#ed5555" }} onClick={signOut}>
+							로그아웃
+						</Button>
 					</div>
 					<div
 						css={{
@@ -42,7 +59,6 @@ export const Dashboard = () => {
 							maxHeight: "100%",
 						}}
 					>
-						<div>봇과 나 자신 모두가 있는 서버만 표시됩니다.</div>
 						{_myInfo.data?.guilds.map((guild: Guild) => (
 							<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
 								<Card
