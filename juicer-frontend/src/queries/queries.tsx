@@ -1,5 +1,12 @@
 import axios from "axios";
-import type { MyDataInServer, MyInfo, ServerData } from "../types/types";
+import type {
+	MyDataInServer,
+	MyInfo,
+	Role,
+	ServerData,
+	Tag,
+	TagId,
+} from "../types/types";
 
 axios.defaults.withCredentials = true;
 
@@ -83,6 +90,28 @@ export const _createGame = async (
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/create`,
 		{ name: gameName, description: gameDescription, category_id: gameCategory },
 		{ withCredentials: true },
+	);
+	return _res.data;
+};
+
+export const _updateGameWithTagsAndRoles = async (
+	serverId: string,
+	gameId: string,
+	gameName: string,
+	gameDescription: string,
+	gameCategory: string,
+	gameTags: number[],
+	gameRoles: string[],
+) => {
+	const _res = await axios.put(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
+		{
+			name: gameName,
+			description: gameDescription,
+			category_id: gameCategory,
+			tag_ids: gameTags,
+			role_ids: gameRoles,
+		},
 	);
 	return _res.data;
 };

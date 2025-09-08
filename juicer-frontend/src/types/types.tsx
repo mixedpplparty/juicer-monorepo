@@ -34,6 +34,10 @@ export type Tag = {
 	name: string;
 };
 
+export type TagId = {
+	id: number;
+};
+
 export type Role = {
 	id: string;
 };

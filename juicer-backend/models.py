@@ -22,3 +22,11 @@ class CreateCategoryBody(BaseModel):
 
 class AddCategoryToGameBody(BaseModel):
     category_id: int
+
+
+class UpdateGameBody(BaseModel):
+    name: str
+    description: str
+    category_id: str
+    tag_ids: List[int]
+    role_ids: List[str]
