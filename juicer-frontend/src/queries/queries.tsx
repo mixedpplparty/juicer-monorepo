@@ -62,3 +62,17 @@ export const _signOut = async () => {
 	);
 	return _res.data;
 };
+
+export const _createGame = async (
+	serverId: string,
+	gameName: string,
+	gameDescription: string | null | undefined,
+	gameCategory: string | null | undefined,
+) => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/create`,
+		{ name: gameName, description: gameDescription, category_id: gameCategory },
+		{ withCredentials: true },
+	);
+	return _res.data;
+};
