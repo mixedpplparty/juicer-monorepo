@@ -148,11 +148,6 @@ export const Server = () => {
 		},
 	});
 
-	useEffect(() => {
-		console.log(_serverData.data);
-		console.log(_myDataInServer.data);
-	}, [_serverData.data, _myDataInServer.data]);
-
 	const addGameFormAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
 		let gameDescription = formData.get("game-description");
