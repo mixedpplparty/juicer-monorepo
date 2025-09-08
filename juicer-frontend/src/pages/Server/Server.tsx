@@ -18,10 +18,13 @@ import {
 } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
+	_assignRolesToUser,
 	_createGame,
 	_createServer,
 	_fetchMyDataInServer,
 	_fetchServerData,
+	_syncServerData,
+	_unassignRolesFromUser,
 } from "../../queries/queries";
 import type {
 	Category,
@@ -93,6 +96,50 @@ export const Server = () => {
 			gameDescription: string | null | undefined;
 			gameCategory: string | null | undefined;
 		}) => _createGame(serverId, gameName, gameDescription, gameCategory),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+
+	const unassignRolesFromUserMutation = useMutation({
+		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
+			_unassignRolesFromUser(serverId, gameId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+	const assignRolesToUserMutation = useMutation({
+		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
+			_assignRolesToUser(serverId, gameId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+
+	const toggleGameRolesAssign = (game: Game) => {
+		if (_iHaveAllRolesInTheGame(game)) {
+			unassignRolesFromUserMutation.mutate({
+				serverId: serverId as string,
+				gameId: game.id,
+			});
+		} else {
+			assignRolesToUserMutation.mutate({
+				serverId: serverId as string,
+				gameId: game.id,
+			});
+		}
+	};
+	const syncServerDataMutation = useMutation({
+		mutationFn: (serverId: string) => _syncServerData(serverId),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
 		},
@@ -182,6 +229,9 @@ export const Server = () => {
 										alignItems: "center",
 										gap: "8px",
 									}}
+									onClick={() =>
+										syncServerDataMutation.mutate(serverId as string)
+									}
 								>
 									<SyncIcon css={{ width: "20px", height: "20px" }} />
 								</Button>
@@ -295,100 +345,98 @@ export const Server = () => {
 												alignItems: "stretch",
 											}}
 										>
-											<LinkNoStyle
-												to={null as any}
-												css={{ flex: 1, cursor: "pointer" }}
+											<InlineButton
+												css={{
+													display: "flex",
+													flexDirection: "column",
+													width: "100%",
+													gap: "4px",
+													flex: 1,
+													cursor: "pointer",
+												}}
+												onClick={() => toggleGameRolesAssign(game)}
 											>
 												<div
 													css={{
 														display: "flex",
-														flexDirection: "column",
-														width: "100%",
+														flexDirection: "row",
 														gap: "4px",
 													}}
 												>
+													<h2 css={{ margin: 0, display: "inline" }}>
+														{game.name}
+													</h2>
 													<div
 														css={{
 															display: "flex",
 															flexDirection: "row",
 															gap: "4px",
+															alignItems: "center",
 														}}
 													>
-														<h2 css={{ margin: 0, display: "inline" }}>
-															{game.name}
-														</h2>
-														<div
-															css={{
-																display: "flex",
-																flexDirection: "row",
-																gap: "4px",
-																alignItems: "center",
-															}}
-														>
-															{game.category && game.category.length > 0
-																? game.category
-																		?.map((category: Category) => category.name)
-																		.join(", ")
-																: "카테고리 없음"}
-														</div>
-													</div>
-													<div
-														css={{
-															display: "flex",
-															flexDirection: "row",
-															gap: "4px",
-														}}
-													>
-														{game.tags && game.tags.length > 0
-															? game.tags?.map((tag: Tag) => (
-																	<Chip
-																		key={tag.id}
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																		}}
-																	>
-																		{tag.name}
-																	</Chip>
-																))
-															: "태그 없음"}
-													</div>
-													<div
-														css={{
-															display: "flex",
-															flexDirection: "row",
-															gap: "4px",
-														}}
-													>
-														{game.roles_to_add && game.roles_to_add.length > 0
-															? game.roles_to_add?.map((role: Role) => (
-																	<Chip
-																		key={role.id}
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																		}}
-																	>
-																		<_8pxCircle
-																			css={{
-																				backgroundColor: `rgb(${
-																					_findRoleById(role.id)?.color.join(
-																						",",
-																					) || "255, 255, 255"
-																				})`,
-																			}}
-																		/>
-																		{_findRoleById(role.id)?.name}
-																	</Chip>
-																))
-															: "역할 없음"}
+														{game.category
+															? game.category.name
+															: "카테고리 없음"}
 													</div>
 												</div>
-											</LinkNoStyle>
+												<div
+													css={{
+														display: "flex",
+														flexDirection: "row",
+														gap: "4px",
+													}}
+												>
+													{game.tags && game.tags.length > 0
+														? game.tags?.map((tag: Tag) => (
+																<div
+																	key={tag.id}
+																	css={{
+																		display: "flex",
+																		flexDirection: "row",
+																		gap: "4px",
+																		alignItems: "center",
+																		border: "none",
+																		background: "none",
+																	}}
+																>
+																	#{tag.name}
+																</div>
+															))
+														: "태그 없음"}
+												</div>
+												<div
+													css={{
+														display: "flex",
+														flexDirection: "row",
+														gap: "4px",
+													}}
+												>
+													{game.roles_to_add && game.roles_to_add.length > 0
+														? game.roles_to_add?.map((role: Role) => (
+																<Chip
+																	key={role.id}
+																	css={{
+																		display: "flex",
+																		flexDirection: "row",
+																		gap: "4px",
+																		alignItems: "center",
+																	}}
+																>
+																	<_8pxCircle
+																		css={{
+																			backgroundColor: `rgb(${
+																				_findRoleById(role.id)?.color.join(
+																					",",
+																				) || "255, 255, 255"
+																			})`,
+																		}}
+																	/>
+																	{_findRoleById(role.id)?.name}
+																</Chip>
+															))
+														: "역할 없음"}
+												</div>
+											</InlineButton>
 											{_serverData.data?.admin && (
 												<div css={{ alignSelf: "stretch" }}>
 													<LinkNoStyle

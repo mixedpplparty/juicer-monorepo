@@ -1,15 +1,26 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { _fetchServerData } from "../../queries/queries";
+import {
+	_createCategory,
+	_createTag,
+	_deleteCategory,
+	_deleteTag,
+	_fetchServerData,
+} from "../../queries/queries";
 import type { Category, Tag } from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Loading } from "../Loading/Loading";
@@ -18,6 +29,7 @@ export const ServerSettings = () => {
 		useState<boolean>(false);
 	const [isCreateTagModalOpen, setIsCreateTagModalOpen] =
 		useState<boolean>(false);
+	const queryClient = useQueryClient();
 
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
@@ -28,7 +40,78 @@ export const ServerSettings = () => {
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
 	});
+	const createCategoryMutation = useMutation({
+		mutationFn: ({
+			serverId,
+			categoryName,
+		}: {
+			serverId: string;
+			categoryName: string;
+		}) => _createCategory(serverId, categoryName),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+			setIsCreateCategoryModalOpen(false);
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
 
+	const createCategoryFormAction = async (formData: FormData) => {
+		const categoryName = formData.get("category-name");
+		createCategoryMutation.mutate({
+			serverId: serverId as string,
+			categoryName: categoryName as string,
+		});
+	};
+	const createTagMutation = useMutation({
+		mutationFn: ({
+			serverId,
+			tagName,
+		}: {
+			serverId: string;
+			tagName: string;
+		}) => _createTag(serverId, tagName),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+			setIsCreateTagModalOpen(false);
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+	const createTagFormAction = async (formData: FormData) => {
+		const tagName = formData.get("tag-name");
+		createTagMutation.mutate({
+			serverId: serverId as string,
+			tagName: tagName as string,
+		});
+	};
+	const deleteCategoryMutation = useMutation({
+		mutationFn: ({
+			serverId,
+			categoryId,
+		}: {
+			serverId: string;
+			categoryId: number;
+		}) => _deleteCategory(serverId, categoryId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+	const deleteTagMutation = useMutation({
+		mutationFn: ({ serverId, tagId }: { serverId: string; tagId: number }) =>
+			_deleteTag(serverId, tagId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
 	return (
 		<Suspense fallback={<Loading />}>
 			<FullPageBase>
@@ -90,7 +173,7 @@ export const ServerSettings = () => {
 									카테고리 추가
 								</Button>
 							</div>
-							{_serverData.data?.server_data_db.categories?.length || (
+							{!!_serverData.data?.server_data_db.categories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 카테고리가 없습니다.
 								</div>
@@ -115,6 +198,12 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
+													onClick={() =>
+														deleteCategoryMutation.mutate({
+															serverId: serverId as string,
+															categoryId: category.id,
+														})
+													}
 												>
 													<DeleteIcon
 														css={{
@@ -160,7 +249,7 @@ export const ServerSettings = () => {
 								</Button>
 							</div>
 							<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
-								{_serverData.data?.server_data_db.tags?.length || (
+								{!!_serverData.data?.server_data_db.tags?.length || (
 									<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 										서버에 태그가 없습니다.
 									</div>
@@ -188,6 +277,12 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
+													onClick={() =>
+														deleteTagMutation.mutate({
+															serverId: serverId as string,
+															tagId: tag.id,
+														})
+													}
 												>
 													<DeleteIcon
 														css={{
@@ -213,7 +308,14 @@ export const ServerSettings = () => {
 						title="카테고리 추가"
 						onClose={() => setIsCreateCategoryModalOpen(false)}
 					>
-						asdf
+						<form action={createCategoryFormAction}>
+							<Input
+								type="text"
+								name="category-name"
+								placeholder="카테고리 이름"
+							/>
+							<Button type="submit">카테고리 추가</Button>
+						</form>
 					</Modal>
 				</ModalPortal>
 			)}
@@ -223,7 +325,10 @@ export const ServerSettings = () => {
 						title="태그 추가"
 						onClose={() => setIsCreateTagModalOpen(false)}
 					>
-						asdf
+						<form action={createTagFormAction}>
+							<Input type="text" name="tag-name" placeholder="태그 이름" />
+							<Button type="submit">태그 추가</Button>
+						</form>
 					</Modal>
 				</ModalPortal>
 			)}

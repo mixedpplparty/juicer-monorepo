@@ -46,7 +46,7 @@ export type Game = {
 	id: number;
 	name: string;
 	description: string | null;
-	category: Category[] | null;
+	category: Category | null;
 	tags: Tag[] | null;
 	roles_to_add: Role[] | null;
 };
