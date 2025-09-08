@@ -23,10 +23,17 @@ import {
 	_fetchMyDataInServer,
 	_fetchServerData,
 } from "../../queries/queries";
-import type { Category, Game, Role, Tag } from "../../types/types";
+import type {
+	Category,
+	Game,
+	Role,
+	ServerDataDiscordRole,
+	Tag,
+} from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
+import { Chip } from "../../ui/components/Chip";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -179,6 +186,54 @@ export const Server = () => {
 							</div>
 						)}
 					</div>
+
+					{
+						<div
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
+							<h2 css={{ margin: 0 }}>내 정보</h2>
+
+							<Card
+								css={{
+									border: "none",
+									display: "flex",
+									flexDirection: "row",
+									alignItems: "center",
+									gap: "12px",
+								}}
+							>
+								<img
+									src={_myDataInServer.data?.avatar || serverPlaceholderIcon}
+									alt={_myDataInServer.data?.name}
+									css={{ width: "48px", height: "48px", borderRadius: "50%" }}
+								/>
+								<div
+									css={{ display: "flex", flexDirection: "column", gap: "4px" }}
+								>
+									<h2 css={{ margin: 0 }}>
+										{_myDataInServer.data?.nick
+											? _myDataInServer.data.nick
+											: _myDataInServer.data?.name}
+									</h2>
+									<div
+										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
+									>
+										{_myDataInServer.data?.roles?.map((role: Role) => {
+											return (
+												<Chip key={role.id}>
+													{
+														_serverData.data?.server_data_discord.roles?.find(
+															(r: ServerDataDiscordRole) => r.id === role.id,
+														)?.name
+													}
+												</Chip>
+											);
+										})}
+									</div>
+								</div>
+							</Card>
+						</div>
+					}
 
 					{_serverData.data?.server_data_db.games &&
 						_serverData.data?.server_data_db.games.length > 0 && (
