@@ -216,6 +216,84 @@ async def update_game(db: AsyncConnection, game_id: int, server_id: int, new_nam
         return cursor.rowcount > 0
 
 
+async def update_game_with_tags_and_roles(db: AsyncConnection, game_id: int, server_id: int, new_name: str, new_category_id: int, new_description: str, new_tag_ids: List[int], new_role_ids: List[str]) -> bool:
+    """
+    Updates a game's name, category, description, tags, and roles.
+    """
+    new_role_ids = [int(role_id) for role_id in new_role_ids]
+    async with db.cursor() as cursor:
+        # Verify game exists in the specified server
+        await cursor.execute(
+            "SELECT 1 FROM games WHERE game_id = %s AND server_id = %s",
+            (game_id, server_id)
+        )
+        if not await cursor.fetchone():
+            return False
+
+        await cursor.execute(
+            "UPDATE games SET name = %s, category_id = %s, description = %s WHERE game_id = %s AND server_id = %s",
+            (new_name, None if new_category_id == "" else new_category_id,
+             None if new_description == "" else new_description, game_id, server_id)
+        )
+        if cursor.rowcount <= 0:
+            return False
+
+        # Sync game_tags
+        await cursor.execute(
+            "SELECT tag_id FROM game_tags WHERE game_id = %s",
+            (game_id,)
+        )
+        existing_tag_rows = await cursor.fetchall()
+        existing_tag_ids = {row[0] for row in existing_tag_rows}
+        desired_tag_ids = set(new_tag_ids or [])
+
+        tags_to_add = desired_tag_ids - existing_tag_ids
+        tags_to_remove = existing_tag_ids - desired_tag_ids
+
+        if tags_to_remove:
+            for tag_id in tags_to_remove:
+                await cursor.execute(
+                    "DELETE FROM game_tags WHERE game_id = %s AND tag_id = %s",
+                    (game_id, tag_id)
+                )
+        if tags_to_add:
+            for tag_id in tags_to_add:
+                await cursor.execute(
+                    "INSERT INTO game_tags (game_id, tag_id) VALUES (%s, %s) ON CONFLICT (game_id, tag_id) DO NOTHING",
+                    (game_id, tag_id)
+                )
+
+        # Sync game_roles
+        await cursor.execute(
+            "SELECT role_id FROM game_roles WHERE game_id = %s",
+            (game_id,)
+        )
+        existing_role_rows = await cursor.fetchall()
+        existing_role_ids = {row[0] for row in existing_role_rows}
+        desired_role_ids = set(new_role_ids or [])
+
+        roles_to_add = desired_role_ids - existing_role_ids
+        roles_to_remove = existing_role_ids - desired_role_ids
+
+        # print("Roles to add: ", roles_to_add)
+        # print("Roles to remove: ", roles_to_remove)
+
+        if roles_to_remove:
+            for role_id in roles_to_remove:
+                await cursor.execute(
+                    "DELETE FROM game_roles WHERE game_id = %s AND role_id = %s",
+                    (game_id, role_id)
+                )
+        if roles_to_add:
+            for role_id in roles_to_add:
+                await cursor.execute(
+                    "INSERT INTO game_roles (game_id, role_id) VALUES (%s, %s) ON CONFLICT (game_id, role_id) DO NOTHING",
+                    (game_id, role_id)
+                )
+
+        return True
+
+
 async def delete_game(db: AsyncConnection, game_id: int, server_id: int) -> bool:
     """
     Deletes a game by ID and server ID.
@@ -288,6 +366,53 @@ async def add_tags_to_game(db: AsyncConnection, game_id: int, server_id: int, ta
                 ON CONFLICT (game_id, tag_id) DO NOTHING
             """, (game_id, tag_id))
 
+        return True
+
+
+async def create_tag(db: AsyncConnection, server_id: int, name: str) -> Optional[int]:
+    """
+    Creates a new tag in the database.
+    """
+    async with db.cursor() as cursor:
+        try:
+            await cursor.execute("INSERT INTO tags (server_id, name) VALUES (%s, %s)", (server_id, name))
+            return True
+        except UniqueViolation:
+            return None  # Tag already exists
+        except Exception as e:
+            raise ValueError(f"Failed to create tag: {str(e)}")
+
+
+async def add_tags_to_game_by_ids(db: AsyncConnection, game_id: int, server_id: int, tag_ids: List[int]) -> bool:
+    """
+    Adds one or more tags to a game by IDs.
+    """
+    async with db.cursor() as cursor:
+        for tag_id in tag_ids:
+            # Verify tag exists in the specified server
+            await cursor.execute(
+                "SELECT 1 FROM tags WHERE tag_id = %s AND server_id = %s",
+                (tag_id, server_id)
+            )
+            if not await cursor.fetchone():
+                raise ValueError(
+                    f"Tag {tag_id} not found in server {server_id}")
+
+            # Verify game exists in the specified server
+            await cursor.execute(
+                "SELECT 1 FROM games WHERE game_id = %s AND server_id = %s",
+                (game_id, server_id)
+            )
+            if not await cursor.fetchone():
+                raise ValueError(
+                    f"Game {game_id} not found in server {server_id}")
+
+            # Add tag to game (ignore if already exists)
+            await cursor.execute("""
+                INSERT INTO game_tags (game_id, tag_id) 
+                VALUES (%s, %s) 
+                ON CONFLICT (game_id, tag_id) DO NOTHING
+            """, (game_id, tag_id))
         return True
 
 

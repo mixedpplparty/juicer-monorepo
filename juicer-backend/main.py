@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game
+from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +16,7 @@ from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import Depends, FastAPI, HTTPException
-from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody
+from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, UpdateGameBody
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -551,14 +551,31 @@ async def create_game_request(server_id: int, body: CreateGameBody, discord_acce
             detail=f"Failed to create game: {str(e)}"
         )
 
+# LEGACY
+
 
 @discord_client.event
-@app.put("/discord/server/{server_id}/games/{game_id}")
+@app.put("/discord/server/{server_id}/games/{game_id}/legacy")
 async def update_game_request(server_id: int, game_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await update_game(db, game_id, server_id, name, category_id, description)
+        res = await update_game(db, game_id, server_id, body.name, body.category_id, body.description)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update game: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.put("/discord/server/{server_id}/games/{game_id}")
+async def update_game_request(server_id: int, game_id: int, body: UpdateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+
+    try:
+        res = await update_game_with_tags_and_roles(db, game_id, server_id, body.name, body.category_id, body.description, body.tag_ids, body.role_ids)
         return res
     except Exception as e:
         raise HTTPException(

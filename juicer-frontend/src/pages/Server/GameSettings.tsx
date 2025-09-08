@@ -1,14 +1,23 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { _fetchMyDataInServer, _fetchServerData } from "../../queries/queries";
+import {
+	_fetchMyDataInServer,
+	_fetchServerData,
+	_updateGameWithTagsAndRoles,
+} from "../../queries/queries";
 import type {
 	Category,
 	Game,
 	Role,
 	ServerDataDiscordRole,
 	Tag,
+	TagId,
 } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
@@ -20,19 +29,59 @@ import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
 	const [searchParams] = useSearchParams();
-	const [selectedTags, setSelectedTags] = useState<number[]>([]);
-	const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 	const gameId = searchParams.get("gameId");
 	const serverId = searchParams.get("serverId");
-	const navigate = useNavigate();
-	const _myDataInServer = useSuspenseQuery({
-		queryKey: ["myDataInServer", serverId],
-		queryFn: () => _fetchMyDataInServer(serverId),
-	});
-
 	const _serverData = useSuspenseQuery({
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
+	});
+	const [selectedTags, setSelectedTags] = useState<number[]>(
+		_serverData.data?.server_data_db.games
+			?.find((game: Game) => game.id === parseInt(gameId as string))
+			?.tags?.map((tag: Tag) => tag.id) || [],
+	);
+	const [selectedRoles, setSelectedRoles] = useState<string[]>(
+		_serverData.data?.server_data_db.games
+			?.find((game: Game) => game.id === parseInt(gameId as string))
+			?.roles_to_add?.map((role: Role) => role.id) || [],
+	);
+	const navigate = useNavigate();
+
+	const queryClient = useQueryClient();
+
+	const updateGameWithTagsAndRolesMutation = useMutation({
+		mutationFn: ({
+			serverId,
+			gameId,
+			gameName,
+			gameDescription,
+			gameCategory,
+			gameTags,
+			gameRoles,
+		}: {
+			serverId: string;
+			gameId: string;
+			gameName: string;
+			gameDescription: string;
+			gameCategory: string;
+			gameTags: number[];
+			gameRoles: string[];
+		}) =>
+			_updateGameWithTagsAndRoles(
+				serverId,
+				gameId,
+				gameName,
+				gameDescription,
+				gameCategory,
+				gameTags,
+				gameRoles,
+			),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
 	});
 
 	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
@@ -45,6 +94,21 @@ export const GameSettings = () => {
 		return _serverData.data?.server_data_db.games?.find(
 			(g: Game) => g.id === parseInt(gameId),
 		);
+	};
+
+	const onGameSettingsChangeSubmitAction = async (formData: FormData) => {
+		const gameName = formData.get("game-name");
+		const gameDescription = formData.get("game-description");
+		const gameCategory = formData.get("game-category");
+		updateGameWithTagsAndRolesMutation.mutate({
+			serverId: serverId as string,
+			gameId: gameId as string,
+			gameName: gameName as string,
+			gameDescription: gameDescription as string,
+			gameCategory: gameCategory as string,
+			gameTags: selectedTags as number[],
+			gameRoles: selectedRoles as string[],
+		});
 	};
 
 	return (
@@ -75,7 +139,7 @@ export const GameSettings = () => {
 						</div>
 					</div>
 					<form
-						action={() => {}}
+						action={onGameSettingsChangeSubmitAction}
 						css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 					>
 						<label htmlFor="game-name">게임 이름</label>
