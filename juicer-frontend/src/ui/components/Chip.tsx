@@ -15,6 +15,10 @@ export const CheckableChipBase = styled(Chip, {
 		? "rgba(255, 255, 255, 1)"
 		: "rgba(255, 255, 255, 0.1)",
 	color: props.checked ? "rgba(0, 0, 0, 1)" : "rgba(255, 255, 255, 1)",
+	display: "flex",
+	flexDirection: "row",
+	gap: "4px",
+	alignItems: "center",
 }));
 
 type CheckableChipProps = {
