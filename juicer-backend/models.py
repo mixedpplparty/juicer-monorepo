@@ -30,3 +30,7 @@ class UpdateGameBody(BaseModel):
     category_id: str
     tag_ids: List[int]
     role_ids: List[str]
+
+
+class CreateTagBody(BaseModel):
+    name: str

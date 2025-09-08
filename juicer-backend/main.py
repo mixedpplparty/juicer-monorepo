@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
+from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, create_tag, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +16,7 @@ from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import Depends, FastAPI, HTTPException
-from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, UpdateGameBody
+from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, CreateTagBody, UpdateGameBody
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -161,6 +161,58 @@ async def authenticate_and_authorize_user(server_id: int, discord_access_token: 
         "user_data": user_data,
         "guild": guild
     }
+
+
+@discord_client.event
+async def assign_roles_to_user(db: AsyncGenerator[any, any], server_id: int, user_id: str, game_id: int) -> bool:
+    user_id = int(user_id)
+    try:
+        mapped_roles = await get_game_roles(db, game_id, server_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get roles for game: {str(e)}"
+        )
+    try:
+        for role in mapped_roles:
+            role_id = int(role.get("role_id"))
+            role_obj = discord_client.get_guild(server_id).get_role(role_id)
+            if role_obj.name == "@everyone":
+                continue
+            await discord_client.get_guild(server_id).get_member(user_id).add_roles(
+                role_obj)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign roles: {str(e)}"
+        )
+    return True
+
+
+@discord_client.event
+async def unassign_roles_from_user(db: AsyncGenerator[any, any], server_id: int, user_id: str, game_id: int) -> bool:
+    user_id = int(user_id)
+    try:
+        mapped_roles = await get_game_roles(db, game_id, server_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get roles for game: {str(e)}"
+        )
+    try:
+        for role in mapped_roles:
+            role_id = int(role.get("role_id"))
+            role_obj = discord_client.get_guild(server_id).get_role(role_id)
+            if role_obj.name == "@everyone":
+                continue
+            await discord_client.get_guild(server_id).get_member(user_id).remove_roles(
+                role_obj)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to unassign roles from user: {str(e)}"
+        )
+    return True
 
 
 # USER OAuth Endpoints
@@ -600,6 +652,21 @@ async def delete_game_request(server_id: int, game_id: int, discord_access_token
 
 
 @discord_client.event
+@app.post("/discord/server/{server_id}/tags/create")
+async def create_tag_request(server_id: int, body: CreateTagBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+
+    try:
+        res = await create_tag(db, server_id, body.name)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create tag: {str(e)}"
+        )
+
+
+@discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/tags/add")
 async def add_tag_request(server_id: int, game_id: int, body: AddTagsBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
@@ -695,6 +762,36 @@ async def get_game_roles_request(server_id: int, game_id: int, discord_access_to
 
 
 @discord_client.event
+@app.get("/discord/server/{server_id}/games/{game_id}/roles/assign")
+async def assign_roles_to_user_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
+    user_data = auth_data["user_data"]
+    try:
+        res = await assign_roles_to_user(db, server_id, user_data.get("id"), game_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign roles to user: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/games/{game_id}/roles/unassign")
+async def unassign_roles_from_user_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
+    user_data = auth_data["user_data"]
+    try:
+        res = await unassign_roles_from_user(db, server_id, user_data.get("id"), game_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to unassign roles from user: {str(e)}"
+        )
+
+
+@discord_client.event
 @app.post("/discord/server/{server_id}/categories/create")
 async def create_category_request(server_id: int, body: CreateCategoryBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
@@ -731,6 +828,11 @@ async def delete_category_request(server_id: int, category_id: int, discord_acce
 
     try:
         res = await delete_category(db, category_id, server_id)
+        if res['success'] == False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=res['message']
+            )
         return res
     except Exception as e:
         raise HTTPException(

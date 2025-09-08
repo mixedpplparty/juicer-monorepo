@@ -1,4 +1,5 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
 	useMutation,
 	useQueryClient,
@@ -7,6 +8,7 @@ import {
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
+	_deleteGame,
 	_fetchMyDataInServer,
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
@@ -111,6 +113,25 @@ export const GameSettings = () => {
 		});
 	};
 
+	const deleteGameMutation = useMutation({
+		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
+			_deleteGame(serverId, gameId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+			navigate(`/server?serverId=${serverId}`);
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+
+	const handleDeleteGame = () => {
+		deleteGameMutation.mutate({
+			serverId: serverId as string,
+			gameId: parseInt(gameId as string),
+		});
+	};
+
 	return (
 		<Suspense fallback={<Loading />}>
 			<FullPageBase>
@@ -130,13 +151,30 @@ export const GameSettings = () => {
 							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
 						</Button>
 						<div
-							css={{ display: "flex", flexDirection: "column", width: "100%" }}
+							css={{
+								display: "flex",
+								flexDirection: "column",
+								width: "100%",
+								flex: 1,
+							}}
 						>
 							<h1 css={{ margin: 0 }}>
 								{_findGameById(gameId as string)?.name}
 							</h1>
 							<div>게임 설정</div>
 						</div>
+						<Button
+							css={{
+								background: "#ed5555",
+								alignItems: "center",
+								gap: "8px",
+								display: "flex",
+							}}
+							onClick={handleDeleteGame}
+						>
+							<DeleteIcon css={{ width: "20px", height: "20px" }} />
+							게임 삭제
+						</Button>
 					</div>
 					<form
 						action={onGameSettingsChangeSubmitAction}
@@ -157,7 +195,11 @@ export const GameSettings = () => {
 							defaultValue={_findGameById(gameId as string)?.description || ""}
 						/>
 						<label htmlFor="game-category">카테고리 (선택)</label>
-						<Select id="game-category" name="game-category" defaultValue="">
+						<Select
+							id="game-category"
+							name="game-category"
+							defaultValue={_findGameById(gameId as string)?.category?.id || ""}
+						>
 							<Option value="">카테고리 선택</Option>
 							{_serverData.data?.server_data_db.categories?.map(
 								(category: Category) => (
@@ -168,22 +210,26 @@ export const GameSettings = () => {
 							)}
 						</Select>
 						<label htmlFor="game-tags">태그 부여(선택)</label>
-						{_serverData.data?.server_data_db.tags?.map((tag: Tag) => (
-							<CheckableChip
-								key={tag.id}
-								value={tag.id}
-								checked={selectedTags.includes(tag.id)}
-								onChange={(checked) => {
-									if (checked) {
-										setSelectedTags([...selectedTags, tag.id]);
-									} else {
-										setSelectedTags(selectedTags.filter((id) => id !== tag.id));
-									}
-								}}
-							>
-								{tag.name}
-							</CheckableChip>
-						))}
+						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
+							{_serverData.data?.server_data_db.tags?.map((tag: Tag) => (
+								<CheckableChip
+									key={tag.id}
+									value={tag.id}
+									checked={selectedTags.includes(tag.id)}
+									onChange={(checked) => {
+										if (checked) {
+											setSelectedTags([...selectedTags, tag.id]);
+										} else {
+											setSelectedTags(
+												selectedTags.filter((id) => id !== tag.id),
+											);
+										}
+									}}
+								>
+									{tag.name}
+								</CheckableChip>
+							))}
+						</div>
 						{_serverData.data?.server_data_db.tags?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 태그가 없습니다.

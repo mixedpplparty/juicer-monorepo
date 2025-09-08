@@ -115,3 +115,67 @@ export const _updateGameWithTagsAndRoles = async (
 	);
 	return _res.data;
 };
+
+export const _createCategory = async (
+	serverId: string,
+	categoryName: string,
+) => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/create`,
+		{ name: categoryName },
+	);
+	return _res.data;
+};
+
+export const _createTag = async (serverId: string, tagName: string) => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/create`,
+		{ name: tagName },
+	);
+	return _res.data;
+};
+
+export const _deleteCategory = async (serverId: string, categoryId: number) => {
+	const _res = await axios.delete(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/${categoryId}`,
+	);
+	return _res.data;
+};
+
+export const _deleteTag = async (serverId: string, tagId: number) => {
+	const _res = await axios.delete(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/${tagId}`,
+	);
+	return _res.data;
+};
+
+export const _deleteGame = async (serverId: string, gameId: number) => {
+	const _res = await axios.delete(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
+	);
+	return _res.data;
+};
+
+export const _assignRolesToUser = async (serverId: string, gameId: number) => {
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/assign`,
+	);
+	return _res.data;
+};
+
+export const _unassignRolesFromUser = async (
+	serverId: string,
+	gameId: number,
+) => {
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/unassign`,
+	);
+	return _res.data;
+};
+
+export const _syncServerData = async (serverId: string) => {
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/sync-roles`,
+	);
+	return _res.data;
+};
