@@ -34,6 +34,7 @@ import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
+import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -45,6 +46,20 @@ export const Server = () => {
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const queryClient = useQueryClient();
+
+	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
+		return _serverData.data?.server_data_discord.roles?.find(
+			(r: ServerDataDiscordRole) => r.id === roleId,
+		);
+	};
+
+	const _iHaveAllRolesInTheGame = (game: Game): boolean => {
+		return (
+			game.roles_to_add?.every(
+				(role: Role) => _findRoleById(role.id)?.me_in_role,
+			) || false
+		);
+	};
 
 	const _myDataInServer = useSuspenseQuery({
 		queryKey: ["myDataInServer", serverId],
@@ -210,22 +225,38 @@ export const Server = () => {
 								<div
 									css={{ display: "flex", flexDirection: "column", gap: "4px" }}
 								>
-									<h2 css={{ margin: 0 }}>
-										{_myDataInServer.data?.nick
-											? _myDataInServer.data.nick
-											: _myDataInServer.data?.name}
-									</h2>
+									<div
+										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
+									>
+										<h2 css={{ margin: 0 }}>
+											{_myDataInServer.data?.nick
+												? _myDataInServer.data.nick
+												: _myDataInServer.data?.name}
+										</h2>
+									</div>
 									<div
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
 										{_myDataInServer.data?.roles?.map((role: Role) => {
 											return (
-												<Chip key={role.id}>
-													{
-														_serverData.data?.server_data_discord.roles?.find(
-															(r: ServerDataDiscordRole) => r.id === role.id,
-														)?.name
-													}
+												<Chip
+													key={role.id}
+													css={{
+														display: "flex",
+														flexDirection: "row",
+														gap: "4px",
+														alignItems: "center",
+													}}
+												>
+													<_8pxCircle
+														css={{
+															backgroundColor: `rgb(${
+																_findRoleById(role.id)?.color.join(",") ||
+																"255, 255, 255"
+															})`,
+														}}
+													/>
+													{_findRoleById(role.id)?.name}
 												</Chip>
 											);
 										})}
@@ -248,6 +279,10 @@ export const Server = () => {
 											alignItems: "center",
 											display: "flex",
 											flexDirection: "row",
+											...(_iHaveAllRolesInTheGame(game) && {
+												backgroundColor: "rgba(255, 255, 255, 1)",
+												color: "rgba(0, 0, 0, 1)",
+											}), // NEEDS TO BE TESTED
 										}}
 										key={game.id}
 									>
@@ -408,6 +443,13 @@ export const Server = () => {
 							<label htmlFor="game-category">카테고리 (선택)</label>
 							<Select id="game-category" name="game-category" defaultValue="">
 								<Option value="">카테고리 선택</Option>
+								{_serverData.data?.server_data_db.categories?.map(
+									(category: Category) => (
+										<Option key={category.id} value={category.id}>
+											{category.name}
+										</Option>
+									),
+								)}
 							</Select>
 							<div>태그와 역할은 생성 후 추가할 수 있습니다.</div>
 							<Button
