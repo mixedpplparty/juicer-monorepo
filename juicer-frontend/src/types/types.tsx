@@ -55,6 +55,17 @@ export type ServerDataDiscord = {
 	owner_name: string;
 	owner_nick: string | null;
 	member_count: number;
+	roles: ServerDataDiscordRole[] | null;
+};
+
+export type ServerDataDiscordRole = {
+	id: string;
+	name: string;
+	color: number[]; // [r, g, b]
+	display_icon: string | null;
+	mention: string;
+	icon: string | null;
+	me_in_role: boolean;
 };
 
 export type ServerData = {
