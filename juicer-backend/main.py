@@ -429,6 +429,29 @@ async def create_server_request(server_id: int, discord_access_token: Optional[s
 
 
 @discord_client.event
+@app.get("/discord/server/{server_id}/me")
+async def get_my_data_in_server(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
+    user_data = auth_data["user_data"]
+    guild = auth_data["guild"]
+    try:
+        my_data_in_guild = guild.get_member(int(user_data.get("id")))
+        return {
+            "id": str(my_data_in_guild.id),
+            "name": my_data_in_guild.name,
+            "nick": my_data_in_guild.nick,
+            "avatar": my_data_in_guild.avatar.url if my_data_in_guild.avatar else None,
+            "roles": [str(role.id) for role in my_data_in_guild.roles],
+            "joined_at": my_data_in_guild.joined_at.isoformat(),
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get my data in server: {str(e)}"
+        )
+
+
+@discord_client.event
 @app.get("/discord/server/{server_id}/roles")
 async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     auth_data = await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)

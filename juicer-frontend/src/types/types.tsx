@@ -44,6 +44,7 @@ export type Game = {
 	description: string | null;
 	category: Category[] | null;
 	tags: Tag[] | null;
+	roles_to_add: Role[] | null;
 };
 
 export type ServerDataDiscord = {
