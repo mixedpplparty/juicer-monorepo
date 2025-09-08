@@ -304,6 +304,7 @@ export const Server = () => {
 														display: "flex",
 														flexDirection: "column",
 														width: "100%",
+														gap: "4px",
 													}}
 												>
 													<div
@@ -331,9 +332,6 @@ export const Server = () => {
 																: "카테고리 없음"}
 														</div>
 													</div>
-													{/* <p css={{ margin: 0 }}>
-														{game.description || "설명 없음"}
-													</p> */}
 													<div
 														css={{
 															display: "flex",
@@ -342,9 +340,19 @@ export const Server = () => {
 														}}
 													>
 														{game.tags && game.tags.length > 0
-															? game.tags
-																	?.map((tag: Tag) => tag.name)
-																	.join(", ")
+															? game.tags?.map((tag: Tag) => (
+																	<Chip
+																		key={tag.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																		}}
+																	>
+																		{tag.name}
+																	</Chip>
+																))
 															: "태그 없음"}
 													</div>
 													<div
@@ -355,9 +363,28 @@ export const Server = () => {
 														}}
 													>
 														{game.roles_to_add && game.roles_to_add.length > 0
-															? game.roles_to_add
-																	?.map((role: Role) => role.id)
-																	.join(", ")
+															? game.roles_to_add?.map((role: Role) => (
+																	<Chip
+																		key={role.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																		}}
+																	>
+																		<_8pxCircle
+																			css={{
+																				backgroundColor: `rgb(${
+																					_findRoleById(role.id)?.color.join(
+																						",",
+																					) || "255, 255, 255"
+																				})`,
+																			}}
+																		/>
+																		{_findRoleById(role.id)?.name}
+																	</Chip>
+																))
 															: "역할 없음"}
 													</div>
 												</div>
