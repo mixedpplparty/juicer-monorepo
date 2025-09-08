@@ -441,7 +441,7 @@ async def get_my_data_in_server(server_id: int, discord_access_token: Optional[s
             "name": my_data_in_guild.name,
             "nick": my_data_in_guild.nick,
             "avatar": my_data_in_guild.avatar.url if my_data_in_guild.avatar else None,
-            "roles": [str(role.id) for role in my_data_in_guild.roles],
+            "roles": [{"id": str(role.id)} for role in my_data_in_guild.roles],
             "joined_at": my_data_in_guild.joined_at.isoformat(),
         }
     except Exception as e:

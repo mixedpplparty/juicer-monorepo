@@ -62,3 +62,12 @@ export type ServerData = {
 	server_data_db: ServerDataDb;
 	server_data_discord: ServerDataDiscord;
 };
+
+export type MyDataInServer = {
+	id: string;
+	name: string;
+	nick: string | null;
+	avatar: string | null;
+	roles: Role[] | null;
+	joined_at: string;
+};
