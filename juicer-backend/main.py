@@ -464,6 +464,7 @@ async def get_my_data_in_server(server_id: int, discord_access_token: Optional[s
 async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     auth_data = await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
     guild = auth_data["guild"]
+    user_data = auth_data["user_data"]
 
     roles = guild.roles
     res = []
@@ -472,8 +473,10 @@ async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie
             "id": str(role.id),
             "name": role.name,
             "color": role.color.to_rgb(),
-            "is_default": role.is_default(),
-            "icon": role.icon.url if role.icon else None
+            "display_icon": role.display_icon.url if role.display_icon else None,
+            "mention": role.mention,
+            "icon": role.icon.url if role.icon else None,
+            "me_in_role": role.id in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
         })
     return res
 
