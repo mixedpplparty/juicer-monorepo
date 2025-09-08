@@ -20,6 +20,7 @@ import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
 	_createGame,
 	_createServer,
+	_fetchMyDataInServer,
 	_fetchServerData,
 } from "../../queries/queries";
 import type { Category, Game, Role, Tag } from "../../types/types";
@@ -37,6 +38,12 @@ export const Server = () => {
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const queryClient = useQueryClient();
+
+	const _myDataInServer = useSuspenseQuery({
+		queryKey: ["myDataInServer", serverId],
+		queryFn: () => _fetchMyDataInServer(serverId),
+	});
+
 	const _serverData = useSuspenseQuery({
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
@@ -74,7 +81,8 @@ export const Server = () => {
 
 	useEffect(() => {
 		console.log(_serverData.data);
-	}, [_serverData.data]);
+		console.log(_myDataInServer.data);
+	}, [_serverData.data, _myDataInServer.data]);
 
 	const addGameFormAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");

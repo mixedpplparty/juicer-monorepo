@@ -387,6 +387,14 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
         "owner_name": guild.owner.name,
         "owner_nick": guild.owner.nick,
         "member_count": guild.member_count,
+        "roles": [{"id": str(role.id),
+                   "name": role.name,
+                   "color": role.color.to_rgb(),
+                   "display_icon": role.display_icon.url if role.display_icon else None,
+                   "mention": role.mention,
+                   "icon": role.icon.url if role.icon else None,
+                   "me_in_role": role.id in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
+                   } for role in guild.roles],
     }
 
     try:

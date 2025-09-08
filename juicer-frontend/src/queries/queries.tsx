@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { MyInfo, ServerData } from "../types/types";
+import type { MyDataInServer, MyInfo, ServerData } from "../types/types";
 
 axios.defaults.withCredentials = true;
 
@@ -40,6 +40,16 @@ export const _fetchServerData = async (
 ): Promise<ServerData | null> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`,
+		{ withCredentials: true },
+	);
+	return _res.data;
+};
+
+export const _fetchMyDataInServer = async (
+	serverId: string | null,
+): Promise<MyDataInServer | null> => {
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/me`,
 		{ withCredentials: true },
 	);
 	return _res.data;
