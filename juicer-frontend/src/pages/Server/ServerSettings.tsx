@@ -2,7 +2,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { _fetchServerData } from "../../queries/queries";
 import type { Category, Tag } from "../../types/types";
@@ -10,8 +10,15 @@ import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Modal } from "../../ui/components/Modal";
+import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
+	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
+		useState<boolean>(false);
+	const [isCreateTagModalOpen, setIsCreateTagModalOpen] =
+		useState<boolean>(false);
+
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 
@@ -77,6 +84,7 @@ export const ServerSettings = () => {
 										alignItems: "center",
 										gap: "8px",
 									}}
+									onClick={() => setIsCreateCategoryModalOpen(true)}
 								>
 									<AddIcon css={{ width: "16px", height: "16px" }} />
 									카테고리 추가
@@ -145,6 +153,7 @@ export const ServerSettings = () => {
 										alignItems: "center",
 										gap: "8px",
 									}}
+									onClick={() => setIsCreateTagModalOpen(true)}
 								>
 									<AddIcon css={{ width: "16px", height: "16px" }} />
 									태그 추가
@@ -198,6 +207,26 @@ export const ServerSettings = () => {
 					</div>
 				</ResponsiveCard>
 			</FullPageBase>
+			{isCreateCategoryModalOpen && (
+				<ModalPortal>
+					<Modal
+						title="카테고리 추가"
+						onClose={() => setIsCreateCategoryModalOpen(false)}
+					>
+						asdf
+					</Modal>
+				</ModalPortal>
+			)}
+			{isCreateTagModalOpen && (
+				<ModalPortal>
+					<Modal
+						title="태그 추가"
+						onClose={() => setIsCreateTagModalOpen(false)}
+					>
+						asdf
+					</Modal>
+				</ModalPortal>
+			)}
 		</Suspense>
 	);
 };
