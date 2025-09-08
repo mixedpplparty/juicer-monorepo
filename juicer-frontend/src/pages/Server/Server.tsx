@@ -2,11 +2,21 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	QueryClient,
+	queryOptions,
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Suspense, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useActionData, useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
-import { _createServer, _fetchServerData } from "../../queries/queries";
+import {
+	_createGame,
+	_createServer,
+	_fetchServerData,
+} from "../../queries/queries";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { FullPageBase } from "../../ui/components/FullPageBase";
@@ -19,22 +29,66 @@ export const Server = () => {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
-
+	const queryClient = useQueryClient();
 	const _serverData = useSuspenseQuery({
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
 	});
 
 	const createServerMutation = useMutation({
-		mutationFn: _createServer,
+		mutationFn: (serverId: string) => _createServer(serverId),
 		onSuccess: () => {
-			navigate(""); // refresh
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
+		},
+	});
+
+	const createGameMutation = useMutation({
+		mutationFn: ({
+			serverId,
+			gameName,
+			gameDescription,
+			gameCategory,
+		}: {
+			serverId: string;
+			gameName: string;
+			gameDescription: string | null | undefined;
+			gameCategory: string | null | undefined;
+		}) => _createGame(serverId, gameName, gameDescription, gameCategory),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
+		},
+		onError: (error) => {
+			console.error(error);
 		},
 	});
 
 	useEffect(() => {
 		console.log(_serverData.data);
 	}, [_serverData.data]);
+
+	const addGameFormAction = async (formData: FormData) => {
+		const gameName = formData.get("game-name");
+		let gameDescription = formData.get("game-description");
+		// null if ""
+		if (gameDescription === "") {
+			gameDescription = null;
+		}
+		let gameCategory = formData.get("game-category");
+		if (gameCategory === "") {
+			gameCategory = null;
+		}
+		console.log(gameName, gameDescription, gameCategory);
+		createGameMutation.mutate({
+			serverId: serverId as string,
+			gameName: gameName as string,
+			gameDescription: gameDescription as string | null | undefined,
+			gameCategory: gameCategory as string | null | undefined,
+		});
+		setIsAddGameModalOpen(false);
+	};
 
 	const [isAddGameModalOpen, setIsAddGameModalOpen] = useState<boolean>(false);
 
@@ -145,9 +199,7 @@ export const Server = () => {
 									justifyContent: "center",
 									gap: "8px",
 								}}
-								onClick={() =>
-									createServerMutation.mutate({ serverId: serverId })
-								}
+								onClick={() => createServerMutation.mutate(serverId as string)}
 							>
 								<AddIcon css={{ width: "16px", height: "16px" }} />
 								juicer DB에 서버 추가
@@ -159,25 +211,33 @@ export const Server = () => {
 			{isAddGameModalOpen && (
 				<ModalPortal>
 					<Modal title="게임 추가" onClose={() => setIsAddGameModalOpen(false)}>
-						<label htmlFor="game-name">게임 이름</label>
-						<Input id="game-name" />
-						<label htmlFor="game-description">설명 (선택)</label>
-						<Input id="game-description" />
-						<label htmlFor="game-category">카테고리 (선택)</label>
-						<Select id="game-category"></Select>
-						<div>태그와 역할은 생성 후 추가할 수 있습니다.</div>
-						<Button
-							css={{
-								background: "#5865F2",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								width: "100%",
-								gap: "8px",
-							}}
+						<form
+							action={addGameFormAction}
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
-							게임 추가
-						</Button>
+							<label htmlFor="game-name">게임 이름</label>
+							<Input id="game-name" name="game-name" aria-required required />
+							<label htmlFor="game-description">설명 (선택)</label>
+							<Input id="game-description" name="game-description" />
+							<label htmlFor="game-category">카테고리 (선택)</label>
+							<Select id="game-category" name="game-category" defaultValue="">
+								<Option value="">카테고리 선택</Option>
+							</Select>
+							<div>태그와 역할은 생성 후 추가할 수 있습니다.</div>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "100%",
+									gap: "8px",
+								}}
+								type="submit"
+							>
+								게임 추가
+							</Button>
+						</form>
 					</Modal>
 				</ModalPortal>
 			)}

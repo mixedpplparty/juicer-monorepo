@@ -16,6 +16,8 @@ from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import Depends, FastAPI, HTTPException
+from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody
+
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
@@ -503,11 +505,11 @@ async def get_games(server_id: int, discord_access_token: Optional[str] = Cookie
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/create")
-async def create_game_request(server_id: int, name: str, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def create_game_request(server_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await create_game(db, server_id, name, description, category_id)
+        res = await create_game(db, server_id, body.name, body.description, body.category_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -518,7 +520,7 @@ async def create_game_request(server_id: int, name: str, description: Optional[s
 
 @discord_client.event
 @app.put("/discord/server/{server_id}/games/{game_id}")
-async def update_game_request(server_id: int, game_id: int, name: Optional[str] = None, description: Optional[str] = None, category_id: Optional[int] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def update_game_request(server_id: int, game_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
@@ -548,11 +550,11 @@ async def delete_game_request(server_id: int, game_id: int, discord_access_token
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/tags/add")
-async def add_tag_request(server_id: int, game_id: int, name: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def add_tag_request(server_id: int, game_id: int, body: AddTagsBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await add_tags_to_game(db, game_id, server_id, [name])
+        res = await add_tags_to_game(db, game_id, server_id, body.tag_names)
         return res
     except Exception as e:
         raise HTTPException(
@@ -613,11 +615,11 @@ async def get_all_tags_in_server_request(server_id: int, discord_access_token: O
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/roles/add")
-async def map_roles_to_game_request(server_id: int, game_id: int, role_ids: List[str], discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def map_roles_to_game_request(server_id: int, game_id: int, body: AddRolesBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await map_roles_to_game(db, game_id, server_id, role_ids)
+        res = await map_roles_to_game(db, game_id, server_id, body.role_ids)
         return res
     except Exception as e:
         raise HTTPException(
@@ -642,12 +644,12 @@ async def get_game_roles_request(server_id: int, game_id: int, discord_access_to
 
 
 @discord_client.event
-@app.post("/discord/server/{server_id}/games/{game_id}/categories/create")
-async def create_category_request(server_id: int, game_id: int, name: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+@app.post("/discord/server/{server_id}/categories/create")
+async def create_category_request(server_id: int, body: CreateCategoryBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await create_category(db, server_id, name)
+        res = await create_category(db, server_id, body.name)
         return res
     except Exception as e:
         raise HTTPException(
@@ -658,11 +660,11 @@ async def create_category_request(server_id: int, game_id: int, name: str, disco
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/{game_id}/categories/add")
-async def add_category_request(server_id: int, game_id: int, category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def add_category_request(server_id: int, game_id: int, body: AddCategoryToGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await map_category_to_game(db, game_id, server_id, category_id)
+        res = await map_category_to_game(db, game_id, server_id, body.category_id)
         return res
     except Exception as e:
         raise HTTPException(
@@ -673,7 +675,7 @@ async def add_category_request(server_id: int, game_id: int, category_id: int, d
 
 @discord_client.event
 @app.delete("/discord/server/{server_id}/categories/{category_id}")
-async def delete_category_request(server_id: int, game_id: int, category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def delete_category_request(server_id: int, category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
@@ -688,7 +690,7 @@ async def delete_category_request(server_id: int, game_id: int, category_id: int
 
 @discord_client.event
 @app.get("/discord/server/{server_id}/search/name")
-async def search_games_by_name_request(server_id: int, name: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def search_games_by_name_request(server_id: int, name: str | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
@@ -703,7 +705,7 @@ async def search_games_by_name_request(server_id: int, name: str, discord_access
 
 @discord_client.event
 @app.get("/discord/server/{server_id}/search/tags")
-async def search_games_by_tags_request(server_id: int, tags: List[str], discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def search_games_by_tags_request(server_id: int, tags: List[str] | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
@@ -718,7 +720,7 @@ async def search_games_by_tags_request(server_id: int, tags: List[str], discord_
 
 @discord_client.event
 @app.get("/discord/server/{server_id}/search/categories")
-async def search_games_by_categories_request(server_id: int, category: str, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def search_games_by_categories_request(server_id: int, category: str | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
