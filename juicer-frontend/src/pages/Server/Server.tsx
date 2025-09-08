@@ -10,14 +10,21 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Suspense, useEffect, useState } from "react";
-import { useActionData, useNavigate, useSearchParams } from "react-router";
+import {
+	Link,
+	useActionData,
+	useNavigate,
+	useSearchParams,
+} from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
 	_createGame,
 	_createServer,
 	_fetchServerData,
 } from "../../queries/queries";
-import { Button } from "../../ui/components/Button";
+import type { Category, Game, Tag } from "../../types/types";
+import { LinkNoStyle } from "../../ui/components/Anchor";
+import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
@@ -164,6 +171,96 @@ export const Server = () => {
 							</div>
 						)}
 					</div>
+
+					{_serverData.data?.server_data_db.games &&
+						_serverData.data?.server_data_db.games.length > 0 && (
+							<div
+								css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+							>
+								<h2 css={{ margin: 0 }}>게임</h2>
+								{_serverData.data.server_data_db.games.map((game: Game) => (
+									<Card
+										css={{
+											border: "1px solid rgb(255, 255, 255)",
+											alignItems: "center",
+											display: "flex",
+											flexDirection: "row",
+										}}
+										key={game.id}
+									>
+										<div
+											css={{
+												display: "flex",
+												flexDirection: "row",
+												gap: "8px",
+												width: "100%",
+												alignItems: "stretch",
+											}}
+										>
+											<LinkNoStyle
+												to={null as any}
+												css={{ flex: 1, cursor: "pointer" }}
+											>
+												<div
+													css={{
+														display: "flex",
+														flexDirection: "column",
+														width: "100%",
+													}}
+												>
+													<h2 css={{ margin: 0 }}>{game.name}</h2>
+													<p css={{ margin: 0 }}>
+														{game.description || "설명 없음"}
+													</p>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{game.category && game.category.length > 0
+															? game.category
+																	?.map((category: Category) => category.name)
+																	.join(", ")
+															: "카테고리 없음"}
+													</div>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{game.tags && game.tags.length > 0
+															? game.tags
+																	?.map((tag: Tag) => tag.name)
+																	.join(", ")
+															: "태그 없음"}
+													</div>
+												</div>
+											</LinkNoStyle>
+											{_serverData.data?.admin && (
+												<div css={{ alignSelf: "stretch" }}>
+													<LinkNoStyle
+														to={`/server/game?gameId=${game.id}&serverId=${serverId}`}
+														css={{ cursor: "pointer" }}
+													>
+														<InlineButton
+															css={{ height: "100%", alignItems: "center" }}
+														>
+															<SettingsIcon
+																css={{ width: "20px", height: "20px" }}
+															/>
+														</InlineButton>
+													</LinkNoStyle>
+												</div>
+											)}
+										</div>
+									</Card>
+								))}
+							</div>
+						)}
 
 					{_serverData.data?.server_data_db ? (
 						<Card
