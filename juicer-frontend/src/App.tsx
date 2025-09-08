@@ -5,12 +5,10 @@ import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
 import { Landing } from "./pages/Landing/Landing";
 import { Loading } from "./pages/Loading/Loading";
+import { GameSettings } from "./pages/Server/GameSettings";
 import { Server } from "./pages/Server/Server";
 import { ServerSettings } from "./pages/Server/ServerSettings";
 import { _fetchMyTokens } from "./queries/queries";
-
-// TODO Determine if it's user's first time
-// if it is navigate to OOBE or else Dashboard
 
 const App = () => {
 	const _auth = useSuspenseQuery({
@@ -26,6 +24,7 @@ const App = () => {
 					{ path: "*", element: <Dashboard /> },
 					{ path: "/server", element: <Server /> },
 					{ path: "/server/settings", element: <ServerSettings /> },
+					{ path: "/server/game", element: <GameSettings /> },
 				]
 			: [
 					{ path: "*", element: <Landing /> },

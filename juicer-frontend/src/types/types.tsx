@@ -1,3 +1,4 @@
+import { typographyClasses } from "@mui/material/Typography";
 import type { APIUser } from "discord-api-types/v10";
 
 export type Guild = {
@@ -17,10 +18,32 @@ export type MyInfo = {
 
 export type ServerDataDb = {
 	server_id: string;
-	roles: string[];
-	categories: number[];
-	tags: number[];
-	games: number[];
+	roles: Role[] | null;
+	categories: Category[] | null;
+	tags: Tag[] | null;
+	games: Game[] | null;
+};
+
+export type Category = {
+	id: number;
+	name: string;
+};
+
+export type Tag = {
+	id: number;
+	name: string;
+};
+
+export type Role = {
+	id: string;
+};
+
+export type Game = {
+	id: number;
+	name: string;
+	description: string | null;
+	category: Category[] | null;
+	tags: Tag[] | null;
 };
 
 export type ServerDataDiscord = {
