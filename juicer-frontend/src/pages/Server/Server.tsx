@@ -22,7 +22,7 @@ import {
 	_createServer,
 	_fetchServerData,
 } from "../../queries/queries";
-import type { Category, Game, Tag } from "../../types/types";
+import type { Category, Game, Role, Tag } from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
@@ -208,10 +208,6 @@ export const Server = () => {
 														width: "100%",
 													}}
 												>
-													<h2 css={{ margin: 0 }}>{game.name}</h2>
-													<p css={{ margin: 0 }}>
-														{game.description || "설명 없음"}
-													</p>
 													<div
 														css={{
 															display: "flex",
@@ -219,12 +215,27 @@ export const Server = () => {
 															gap: "4px",
 														}}
 													>
-														{game.category && game.category.length > 0
-															? game.category
-																	?.map((category: Category) => category.name)
-																	.join(", ")
-															: "카테고리 없음"}
+														<h2 css={{ margin: 0, display: "inline" }}>
+															{game.name}
+														</h2>
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "row",
+																gap: "4px",
+																alignItems: "center",
+															}}
+														>
+															{game.category && game.category.length > 0
+																? game.category
+																		?.map((category: Category) => category.name)
+																		.join(", ")
+																: "카테고리 없음"}
+														</div>
 													</div>
+													{/* <p css={{ margin: 0 }}>
+														{game.description || "설명 없음"}
+													</p> */}
 													<div
 														css={{
 															display: "flex",
@@ -237,6 +248,19 @@ export const Server = () => {
 																	?.map((tag: Tag) => tag.name)
 																	.join(", ")
 															: "태그 없음"}
+													</div>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{game.roles_to_add && game.roles_to_add.length > 0
+															? game.roles_to_add
+																	?.map((role: Role) => role.id)
+																	.join(", ")
+															: "역할 없음"}
 													</div>
 												</div>
 											</LinkNoStyle>
@@ -262,7 +286,7 @@ export const Server = () => {
 							</div>
 						)}
 
-					{_serverData.data?.server_data_db ? (
+					{_serverData.data?.server_data_db && _serverData.data.admin && (
 						<Card
 							css={{
 								border: "1px solid rgba(255, 255, 255, 0.66)",
@@ -276,7 +300,9 @@ export const Server = () => {
 							<AddIcon css={{ width: "16px", height: "16px" }} />
 							게임 추가하기
 						</Card>
-					) : (
+					)}
+
+					{!_serverData.data?.server_data_db && (
 						<div
 							css={{
 								display: "flex",
