@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
 import {
 	_deleteGame,
-	_fetchMyDataInServer,
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
 } from "../../remotes/remotes";
@@ -16,7 +15,6 @@ import type {
 	Role,
 	ServerDataDiscordRole,
 	Tag,
-	TagId,
 } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
@@ -31,10 +29,10 @@ export const GameSettings = () => {
 	const [searchParams] = useSearchParams();
 	const gameId = searchParams.get("gameId");
 	const serverId = searchParams.get("serverId");
-	const _serverData = useSuspenseQuery({
-		queryKey: ["serverData", serverId],
-		queryFn: () => _fetchServerData(serverId),
-	});
+	const _serverDataQuery = useSuspenseQuery(
+		_fetchServerData.query(serverId as string),
+	);
+	const _serverData = _serverDataQuery.data;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
 		_serverData.data?.server_data_db.games
 			?.find((game: Game) => game.id === parseInt(gameId as string))
@@ -75,7 +73,7 @@ export const GameSettings = () => {
 				selectedRoles as string[],
 			),
 		);
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 
 	const handleDeleteGame = async () => {
@@ -83,7 +81,7 @@ export const GameSettings = () => {
 		await startTransition(
 			_deleteGame(serverId as string, parseInt(gameId as string)),
 		);
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 		navigate(`/server?serverId=${serverId}`);
 	};
 

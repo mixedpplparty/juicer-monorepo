@@ -33,32 +33,32 @@ export const ServerSettings = () => {
 
 	const navigate = useNavigate();
 
-	const _serverData = useSuspenseQuery({
-		queryKey: ["serverData", serverId],
-		queryFn: () => _fetchServerData(serverId),
-	});
+	const _serverDataQuery = useSuspenseQuery(
+		_fetchServerData.query(serverId as string),
+	);
+	const _serverData = _serverDataQuery.data;
 
 	const createCategoryFormAction = async (formData: FormData) => {
 		const categoryName = formData.get("category-name");
 		await startTransition(
 			_createCategory(serverId as string, categoryName as string),
 		);
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 		setIsCreateCategoryModalOpen(false);
 	};
 	const createTagFormAction = async (formData: FormData) => {
 		const tagName = formData.get("tag-name");
 		await startTransition(_createTag(serverId as string, tagName as string));
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 		setIsCreateTagModalOpen(false);
 	};
 	const deleteCategoryAction = (categoryId: number) => async () => {
 		await startTransition(_deleteCategory(serverId as string, categoryId));
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 	const deleteTagAction = (tagId: number) => async () => {
 		await startTransition(_deleteTag(serverId as string, tagId));
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 	return (
 		<Suspense fallback={<Loading />}>

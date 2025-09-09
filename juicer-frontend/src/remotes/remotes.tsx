@@ -1,24 +1,15 @@
 import axios from "axios";
-import type {
-	MyDataInServer,
-	MyInfo,
-	Role,
-	ServerData,
-	Tag,
-	TagId,
-} from "../types/types";
+import type { MyDataInServer, MyInfo } from "../types/types";
 
 axios.defaults.withCredentials = true;
 
 export const _fetchMyTokens = async () => {
 	try {
-		const _res = await axios.get(
-			`${import.meta.env.VITE_BACKEND_URI}/discord/auth/me`,
-			{ withCredentials: true },
-		);
-		return _res.data;
+		return axios.get(_fetchMyTokens.apiPath(), {
+			withCredentials: true,
+		});
 	} catch (error) {
-		// return null on 401 - reauthenticate
+		// reauthenticate on 401
 		if (axios.isAxiosError(error) && error.response?.status === 401) {
 			return null;
 		}
@@ -26,30 +17,49 @@ export const _fetchMyTokens = async () => {
 	}
 };
 
-export const _fetchMyInfo = async (): Promise<MyInfo | null> => {
-	try {
-		const _res = await axios.get(
-			`${import.meta.env.VITE_BACKEND_URI}/discord/user/me`,
-			{ withCredentials: true },
-		);
-		return _res.data;
-	} catch (error) {
-		// return null on 401 - reauthenticate
-		if (axios.isAxiosError(error) && error.response?.status === 401) {
-			return null;
-		}
-		throw error;
-	}
+_fetchMyTokens.apiPath = () => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/auth/me`;
 };
 
-export const _fetchServerData = async (
-	serverId: string | null,
-): Promise<ServerData | null> => {
-	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`,
-		{ withCredentials: true },
-	);
-	return _res.data;
+_fetchMyTokens.query = () => {
+	return {
+		queryKey: ["auth"],
+		queryFn: () => _fetchMyTokens,
+	};
+};
+
+export const _fetchMyInfo = async () => {
+	return axios.get(_fetchMyInfo.apiPath(), {
+		withCredentials: true,
+	});
+};
+
+_fetchMyInfo.apiPath = () => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/user/me`;
+};
+
+_fetchMyInfo.query = () => {
+	return {
+		queryKey: ["myInfo"],
+		queryFn: () => _fetchMyInfo(),
+	};
+};
+
+export const _fetchServerData = async (serverId: string) => {
+	return axios.get(_fetchServerData.apiPath(serverId), {
+		withCredentials: true,
+	});
+};
+
+_fetchServerData.apiPath = (serverId: string): string => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`;
+};
+
+_fetchServerData.query = (serverId: string) => {
+	return {
+		queryKey: ["serverData", serverId],
+		queryFn: () => _fetchServerData(serverId),
+	};
 };
 
 export const _fetchMyDataInServer = async (

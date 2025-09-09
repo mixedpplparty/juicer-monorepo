@@ -70,14 +70,14 @@ export const Server = () => {
 		queryFn: () => _fetchMyDataInServer(serverId),
 	});
 
-	const _serverData = useSuspenseQuery({
-		queryKey: ["serverData", serverId],
-		queryFn: () => _fetchServerData(serverId),
-	});
+	const _serverDataQuery = useSuspenseQuery(
+		_fetchServerData.query(serverId as string),
+	);
+	const _serverData = _serverDataQuery.data;
 
 	const createServerAction = async () => {
 		await startTransition(_createServer(serverId as string));
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 
 	const toggleGameRolesAssign = async (game: Game) => {
@@ -88,12 +88,12 @@ export const Server = () => {
 		} else {
 			await startTransition(_assignRolesToUser(serverId as string, game.id));
 		}
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 
 	const syncServerDataAction = async () => {
 		await startTransition(_syncServerData(serverId as string));
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 	};
 
 	const addGameFormAction = async (formData: FormData) => {
@@ -116,7 +116,7 @@ export const Server = () => {
 				gameCategory as string | null | undefined,
 			),
 		);
-		await _serverData.refetch();
+		await _serverDataQuery.refetch();
 		setIsAddGameModalOpen(false);
 	};
 
