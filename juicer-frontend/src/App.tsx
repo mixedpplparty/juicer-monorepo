@@ -8,7 +8,7 @@ import { Loading } from "./pages/Loading/Loading";
 import { GameSettings } from "./pages/Server/GameSettings";
 import { Server } from "./pages/Server/Server";
 import { ServerSettings } from "./pages/Server/ServerSettings";
-import { _fetchMyTokens } from "./queries/queries";
+import { _fetchMyTokens } from "./remotes/remotes";
 
 const App = () => {
 	const _auth = useSuspenseQuery({
