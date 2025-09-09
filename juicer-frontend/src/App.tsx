@@ -13,6 +13,13 @@ import { _fetchMyTokens } from "./remotes/remotes";
 const App = () => {
 	const _authQuery = useSuspenseQuery(_fetchMyTokens.query());
 
+	useEffect(() => {
+		console.log("isError", _authQuery.isError);
+	}, [_authQuery.isError]);
+	useEffect(() => {
+		console.log("error", _authQuery.error);
+	}, [_authQuery.error]);
+
 	if (_authQuery.isError) {
 		return <Landing />;
 	}
@@ -36,6 +43,7 @@ const App = () => {
 					},
 				]),
 	]);
+
 	return (
 		<Suspense fallback={<Loading />}>
 			<RouterProvider router={router} />
