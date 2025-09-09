@@ -16,7 +16,7 @@ _fetchMyTokens.apiPath = () => {
 _fetchMyTokens.query = () => {
 	return {
 		queryKey: ["auth"],
-		queryFn: () => _fetchMyTokens,
+		queryFn: () => _fetchMyTokens(),
 	};
 };
 

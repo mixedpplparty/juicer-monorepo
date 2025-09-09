@@ -9,13 +9,12 @@ import { GameSettings } from "./pages/Server/GameSettings";
 import { Server } from "./pages/Server/Server";
 import { ServerSettings } from "./pages/Server/ServerSettings";
 import { _fetchMyTokens } from "./remotes/remotes";
-import type { AuthData } from "./types/types";
 
 const App = () => {
 	const _authQuery = useSuspenseQuery(_fetchMyTokens.query());
 
 	const isAuthenticated =
-		_authQuery.data?.discord_access_token && !_authQuery.isError;
+		_authQuery?.data?.data?.discord_access_token && !_authQuery.isError;
 
 	const router = createBrowserRouter([
 		...(isAuthenticated
