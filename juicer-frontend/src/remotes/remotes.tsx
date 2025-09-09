@@ -4,17 +4,9 @@ import type { MyDataInServer, MyInfo } from "../types/types";
 axios.defaults.withCredentials = true;
 
 export const _fetchMyTokens = async () => {
-	try {
-		return axios.get(_fetchMyTokens.apiPath(), {
-			withCredentials: true,
-		});
-	} catch (error) {
-		// reauthenticate on 401
-		if (axios.isAxiosError(error) && error.response?.status === 401) {
-			return null;
-		}
-		throw error;
-	}
+	return axios.get(_fetchMyTokens.apiPath(), {
+		withCredentials: true,
+	});
 };
 
 _fetchMyTokens.apiPath = () => {
