@@ -4,7 +4,7 @@ import type { MyDataInServer, MyInfo } from "../types/types";
 axios.defaults.withCredentials = true;
 
 export const _fetchMyTokens = async () => {
-	return axios.get(_fetchMyTokens.apiPath(), {
+	return await axios.get(_fetchMyTokens.apiPath(), {
 		withCredentials: true,
 	});
 };
@@ -16,12 +16,12 @@ _fetchMyTokens.apiPath = () => {
 _fetchMyTokens.query = () => {
 	return {
 		queryKey: ["auth"],
-		queryFn: () => _fetchMyTokens(),
+		queryFn: _fetchMyTokens,
 	};
 };
 
 export const _fetchMyInfo = async () => {
-	return axios.get(_fetchMyInfo.apiPath(), {
+	return await axios.get(_fetchMyInfo.apiPath(), {
 		withCredentials: true,
 	});
 };
@@ -38,7 +38,7 @@ _fetchMyInfo.query = () => {
 };
 
 export const _fetchServerData = async (serverId: string) => {
-	return axios.get(_fetchServerData.apiPath(serverId), {
+	return await axios.get(_fetchServerData.apiPath(serverId), {
 		withCredentials: true,
 	});
 };
