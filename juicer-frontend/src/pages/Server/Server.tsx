@@ -17,6 +17,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
+import { useLoading } from "../../hooks/useLoading";
 import {
 	_assignRolesToUser,
 	_createGame,
@@ -25,7 +26,7 @@ import {
 	_fetchServerData,
 	_syncServerData,
 	_unassignRolesFromUser,
-} from "../../queries/queries";
+} from "../../remotes/remotes";
 import type {
 	Category,
 	Game,
@@ -45,11 +46,11 @@ import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const Server = () => {
+	//TODO do whatever when loading
+	const [isLoading, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
-	const queryClient = useQueryClient();
-
 	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
 		return _serverData.data?.server_data_discord.roles?.find(
 			(r: ServerDataDiscordRole) => r.id === roleId,
@@ -74,79 +75,26 @@ export const Server = () => {
 		queryFn: () => _fetchServerData(serverId),
 	});
 
-	const createServerMutation = useMutation({
-		mutationFn: (serverId: string) => _createServer(serverId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-
-	const createGameMutation = useMutation({
-		mutationFn: ({
-			serverId,
-			gameName,
-			gameDescription,
-			gameCategory,
-		}: {
-			serverId: string;
-			gameName: string;
-			gameDescription: string | null | undefined;
-			gameCategory: string | null | undefined;
-		}) => _createGame(serverId, gameName, gameDescription, gameCategory),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-
-	const unassignRolesFromUserMutation = useMutation({
-		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
-			_unassignRolesFromUser(serverId, gameId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-	const assignRolesToUserMutation = useMutation({
-		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
-			_assignRolesToUser(serverId, gameId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-
-	const toggleGameRolesAssign = (game: Game) => {
-		if (_iHaveAllRolesInTheGame(game)) {
-			unassignRolesFromUserMutation.mutate({
-				serverId: serverId as string,
-				gameId: game.id,
-			});
-		} else {
-			assignRolesToUserMutation.mutate({
-				serverId: serverId as string,
-				gameId: game.id,
-			});
-		}
+	const createServerAction = async () => {
+		await startTransition(_createServer(serverId as string));
+		await _serverData.refetch();
 	};
-	const syncServerDataMutation = useMutation({
-		mutationFn: (serverId: string) => _syncServerData(serverId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
+
+	const toggleGameRolesAssign = async (game: Game) => {
+		if (_iHaveAllRolesInTheGame(game)) {
+			await startTransition(
+				_unassignRolesFromUser(serverId as string, game.id),
+			);
+		} else {
+			await startTransition(_assignRolesToUser(serverId as string, game.id));
+		}
+		await _serverData.refetch();
+	};
+
+	const syncServerDataAction = async () => {
+		await startTransition(_syncServerData(serverId as string));
+		await _serverData.refetch();
+	};
 
 	const addGameFormAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
@@ -160,12 +108,15 @@ export const Server = () => {
 			gameCategory = null;
 		}
 		console.log(gameName, gameDescription, gameCategory);
-		createGameMutation.mutate({
-			serverId: serverId as string,
-			gameName: gameName as string,
-			gameDescription: gameDescription as string | null | undefined,
-			gameCategory: gameCategory as string | null | undefined,
-		});
+		await startTransition(
+			_createGame(
+				serverId as string,
+				gameName as string,
+				gameDescription as string | null | undefined,
+				gameCategory as string | null | undefined,
+			),
+		);
+		await _serverData.refetch();
 		setIsAddGameModalOpen(false);
 	};
 
@@ -224,9 +175,7 @@ export const Server = () => {
 										alignItems: "center",
 										gap: "8px",
 									}}
-									onClick={() =>
-										syncServerDataMutation.mutate(serverId as string)
-									}
+									onClick={syncServerDataAction}
 								>
 									<SyncIcon css={{ width: "20px", height: "20px" }} />
 								</Button>
@@ -490,7 +439,7 @@ export const Server = () => {
 									justifyContent: "center",
 									gap: "8px",
 								}}
-								onClick={() => createServerMutation.mutate(serverId as string)}
+								onClick={createServerAction}
 							>
 								<AddIcon css={{ width: "16px", height: "16px" }} />
 								juicer DB에 서버 추가

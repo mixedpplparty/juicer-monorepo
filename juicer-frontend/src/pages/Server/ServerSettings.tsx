@@ -1,20 +1,17 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {
-	useMutation,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { useLoading } from "../../hooks/useLoading";
 import {
 	_createCategory,
 	_createTag,
 	_deleteCategory,
 	_deleteTag,
 	_fetchServerData,
-} from "../../queries/queries";
+} from "../../remotes/remotes";
 import type { Category, Tag } from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
@@ -25,12 +22,12 @@ import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
+	//TODO do whatever when loading
+	const [isLoading, startTransition] = useLoading();
 	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
 		useState<boolean>(false);
 	const [isCreateTagModalOpen, setIsCreateTagModalOpen] =
 		useState<boolean>(false);
-	const queryClient = useQueryClient();
-
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 
@@ -40,78 +37,29 @@ export const ServerSettings = () => {
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
 	});
-	const createCategoryMutation = useMutation({
-		mutationFn: ({
-			serverId,
-			categoryName,
-		}: {
-			serverId: string;
-			categoryName: string;
-		}) => _createCategory(serverId, categoryName),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-			setIsCreateCategoryModalOpen(false);
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
 
 	const createCategoryFormAction = async (formData: FormData) => {
 		const categoryName = formData.get("category-name");
-		createCategoryMutation.mutate({
-			serverId: serverId as string,
-			categoryName: categoryName as string,
-		});
+		await startTransition(
+			_createCategory(serverId as string, categoryName as string),
+		);
+		await _serverData.refetch();
+		setIsCreateCategoryModalOpen(false);
 	};
-	const createTagMutation = useMutation({
-		mutationFn: ({
-			serverId,
-			tagName,
-		}: {
-			serverId: string;
-			tagName: string;
-		}) => _createTag(serverId, tagName),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-			setIsCreateTagModalOpen(false);
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
 	const createTagFormAction = async (formData: FormData) => {
 		const tagName = formData.get("tag-name");
-		createTagMutation.mutate({
-			serverId: serverId as string,
-			tagName: tagName as string,
-		});
+		await startTransition(_createTag(serverId as string, tagName as string));
+		await _serverData.refetch();
+		setIsCreateTagModalOpen(false);
 	};
-	const deleteCategoryMutation = useMutation({
-		mutationFn: ({
-			serverId,
-			categoryId,
-		}: {
-			serverId: string;
-			categoryId: number;
-		}) => _deleteCategory(serverId, categoryId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-	const deleteTagMutation = useMutation({
-		mutationFn: ({ serverId, tagId }: { serverId: string; tagId: number }) =>
-			_deleteTag(serverId, tagId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
+	const deleteCategoryAction = (categoryId: number) => async () => {
+		await startTransition(_deleteCategory(serverId as string, categoryId));
+		await _serverData.refetch();
+	};
+	const deleteTagAction = (tagId: number) => async () => {
+		await startTransition(_deleteTag(serverId as string, tagId));
+		await _serverData.refetch();
+	};
 	return (
 		<Suspense fallback={<Loading />}>
 			<FullPageBase>
@@ -198,12 +146,7 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
-													onClick={() =>
-														deleteCategoryMutation.mutate({
-															serverId: serverId as string,
-															categoryId: category.id,
-														})
-													}
+													onClick={deleteCategoryAction(category.id)}
 												>
 													<DeleteIcon
 														css={{
@@ -277,12 +220,7 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
-													onClick={() =>
-														deleteTagMutation.mutate({
-															serverId: serverId as string,
-															tagId: tag.id,
-														})
-													}
+													onClick={deleteTagAction(tag.id)}
 												>
 													<DeleteIcon
 														css={{

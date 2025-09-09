@@ -1,18 +1,15 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {
-	useMutation,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { useLoading } from "../../hooks/useLoading";
 import {
 	_deleteGame,
 	_fetchMyDataInServer,
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
-} from "../../queries/queries";
+} from "../../remotes/remotes";
 import type {
 	Category,
 	Game,
@@ -30,6 +27,7 @@ import { Input } from "../../ui/components/Input";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
+	const [isLoading, startTransition] = useLoading();
 	const [searchParams] = useSearchParams();
 	const gameId = searchParams.get("gameId");
 	const serverId = searchParams.get("serverId");
@@ -49,43 +47,6 @@ export const GameSettings = () => {
 	);
 	const navigate = useNavigate();
 
-	const queryClient = useQueryClient();
-
-	const updateGameWithTagsAndRolesMutation = useMutation({
-		mutationFn: ({
-			serverId,
-			gameId,
-			gameName,
-			gameDescription,
-			gameCategory,
-			gameTags,
-			gameRoles,
-		}: {
-			serverId: string;
-			gameId: string;
-			gameName: string;
-			gameDescription: string;
-			gameCategory: string;
-			gameTags: number[];
-			gameRoles: string[];
-		}) =>
-			_updateGameWithTagsAndRoles(
-				serverId,
-				gameId,
-				gameName,
-				gameDescription,
-				gameCategory,
-				gameTags,
-				gameRoles,
-			),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-
 	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
 		return _serverData.data?.server_data_discord.roles?.find(
 			(r: ServerDataDiscordRole) => r.id === roleId,
@@ -102,34 +63,28 @@ export const GameSettings = () => {
 		const gameName = formData.get("game-name");
 		const gameDescription = formData.get("game-description");
 		const gameCategory = formData.get("game-category");
-		updateGameWithTagsAndRolesMutation.mutate({
-			serverId: serverId as string,
-			gameId: gameId as string,
-			gameName: gameName as string,
-			gameDescription: gameDescription as string,
-			gameCategory: gameCategory as string,
-			gameTags: selectedTags as number[],
-			gameRoles: selectedRoles as string[],
-		});
+		// TODO do whatever when loading
+		await startTransition(
+			_updateGameWithTagsAndRoles(
+				serverId as string,
+				gameId as string,
+				gameName as string,
+				gameDescription as string,
+				gameCategory as string,
+				selectedTags as number[],
+				selectedRoles as string[],
+			),
+		);
+		await _serverData.refetch();
 	};
 
-	const deleteGameMutation = useMutation({
-		mutationFn: ({ serverId, gameId }: { serverId: string; gameId: number }) =>
-			_deleteGame(serverId, gameId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverData", serverId] });
-			navigate(`/server?serverId=${serverId}`);
-		},
-		onError: (error) => {
-			console.error(error);
-		},
-	});
-
-	const handleDeleteGame = () => {
-		deleteGameMutation.mutate({
-			serverId: serverId as string,
-			gameId: parseInt(gameId as string),
-		});
+	const handleDeleteGame = async () => {
+		// TODO do whatever when loading
+		await startTransition(
+			_deleteGame(serverId as string, parseInt(gameId as string)),
+		);
+		await _serverData.refetch();
+		navigate(`/server?serverId=${serverId}`);
 	};
 
 	return (

@@ -3,7 +3,9 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useEffect } from "react";
 import { useNavigate } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
-import { _fetchMyInfo, _signOut } from "../../queries/queries";
+import { useLoading } from "../../hooks/useLoading";
+import { useSuspense } from "../../hooks/useSuspense";
+import { _fetchMyInfo, _signOut } from "../../remotes/remotes";
 import type { Guild } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
@@ -16,19 +18,15 @@ export const Dashboard = () => {
 		queryFn: _fetchMyInfo,
 	});
 
-	const signOutMutation = useMutation({
-		mutationFn: _signOut,
-		onSuccess: () => {
-			window.location.reload();
-		},
-	});
-
 	useEffect(() => {
 		console.log(_myInfo.data);
 	}, [_myInfo.data]);
 
-	const signOut = () => {
-		signOutMutation.mutate();
+	const [isLoading, startTransition] = useLoading();
+
+	const signOut = async () => {
+		await startTransition(_signOut());
+		window.location.reload();
 	};
 
 	return (
