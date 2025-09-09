@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
@@ -9,14 +9,13 @@ import { GameSettings } from "./pages/Server/GameSettings";
 import { Server } from "./pages/Server/Server";
 import { ServerSettings } from "./pages/Server/ServerSettings";
 import { _fetchMyTokens } from "./remotes/remotes";
+import type { AuthData } from "./types/types";
 
 const App = () => {
-	const _auth = useSuspenseQuery({
-		queryKey: ["auth"],
-		queryFn: _fetchMyTokens,
-	});
+	const _authQuery = useSuspenseQuery(_fetchMyTokens.query());
 
-	const isAuthenticated = _auth.data?.discord_access_token && !_auth.isError;
+	const isAuthenticated =
+		_authQuery.data?.discord_access_token && !_authQuery.isError;
 
 	const router = createBrowserRouter([
 		...(isAuthenticated

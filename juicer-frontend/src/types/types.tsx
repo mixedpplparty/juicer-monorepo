@@ -86,3 +86,8 @@ export type MyDataInServer = {
 	roles: Role[] | null;
 	joined_at: string;
 };
+
+export type AuthData = {
+	discord_access_token: string;
+	discord_refresh_token: string;
+};

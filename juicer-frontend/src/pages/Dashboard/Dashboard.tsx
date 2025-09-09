@@ -1,26 +1,18 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useEffect } from "react";
-import { useNavigate } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
-import { useSuspense } from "../../hooks/useSuspense";
 import { _fetchMyInfo, _signOut } from "../../remotes/remotes";
-import type { Guild } from "../../types/types";
+import type { Guild, MyInfo } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Loading } from "../Loading/Loading";
 export const Dashboard = () => {
-	const _myInfo = useSuspenseQuery({
-		queryKey: ["myInfo"],
-		queryFn: _fetchMyInfo,
-	});
-
-	useEffect(() => {
-		console.log(_myInfo.data);
-	}, [_myInfo.data]);
+	const _myInfoQuery = useSuspenseQuery(_fetchMyInfo.query());
+	const _myInfo = _myInfoQuery.data as unknown as MyInfo;
 
 	const [isLoading, startTransition] = useLoading();
 
