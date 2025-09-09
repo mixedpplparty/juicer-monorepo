@@ -13,8 +13,12 @@ import { _fetchMyTokens } from "./remotes/remotes";
 const App = () => {
 	const _authQuery = useSuspenseQuery(_fetchMyTokens.query());
 
+	if (_authQuery.isError) {
+		return <Landing />;
+	}
+
 	const isAuthenticated =
-		_authQuery?.data?.data?.discord_access_token && !_authQuery.isError;
+		_authQuery.data?.data?.discord_access_token && !_authQuery.isError;
 
 	const router = createBrowserRouter([
 		...(isAuthenticated
