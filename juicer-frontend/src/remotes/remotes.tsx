@@ -33,7 +33,7 @@ _fetchMyInfo.apiPath = () => {
 _fetchMyInfo.query = () => {
 	return {
 		queryKey: ["myInfo"],
-		queryFn: () => _fetchMyInfo(),
+		queryFn: _fetchMyInfo,
 	};
 };
 
