@@ -2,21 +2,9 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
-import {
-	QueryClient,
-	queryOptions,
-	useMutation,
-	useQuery,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
-import { Suspense, useEffect, useState } from "react";
-import {
-	Link,
-	useActionData,
-	useNavigate,
-	useSearchParams,
-} from "react-router";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Suspense, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
 import {
@@ -32,7 +20,6 @@ import {
 import type {
 	Category,
 	Game,
-	GameSearchResult,
 	Role,
 	ServerDataDiscordRole,
 	Tag,
@@ -94,6 +81,7 @@ export const Server = () => {
 	};
 
 	const _iHaveAllRolesInTheGame = (game: Game): boolean => {
+		if (!game.roles_to_add) return false;
 		return (
 			game.roles_to_add?.every(
 				(role: Role) => _findRoleById(role.id)?.me_in_role,

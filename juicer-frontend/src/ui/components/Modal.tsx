@@ -1,6 +1,5 @@
 import CloseIcon from "@mui/icons-material/Close";
-import { Button } from "./Button";
-import { Card, ResponsiveCard } from "./Card";
+import { Card } from "./Card";
 export const Modal = ({
 	children,
 	title,
