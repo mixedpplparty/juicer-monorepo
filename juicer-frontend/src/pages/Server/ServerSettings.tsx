@@ -1,7 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
@@ -10,6 +10,7 @@ import {
 	_createTag,
 	_deleteCategory,
 	_deleteTag,
+	_fetchSearchGamesInServer,
 	_fetchServerData,
 } from "../../remotes/remotes";
 import type { Category, Tag } from "../../types/types";

@@ -6,6 +6,7 @@ import {
 	QueryClient,
 	queryOptions,
 	useMutation,
+	useQuery,
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ import {
 	_createGame,
 	_createServer,
 	_fetchMyDataInServer,
+	_fetchSearchGamesInServer,
 	_fetchServerData,
 	_syncServerData,
 	_unassignRolesFromUser,
@@ -30,6 +32,7 @@ import {
 import type {
 	Category,
 	Game,
+	GameSearchResult,
 	Role,
 	ServerDataDiscordRole,
 	Tag,
@@ -44,9 +47,42 @@ import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Option, Select } from "../../ui/components/Select";
+import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
+
+const GameCardSkeleton = () => {
+	return (
+		<Card
+			css={{
+				border: "1px solid rgba(255, 255, 255, 0.33)",
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<div
+				css={{
+					display: "flex",
+					flexDirection: "row",
+					gap: "8px",
+					alignItems: "center",
+				}}
+			>
+				<Skeleton css={{ width: "25%", height: "1.5rem" }} />
+				<Skeleton css={{ width: "10%", height: "1rem" }} />
+			</div>
+			<Skeleton css={{ width: "35%", height: "1rem" }} />
+			<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
+				<Skeleton css={{ width: "10%", height: "1rem" }} />
+				<Skeleton css={{ width: "10%", height: "1rem" }} />
+				<Skeleton css={{ width: "10%", height: "1rem" }} />
+			</div>
+		</Card>
+	);
+};
+
 export const Server = () => {
 	//TODO do whatever when loading
+	const [query, setQuery] = useState<string | null>(null);
 	const [isLoading, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -69,6 +105,14 @@ export const Server = () => {
 		queryKey: ["myDataInServer", serverId],
 		queryFn: () => _fetchMyDataInServer(serverId),
 	});
+
+	const _searchGamesInServerQuery = useQuery(
+		_fetchSearchGamesInServer.query(serverId as string, query || null),
+	);
+
+	useEffect(() => {
+		console.log(_searchGamesInServerQuery.data);
+	}, [_searchGamesInServerQuery.data]);
 
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
@@ -259,14 +303,42 @@ export const Server = () => {
 							</Card>
 						</div>
 					}
+					<div
+						css={{
+							display: "flex",
+							flexDirection: "row",
+							gap: "12px",
+							alignItems: "center",
+						}}
+					>
+						<h2 css={{ margin: 0 }}>게임</h2>
+						<Input
+							placeholder="게임 이름 검색"
+							value={query || ""}
+							onChange={(e) => setQuery(e.target.value)}
+						/>
+					</div>
 
-					{_serverData.data?.server_data_db.games &&
-						_serverData.data?.server_data_db.games.length > 0 && (
-							<div
-								css={{ display: "flex", flexDirection: "column", gap: "12px" }}
-							>
-								<h2 css={{ margin: 0 }}>게임</h2>
-								{_serverData.data.server_data_db.games.map((game: Game) => (
+					{_searchGamesInServerQuery.isLoading && (
+						<div
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
+							<GameCardSkeleton />
+							<GameCardSkeleton />
+							<GameCardSkeleton />
+						</div>
+					)}
+
+					{_searchGamesInServerQuery.data && (
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "column",
+								gap: "12px",
+							}}
+						>
+							{_searchGamesInServerQuery.data.data.map((game: Game) => {
+								return (
 									<Card
 										css={{
 											border: "1px solid rgb(255, 255, 255)",
@@ -399,10 +471,10 @@ export const Server = () => {
 											)}
 										</div>
 									</Card>
-								))}
-							</div>
-						)}
-
+								);
+							})}
+						</div>
+					)}
 					{_serverData.data?.server_data_db && _serverData.data.admin && (
 						<Card
 							css={{

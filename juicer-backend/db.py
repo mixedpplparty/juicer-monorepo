@@ -160,7 +160,15 @@ async def get_games_by_server(db: AsyncConnection, server_id: int) -> List[Dict[
                         json_build_object('id', t.tag_id, 'name', t.name)
                     ) FILTER (WHERE t.tag_id IS NOT NULL),
                     '[]'::json
-                ) as tags
+                ) as tags,
+                COALESCE(
+                    (
+                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        WHERE gr.game_id = g.game_id
+                    ),
+                    '[]'::json
+                ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
             LEFT JOIN game_tags gt ON g.game_id = gt.game_id
@@ -172,12 +180,12 @@ async def get_games_by_server(db: AsyncConnection, server_id: int) -> List[Dict[
         results = await cursor.fetchall()
         return [
             {
-                'game_id': row[0],
+                'id': row[0],
                 'name': row[1],
                 'description': row[2],
-                'category_id': row[3],
-                'category_name': row[4],
-                'tags': row[5]
+                'category': {'id': row[3], 'name': row[4]},
+                'tags': row[5],
+                'roles_to_add': row[6]
             }
             for row in results
         ]
@@ -831,7 +839,15 @@ async def find_games_by_category(db: AsyncConnection, server_id: int, category_n
                         json_build_object('id', t.tag_id, 'name', t.name)
                     ) FILTER (WHERE t.tag_id IS NOT NULL),
                     '[]'::json
-                ) as tags
+                ) as tags,
+                COALESCE(
+                    (
+                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        WHERE gr.game_id = g.game_id
+                    ),
+                    '[]'::json
+                ) as roles_to_add
             FROM games g
             JOIN categories c ON g.category_id = c.category_id
             LEFT JOIN game_tags gt ON g.game_id = gt.game_id
@@ -843,12 +859,12 @@ async def find_games_by_category(db: AsyncConnection, server_id: int, category_n
         results = await cursor.fetchall()
         return [
             {
-                'game_id': row[0],
+                'id': row[0],
                 'name': row[1],
                 'description': row[2],
-                'category_id': row[3],
-                'category_name': row[4],
-                'tags': row[5]
+                'category': {'id': row[3], 'name': row[4]},
+                'tags': row[5],
+                'roles_to_add': row[6]
             }
             for row in results
         ]
@@ -881,7 +897,15 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
                         json_build_object('id', t.tag_id, 'name', t.name)
                     ) FILTER (WHERE t.tag_id IS NOT NULL),
                     '[]'::json
-                ) as tags
+                ) as tags,
+                COALESCE(
+                    (
+                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        WHERE gr.game_id = g.game_id
+                    ),
+                    '[]'::json
+                ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
             LEFT JOIN game_tags gt ON g.game_id = gt.game_id
@@ -901,12 +925,12 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
         results = await cursor.fetchall()
         return [
             {
-                'game_id': row[0],
+                'id': row[0],
                 'name': row[1],
                 'description': row[2],
-                'category_id': row[3],
-                'category_name': row[4],
-                'tags': row[5]
+                'category': {'id': row[3], 'name': row[4]},
+                'tags': row[5],
+                'roles_to_add': row[6]
             }
             for row in results
         ]
@@ -929,7 +953,15 @@ async def find_games_by_name(db: AsyncConnection, server_id: int, name_query: st
                         json_build_object('id', t.tag_id, 'name', t.name)
                     ) FILTER (WHERE t.tag_id IS NOT NULL),
                     '[]'::json
-                ) as tags
+                ) as tags,
+                COALESCE(
+                    (
+                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        WHERE gr.game_id = g.game_id
+                    ),
+                    '[]'::json
+                ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
             LEFT JOIN game_tags gt ON g.game_id = gt.game_id
@@ -941,12 +973,12 @@ async def find_games_by_name(db: AsyncConnection, server_id: int, name_query: st
         results = await cursor.fetchall()
         return [
             {
-                'game_id': row[0],
+                'id': row[0],
                 'name': row[1],
                 'description': row[2],
-                'category_id': row[3],
-                'category_name': row[4],
-                'tags': row[5]
+                'category': {'id': row[3], 'name': row[4]},
+                'tags': row[5],
+                'roles_to_add': row[6]
             }
             for row in results
         ]
