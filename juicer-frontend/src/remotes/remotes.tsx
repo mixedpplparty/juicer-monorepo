@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { MyDataInServer, MyInfo } from "../types/types";
+import type { Game, MyDataInServer } from "../types/types";
 
 axios.defaults.withCredentials = true;
 
@@ -52,6 +52,27 @@ _fetchServerData.query = (serverId: string) => {
 	return {
 		queryKey: ["serverData", serverId],
 		queryFn: () => _fetchServerData(serverId),
+	};
+};
+
+export const _fetchSearchGamesInServer = async (
+	serverId: string,
+	query: string | null,
+): Promise<unknown> => {
+	return await axios.get(_fetchSearchGamesInServer.apiPath(serverId), {
+		withCredentials: true,
+		params: { query },
+	});
+};
+
+_fetchSearchGamesInServer.apiPath = (serverId: string) => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/search/all`;
+};
+
+_fetchSearchGamesInServer.query = (serverId: string, query: string | null) => {
+	return {
+		queryKey: ["searchGamesInServer", serverId, query],
+		queryFn: () => _fetchSearchGamesInServer(serverId, query),
 	};
 };
 

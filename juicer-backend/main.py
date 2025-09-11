@@ -890,16 +890,22 @@ async def search_games_by_categories_request(server_id: int, category: str | Non
 @app.get("/discord/server/{server_id}/search/all")
 async def search_games_by_all_request(server_id: int, query: str | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token)
-
+    if not query:
+        res = await get_games_by_server(db, server_id)
+        return res
     try:
         res_by_name = await find_games_by_name(db, server_id, query)
         res_by_tags = await find_games_by_tags(db, server_id, [query])
         res_by_categories = await find_games_by_category(db, server_id, query)
-        return {
-            "by_name": res_by_name,
-            "by_tags": res_by_tags,
-            "by_categories": res_by_categories
-        }
+        res_combined = [*res_by_name, *res_by_tags, *res_by_categories]
+        # Deduplicate by 'id' while preserving order
+        seen_ids = set()
+        res_combined = [
+            game for game in res_combined
+            if (game.get('id') not in seen_ids and not seen_ids.add(game.get('id')))
+        ]
+
+        return res_combined
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
