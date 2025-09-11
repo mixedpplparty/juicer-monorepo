@@ -10,12 +10,12 @@ import os
 import sys
 from fastapi import Response
 from fastapi import Cookie, HTTPException, status
-from typing import Optional
+from typing import Optional, Annotated
 from dotenv import load_dotenv
 from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, CreateTagBody, UpdateGameBody
 
 file_dir = os.path.dirname(__file__)
@@ -858,7 +858,7 @@ async def search_games_by_name_request(server_id: int, name: str | None = None, 
 
 @discord_client.event
 @app.get("/discord/server/{server_id}/search/tags")
-async def search_games_by_tags_request(server_id: int, tags: List[str] | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def search_games_by_tags_request(server_id: int, tags: Annotated[Union[List[str], None], Query()] = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token)
 
     try:
@@ -883,4 +883,25 @@ async def search_games_by_categories_request(server_id: int, category: str | Non
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to search games by categories: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/search/all")
+async def search_games_by_all_request(server_id: int, query: str | None = None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token)
+
+    try:
+        res_by_name = await find_games_by_name(db, server_id, query)
+        res_by_tags = await find_games_by_tags(db, server_id, [query])
+        res_by_categories = await find_games_by_category(db, server_id, query)
+        return {
+            "by_name": res_by_name,
+            "by_tags": res_by_tags,
+            "by_categories": res_by_categories
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search games by all: {str(e)}"
         )
