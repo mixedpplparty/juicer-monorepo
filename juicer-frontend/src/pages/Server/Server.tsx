@@ -110,10 +110,6 @@ export const Server = () => {
 		_fetchSearchGamesInServer.query(serverId as string, query || null),
 	);
 
-	useEffect(() => {
-		console.log(_searchGamesInServerQuery.data);
-	}, [_searchGamesInServerQuery.data]);
-
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
@@ -138,6 +134,7 @@ export const Server = () => {
 	const syncServerDataAction = async () => {
 		await startTransition(_syncServerData(serverId as string));
 		await _serverDataQuery.refetch();
+		await _searchGamesInServerQuery.refetch();
 	};
 
 	const addGameFormAction = async (formData: FormData) => {
