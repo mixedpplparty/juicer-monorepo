@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Suspense, useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { SignInFailed } from "./pages/Auth/SignInFailed";
@@ -11,18 +11,11 @@ import { ServerSettings } from "./pages/Server/ServerSettings";
 import { _fetchMyTokens } from "./remotes/remotes";
 
 const App = () => {
-	const _authQuery = useSuspenseQuery(_fetchMyTokens.query());
+	const _authQuery = useQuery(_fetchMyTokens.query());
 
-	useEffect(() => {
-		console.log("isError", _authQuery.isError);
-	}, [_authQuery.isError]);
-	useEffect(() => {
-		console.log("error", _authQuery.error);
-	}, [_authQuery.error]);
-
-	if (_authQuery.isError) {
-		return <Landing />;
-	}
+	if (_authQuery.isLoading) {
+		return <Loading />;
+	} // can't use suspense here
 
 	const isAuthenticated =
 		_authQuery.data?.data?.discord_access_token && !_authQuery.isError;
