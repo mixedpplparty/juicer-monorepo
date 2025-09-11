@@ -774,7 +774,7 @@ async def delete_category(db: AsyncConnection, category_id: int, server_id: int)
                 'message': f"Category {category_id} not found in server {server_id}"
             }
 
-        # Check if any games are referencing this category
+        # Check if any games are referencing this category.
         await cursor.execute("""
             SELECT g.game_id, g.name
             FROM games g
@@ -788,7 +788,7 @@ async def delete_category(db: AsyncConnection, category_id: int, server_id: int)
                           for row in referencing_games]
             return {
                 'success': False,
-                'message': f"Cannot delete category {category_id}. {len(games_list)} game(s) are still referencing it.",
+                'message': f"Cannot delete category {category_id}. {len(games_list)} game(s) still have reference to it.",
                 'games': games_list
             }
 

@@ -21,6 +21,7 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { Toast } from "../../ui/components/Toast";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
@@ -31,6 +32,7 @@ export const ServerSettings = () => {
 		useState<boolean>(false);
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
+	const [toast, setToast] = useState<string | null>(null);
 
 	const navigate = useNavigate();
 
@@ -54,7 +56,15 @@ export const ServerSettings = () => {
 		setIsCreateTagModalOpen(false);
 	};
 	const deleteCategoryAction = (categoryId: number) => async () => {
-		await startTransition(_deleteCategory(serverId as string, categoryId));
+		try {
+			await startTransition(_deleteCategory(serverId as string, categoryId));
+		} catch (error) {
+			console.log(error.response.data.detail);
+			setToast(error.response.data.detail);
+			setTimeout(() => {
+				setToast(null);
+			}, 3000);
+		}
 		await _serverDataQuery.refetch();
 	};
 	const deleteTagAction = (tagId: number) => async () => {
@@ -241,6 +251,7 @@ export const ServerSettings = () => {
 					</div>
 				</ResponsiveCard>
 			</FullPageBase>
+			{toast && <Toast>{toast}</Toast>}
 			{isCreateCategoryModalOpen && (
 				<ModalPortal>
 					<Modal
