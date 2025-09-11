@@ -44,6 +44,7 @@ const GameCardSkeleton = () => {
 				border: "1px solid rgba(255, 255, 255, 0.33)",
 				display: "flex",
 				flexDirection: "column",
+				gap: "12px",
 			}}
 		>
 			<div
@@ -81,7 +82,7 @@ export const Server = () => {
 	};
 
 	const _iHaveAllRolesInTheGame = (game: Game): boolean => {
-		if (!game.roles_to_add) return false;
+		if (!game.roles_to_add || game.roles_to_add.length === 0) return false;
 		return (
 			game.roles_to_add?.every(
 				(role: Role) => _findRoleById(role.id)?.me_in_role,
