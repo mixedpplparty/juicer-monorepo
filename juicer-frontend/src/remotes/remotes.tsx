@@ -17,6 +17,7 @@ _fetchMyTokens.query = () => {
 	return {
 		queryKey: ["auth"],
 		queryFn: _fetchMyTokens,
+		retry: 1,
 	};
 };
 
