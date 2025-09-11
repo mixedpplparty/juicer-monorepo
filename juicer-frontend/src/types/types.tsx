@@ -1,4 +1,3 @@
-import { typographyClasses } from "@mui/material/Typography";
 import type { APIUser } from "discord-api-types/v10";
 
 export type Guild = {

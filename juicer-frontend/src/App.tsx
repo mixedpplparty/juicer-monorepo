@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";

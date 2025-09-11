@@ -1,6 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useEffect } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Suspense } from "react";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
 import { _fetchMyInfo, _signOut } from "../../remotes/remotes";

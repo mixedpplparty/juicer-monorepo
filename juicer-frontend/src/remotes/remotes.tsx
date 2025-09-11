@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Game, MyDataInServer } from "../types/types";
+import type { MyDataInServer } from "../types/types";
 
 axios.defaults.withCredentials = true;
 
