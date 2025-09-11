@@ -311,7 +311,7 @@ export const Server = () => {
 							alignItems: "center",
 						}}
 					>
-						<h2 css={{ margin: 0 }}>게임</h2>
+						<h2 css={{ margin: 0, flex: 1 }}>게임</h2>
 						<Input
 							placeholder="게임 이름 검색"
 							value={query || ""}
@@ -329,152 +329,161 @@ export const Server = () => {
 						</div>
 					)}
 
-					{_searchGamesInServerQuery.data && (
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "column",
-								gap: "12px",
-							}}
-						>
-							{_searchGamesInServerQuery.data.data.map((game: Game) => {
-								return (
-									<Card
-										css={{
-											border: "1px solid rgb(255, 255, 255)",
-											alignItems: "center",
-											display: "flex",
-											flexDirection: "row",
-											...(_iHaveAllRolesInTheGame(game) && {
-												backgroundColor: "rgba(255, 255, 255, 1)",
-												color: "rgba(0, 0, 0, 1)",
-											}), // NEEDS TO BE TESTED
-										}}
-										key={game.id}
-									>
-										<div
+					{_searchGamesInServerQuery?.data &&
+						!!_searchGamesInServerQuery?.data?.data?.length === false &&
+						query && <div>검색 결과가 없습니다.</div>}
+
+					{_searchGamesInServerQuery?.data &&
+						!!_searchGamesInServerQuery?.data?.data?.length === false &&
+						!query && <div>게임이 없습니다.</div>}
+
+					{_searchGamesInServerQuery?.data &&
+						!!_searchGamesInServerQuery?.data?.data?.length === true && (
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "column",
+									gap: "12px",
+								}}
+							>
+								{_searchGamesInServerQuery?.data?.data?.map((game: Game) => {
+									return (
+										<Card
 											css={{
+												border: "1px solid rgb(255, 255, 255)",
+												alignItems: "center",
 												display: "flex",
 												flexDirection: "row",
-												gap: "8px",
-												width: "100%",
-												alignItems: "stretch",
+												...(_iHaveAllRolesInTheGame(game) && {
+													backgroundColor: "rgba(255, 255, 255, 1)",
+													color: "rgba(0, 0, 0, 1)",
+												}), // NEEDS TO BE TESTED
 											}}
+											key={game.id}
 										>
-											<InlineButton
+											<div
 												css={{
 													display: "flex",
-													flexDirection: "column",
+													flexDirection: "row",
+													gap: "8px",
 													width: "100%",
-													gap: "4px",
-													flex: 1,
-													cursor: "pointer",
+													alignItems: "stretch",
 												}}
-												onClick={() => toggleGameRolesAssign(game)}
 											>
-												<div
+												<InlineButton
 													css={{
 														display: "flex",
-														flexDirection: "row",
+														flexDirection: "column",
+														width: "100%",
 														gap: "4px",
+														flex: 1,
+														cursor: "pointer",
 													}}
+													onClick={() => toggleGameRolesAssign(game)}
 												>
-													<h2 css={{ margin: 0, display: "inline" }}>
-														{game.name}
-													</h2>
 													<div
 														css={{
 															display: "flex",
 															flexDirection: "row",
 															gap: "4px",
-															alignItems: "center",
 														}}
 													>
-														{game.category
-															? game.category.name
-															: "카테고리 없음"}
-													</div>
-												</div>
-												<div
-													css={{
-														display: "flex",
-														flexDirection: "row",
-														gap: "4px",
-													}}
-												>
-													{game.tags && game.tags.length > 0
-														? game.tags?.map((tag: Tag) => (
-																<div
-																	key={tag.id}
-																	css={{
-																		display: "flex",
-																		flexDirection: "row",
-																		gap: "4px",
-																		alignItems: "center",
-																		border: "none",
-																		background: "none",
-																	}}
-																>
-																	#{tag.name}
-																</div>
-															))
-														: "태그 없음"}
-												</div>
-												<div
-													css={{
-														display: "flex",
-														flexDirection: "row",
-														gap: "4px",
-													}}
-												>
-													{game.roles_to_add && game.roles_to_add.length > 0
-														? game.roles_to_add?.map((role: Role) => (
-																<Chip
-																	key={role.id}
-																	css={{
-																		display: "flex",
-																		flexDirection: "row",
-																		gap: "4px",
-																		alignItems: "center",
-																	}}
-																>
-																	<_8pxCircle
-																		css={{
-																			backgroundColor: `rgb(${
-																				_findRoleById(role.id)?.color.join(
-																					",",
-																				) || "255, 255, 255"
-																			})`,
-																		}}
-																	/>
-																	{_findRoleById(role.id)?.name}
-																</Chip>
-															))
-														: "역할 없음"}
-												</div>
-											</InlineButton>
-											{_serverData.data?.admin && (
-												<div css={{ alignSelf: "stretch" }}>
-													<LinkNoStyle
-														to={`/server/game?gameId=${game.id}&serverId=${serverId}`}
-														css={{ cursor: "pointer" }}
-													>
-														<InlineButton
-															css={{ height: "100%", alignItems: "center" }}
+														<h2 css={{ margin: 0, display: "inline" }}>
+															{game.name}
+														</h2>
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "row",
+																gap: "4px",
+																alignItems: "center",
+															}}
 														>
-															<SettingsIcon
-																css={{ width: "20px", height: "20px" }}
-															/>
-														</InlineButton>
-													</LinkNoStyle>
-												</div>
-											)}
-										</div>
-									</Card>
-								);
-							})}
-						</div>
-					)}
+															{game.category
+																? game.category.name
+																: "카테고리 없음"}
+														</div>
+													</div>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{game.tags && game.tags.length > 0
+															? game.tags?.map((tag: Tag) => (
+																	<div
+																		key={tag.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																			border: "none",
+																			background: "none",
+																		}}
+																	>
+																		#{tag.name}
+																	</div>
+																))
+															: "태그 없음"}
+													</div>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{game.roles_to_add && game.roles_to_add.length > 0
+															? game.roles_to_add?.map((role: Role) => (
+																	<Chip
+																		key={role.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																		}}
+																	>
+																		<_8pxCircle
+																			css={{
+																				backgroundColor: `rgb(${
+																					_findRoleById(role.id)?.color.join(
+																						",",
+																					) || "255, 255, 255"
+																				})`,
+																			}}
+																		/>
+																		{_findRoleById(role.id)?.name}
+																	</Chip>
+																))
+															: "역할 없음"}
+													</div>
+												</InlineButton>
+												{_serverData.data?.admin && (
+													<div css={{ alignSelf: "stretch" }}>
+														<LinkNoStyle
+															to={`/server/game?gameId=${game.id}&serverId=${serverId}`}
+															css={{ cursor: "pointer" }}
+														>
+															<InlineButton
+																css={{ height: "100%", alignItems: "center" }}
+															>
+																<SettingsIcon
+																	css={{ width: "20px", height: "20px" }}
+																/>
+															</InlineButton>
+														</LinkNoStyle>
+													</div>
+												)}
+											</div>
+										</Card>
+									);
+								})}
+							</div>
+						)}
 					{_serverData.data?.server_data_db && _serverData.data.admin && (
 						<Card
 							css={{
