@@ -26,7 +26,6 @@ services:
     ports:
       - '8000:8000'
     env_file:
-      - ./juicer-backend/.env
       - ./.env
     depends_on:
       - db # Ensures the 'db' service starts before the 'backend'
@@ -37,7 +36,7 @@ services:
     container_name: juicer_frontend
     restart: always
     env_file:
-      - ./juicer-frontend/.env
+      - ./.env
     ports:
       - '8080:8080' # Map container's port 8080 to host's port 8080
     depends_on:
