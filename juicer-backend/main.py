@@ -445,7 +445,7 @@ async def get_db_server_data(server_id: int, discord_access_token: Optional[str]
                    "display_icon": role.display_icon.url if role.display_icon else None,
                    "mention": role.mention,
                    "icon": role.icon.url if role.icon else None,
-                   "me_in_role": role.id in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
+                   "me_in_role": str(role.id) in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
                    } for role in guild.roles],
     }
 
@@ -528,7 +528,7 @@ async def get_roles(server_id: int, discord_access_token: Optional[str] = Cookie
             "display_icon": role.display_icon.url if role.display_icon else None,
             "mention": role.mention,
             "icon": role.icon.url if role.icon else None,
-            "me_in_role": role.id in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
+            "me_in_role": str(role.id) in [str(role.id) for role in guild.get_member(int(user_data.get("id"))).roles]
         })
     return res
 

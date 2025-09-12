@@ -3,7 +3,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
@@ -291,7 +291,6 @@ export const Server = () => {
 															backgroundColor: `rgb(${
 																_findRoleById(
 																	_serverData.data,
-																	_serverData.data,
 																	role.id,
 																)?.color.join(",") || "255, 255, 255"
 															})`,
@@ -360,7 +359,7 @@ export const Server = () => {
 												...(_iHaveAllRolesInTheGame(_serverData.data, game) && {
 													backgroundColor: "rgba(255, 255, 255, 1)",
 													color: "rgba(0, 0, 0, 1)",
-												}), // NEEDS TO BE TESTED
+												}),
 											}}
 											key={game.id}
 										>
@@ -451,6 +450,12 @@ export const Server = () => {
 																			flexDirection: "row",
 																			gap: "4px",
 																			alignItems: "center",
+																			...(_iHaveAllRolesInTheGame(
+																				_serverData.data,
+																				game,
+																			) && {
+																				border: "1px solid black",
+																			}),
 																		}}
 																	>
 																		<_8pxCircle
