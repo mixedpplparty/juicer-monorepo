@@ -59,6 +59,14 @@ export const GameSettings = () => {
 		);
 	};
 
+	// filter out @everyone role
+	const filterOutEveryoneRole = (roles: Role[]): Role[] => {
+		return (
+			roles.filter(
+				(role: Role) => _findRoleById(role.id)?.name !== "@everyone",
+			) || []
+		);
+	};
 	const onGameSettingsChangeSubmitAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
 		const gameDescription = formData.get("game-description");
@@ -203,7 +211,9 @@ export const GameSettings = () => {
 						)}
 						<label htmlFor="game-roles">역할 맵핑(선택)</label>
 						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
-							{_serverData.data?.server_data_db.roles?.map((role: Role) => (
+							{filterOutEveryoneRole(
+								_serverData.data?.server_data_db.roles || [],
+							).map((role: Role) => (
 								<CheckableChip
 									key={role.id}
 									value={role.id}

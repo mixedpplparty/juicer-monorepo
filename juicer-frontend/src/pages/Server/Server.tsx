@@ -296,7 +296,9 @@ export const Server = () => {
 									<div
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
-										{_myDataInServer.data?.roles?.map((role: Role) => {
+										{filterOutEveryoneRole(
+											_myDataInServer.data?.roles || [],
+										).map((role: Role) => {
 											return (
 												<Chip
 													key={role.id}
