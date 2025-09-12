@@ -7,7 +7,7 @@ import { Suspense, useContext, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
-import { ToastContext } from "../../hooks/useToast";
+import { useToast } from "../../hooks/useToast";
 import {
 	_assignRolesToUser,
 	_createGame,
@@ -76,7 +76,7 @@ export const Server = () => {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
-	const { showToast } = useContext(ToastContext);
+	const { showToast } = useToast();
 	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
 		return _serverData.data?.server_data_discord.roles?.find(
 			(r: ServerDataDiscordRole) => r.id === roleId,
@@ -89,6 +89,15 @@ export const Server = () => {
 			game.roles_to_add?.every(
 				(role: Role) => _findRoleById(role.id)?.me_in_role,
 			) || false
+		);
+	};
+
+	// I have a feeling that this should be done in the backend
+	const filterOutEveryoneRole = (roles: Role[]): Role[] => {
+		return (
+			roles.filter(
+				(role: Role) => _findRoleById(role.id)?.name !== "@everyone",
+			) || []
 		);
 	};
 
@@ -107,23 +116,41 @@ export const Server = () => {
 	const _serverData = _serverDataQuery.data;
 
 	const createServerAction = async () => {
-		await startTransition(_createServer(serverId as string));
-		await _serverDataQuery.refetch();
-	};
-
-	const toggleGameRolesAssign = async (game: Game) => {
-		if (_iHaveAllRolesInTheGame(game)) {
-			await startTransition(
-				_unassignRolesFromUser(serverId as string, game.id),
-			);
-		} else {
-			await startTransition(_assignRolesToUser(serverId as string, game.id));
+		try {
+			await startTransition(_createServer(serverId as string));
+			showToast("Server created", "success");
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
 		}
 		await _serverDataQuery.refetch();
 	};
 
+	const toggleGameRolesAssign = async (game: Game) => {
+		try {
+			if (_iHaveAllRolesInTheGame(game)) {
+				await startTransition(
+					_unassignRolesFromUser(serverId as string, game.id),
+				);
+				showToast("Roles unassigned", "success");
+			} else {
+				await startTransition(_assignRolesToUser(serverId as string, game.id));
+				showToast("Roles assigned", "success");
+			}
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
+		}
+
+		await _serverDataQuery.refetch();
+	};
+
 	const syncServerDataAction = async () => {
-		await startTransition(_syncServerData(serverId as string));
+		try {
+			await startTransition(_syncServerData(serverId as string));
+			showToast("Roles synced with server", "success");
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
+		}
+
 		await _serverDataQuery.refetch();
 		await _searchGamesInServerQuery.refetch();
 	};
@@ -140,15 +167,21 @@ export const Server = () => {
 			gameCategory = null;
 		}
 		console.log(gameName, gameDescription, gameCategory);
-		await startTransition(
-			_createGame(
-				serverId as string,
-				gameName as string,
-				gameDescription as string | null | undefined,
-				gameCategory as string | null | undefined,
-			),
-		);
+		try {
+			await startTransition(
+				_createGame(
+					serverId as string,
+					gameName as string,
+					gameDescription as string | null | undefined,
+					gameCategory as string | null | undefined,
+				),
+			);
+			showToast("Game created", "success");
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
+		}
 		await _serverDataQuery.refetch();
+		await _searchGamesInServerQuery.refetch();
 		setIsAddGameModalOpen(false);
 	};
 
@@ -425,28 +458,30 @@ export const Server = () => {
 														}}
 													>
 														{game.roles_to_add && game.roles_to_add.length > 0
-															? game.roles_to_add?.map((role: Role) => (
-																	<Chip
-																		key={role.id}
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																		}}
-																	>
-																		<_8pxCircle
+															? filterOutEveryoneRole(game.roles_to_add)?.map(
+																	(role: Role) => (
+																		<Chip
+																			key={role.id}
 																			css={{
-																				backgroundColor: `rgb(${
-																					_findRoleById(role.id)?.color.join(
-																						",",
-																					) || "255, 255, 255"
-																				})`,
+																				display: "flex",
+																				flexDirection: "row",
+																				gap: "4px",
+																				alignItems: "center",
 																			}}
-																		/>
-																		{_findRoleById(role.id)?.name}
-																	</Chip>
-																))
+																		>
+																			<_8pxCircle
+																				css={{
+																					backgroundColor: `rgb(${
+																						_findRoleById(role.id)?.color.join(
+																							",",
+																						) || "255, 255, 255"
+																					})`,
+																				}}
+																			/>
+																			{_findRoleById(role.id)?.name}
+																		</Chip>
+																	),
+																)
 															: "역할 없음"}
 													</div>
 												</InlineButton>

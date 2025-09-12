@@ -90,3 +90,7 @@ export type AuthData = {
 	discord_access_token: string;
 	discord_refresh_token: string;
 };
+
+export type ToastProps = {
+	type: "error" | "success" | "info" | null;
+};
