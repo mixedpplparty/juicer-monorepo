@@ -2,9 +2,10 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useState } from "react";
+import { Suspense, useContext, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
+import { ToastContext } from "../../hooks/useToast";
 import {
 	_createCategory,
 	_createTag,
@@ -32,7 +33,7 @@ export const ServerSettings = () => {
 		useState<boolean>(false);
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
-	const [toast, setToast] = useState<string | null>(null);
+	const { showToast } = useContext(ToastContext);
 
 	const navigate = useNavigate();
 
@@ -60,10 +61,7 @@ export const ServerSettings = () => {
 			await startTransition(_deleteCategory(serverId as string, categoryId));
 		} catch (error) {
 			console.log(error.response.data.detail);
-			setToast(error.response.data.detail);
-			setTimeout(() => {
-				setToast(null);
-			}, 3000);
+			showToast(error.response.data.detail);
 		}
 		await _serverDataQuery.refetch();
 	};
@@ -251,7 +249,6 @@ export const ServerSettings = () => {
 					</div>
 				</ResponsiveCard>
 			</FullPageBase>
-			{toast && <Toast>{toast}</Toast>}
 			{isCreateCategoryModalOpen && (
 				<ModalPortal>
 					<Modal
