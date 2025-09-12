@@ -3,6 +3,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import {
+	_findGameById,
+	_findRoleById,
+	filterOutEveryoneRole,
+} from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -10,13 +15,7 @@ import {
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
 } from "../../remotes/remotes";
-import type {
-	Category,
-	Game,
-	Role,
-	ServerDataDiscordRole,
-	Tag,
-} from "../../types/types";
+import type { Category, Game, Role, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
@@ -47,26 +46,6 @@ export const GameSettings = () => {
 	);
 	const navigate = useNavigate();
 
-	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
-		return _serverData.data?.server_data_discord.roles?.find(
-			(r: ServerDataDiscordRole) => r.id === roleId,
-		);
-	};
-
-	const _findGameById = (gameId: string): Game | undefined => {
-		return _serverData.data?.server_data_db.games?.find(
-			(g: Game) => g.id === parseInt(gameId),
-		);
-	};
-
-	// filter out @everyone role
-	const filterOutEveryoneRole = (roles: Role[]): Role[] => {
-		return (
-			roles.filter(
-				(role: Role) => _findRoleById(role.id)?.name !== "@everyone",
-			) || []
-		);
-	};
 	const onGameSettingsChangeSubmitAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
 		const gameDescription = formData.get("game-description");
@@ -133,7 +112,7 @@ export const GameSettings = () => {
 							}}
 						>
 							<h1 css={{ margin: 0 }}>
-								{_findGameById(gameId as string)?.name}
+								{_findGameById(_serverData.data, gameId as string)?.name}
 							</h1>
 							<div>게임 설정</div>
 						</div>
@@ -160,19 +139,27 @@ export const GameSettings = () => {
 							name="game-name"
 							aria-required
 							required
-							defaultValue={_findGameById(gameId as string)?.name || ""}
+							defaultValue={
+								_findGameById(_serverData.data, gameId as string)?.name || ""
+							}
 						/>
 						<label htmlFor="game-description">설명(선택)</label>
 						<Input
 							id="game-description"
 							name="game-description"
-							defaultValue={_findGameById(gameId as string)?.description || ""}
+							defaultValue={
+								_findGameById(_serverData.data, gameId as string)
+									?.description || ""
+							}
 						/>
 						<label htmlFor="game-category">카테고리 (선택)</label>
 						<Select
 							id="game-category"
 							name="game-category"
-							defaultValue={_findGameById(gameId as string)?.category?.id || ""}
+							defaultValue={
+								_findGameById(_serverData.data, gameId as string)?.category
+									?.id || ""
+							}
 						>
 							<Option value="">카테고리 선택</Option>
 							{_serverData.data?.server_data_db.categories?.map(
@@ -212,6 +199,7 @@ export const GameSettings = () => {
 						<label htmlFor="game-roles">역할 맵핑(선택)</label>
 						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
 							{filterOutEveryoneRole(
+								_serverData.data,
 								_serverData.data?.server_data_db.roles || [],
 							).map((role: Role) => (
 								<CheckableChip
@@ -230,10 +218,10 @@ export const GameSettings = () => {
 								>
 									<_8pxCircle
 										css={{
-											backgroundColor: `rgb(${_findRoleById(role.id)?.color.join(",") || "255, 255, 255"})`,
+											backgroundColor: `rgb(${_findRoleById(_serverData.data, role.id)?.color.join(",") || "255, 255, 255"})`,
 										}}
 									/>
-									{_findRoleById(role.id)?.name}
+									{_findRoleById(_serverData.data, role.id)?.name}
 								</CheckableChip>
 							))}
 						</div>

@@ -3,9 +3,14 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useContext, useState } from "react";
+import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
+import {
+	_findRoleById,
+	_iHaveAllRolesInTheGame,
+	filterOutEveryoneRole,
+} from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -18,13 +23,7 @@ import {
 	_syncServerData,
 	_unassignRolesFromUser,
 } from "../../remotes/remotes";
-import type {
-	Category,
-	Game,
-	Role,
-	ServerDataDiscordRole,
-	Tag,
-} from "../../types/types";
+import type { Category, Game, Role, Tag } from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
@@ -77,29 +76,6 @@ export const Server = () => {
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const { showToast } = useToast();
-	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
-		return _serverData.data?.server_data_discord.roles?.find(
-			(r: ServerDataDiscordRole) => r.id === roleId,
-		);
-	};
-
-	const _iHaveAllRolesInTheGame = (game: Game): boolean => {
-		if (!game.roles_to_add || game.roles_to_add.length === 0) return false;
-		return (
-			game.roles_to_add?.every(
-				(role: Role) => _findRoleById(role.id)?.me_in_role,
-			) || false
-		);
-	};
-
-	// filter out @everyone role
-	const filterOutEveryoneRole = (roles: Role[]): Role[] => {
-		return (
-			roles.filter(
-				(role: Role) => _findRoleById(role.id)?.name !== "@everyone",
-			) || []
-		);
-	};
 
 	const _myDataInServer = useSuspenseQuery({
 		queryKey: ["myDataInServer", serverId],
@@ -127,7 +103,7 @@ export const Server = () => {
 
 	const toggleGameRolesAssign = async (game: Game) => {
 		try {
-			if (_iHaveAllRolesInTheGame(game)) {
+			if (_iHaveAllRolesInTheGame(_serverData.data, game)) {
 				await startTransition(
 					_unassignRolesFromUser(serverId as string, game.id),
 				);
@@ -297,6 +273,7 @@ export const Server = () => {
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
 										{filterOutEveryoneRole(
+											_serverData.data,
 											_myDataInServer.data?.roles || [],
 										).map((role: Role) => {
 											return (
@@ -312,12 +289,15 @@ export const Server = () => {
 													<_8pxCircle
 														css={{
 															backgroundColor: `rgb(${
-																_findRoleById(role.id)?.color.join(",") ||
-																"255, 255, 255"
+																_findRoleById(
+																	_serverData.data,
+																	_serverData.data,
+																	role.id,
+																)?.color.join(",") || "255, 255, 255"
 															})`,
 														}}
 													/>
-													{_findRoleById(role.id)?.name}
+													{_findRoleById(_serverData.data, role.id)?.name}
 												</Chip>
 											);
 										})}
@@ -377,7 +357,7 @@ export const Server = () => {
 												alignItems: "center",
 												display: "flex",
 												flexDirection: "row",
-												...(_iHaveAllRolesInTheGame(game) && {
+												...(_iHaveAllRolesInTheGame(_serverData.data, game) && {
 													backgroundColor: "rgba(255, 255, 255, 1)",
 													color: "rgba(0, 0, 0, 1)",
 												}), // NEEDS TO BE TESTED
@@ -460,30 +440,35 @@ export const Server = () => {
 														}}
 													>
 														{game.roles_to_add && game.roles_to_add.length > 0
-															? filterOutEveryoneRole(game.roles_to_add)?.map(
-																	(role: Role) => (
-																		<Chip
-																			key={role.id}
+															? filterOutEveryoneRole(
+																	_serverData.data,
+																	game.roles_to_add,
+																)?.map((role: Role) => (
+																	<Chip
+																		key={role.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																		}}
+																	>
+																		<_8pxCircle
 																			css={{
-																				display: "flex",
-																				flexDirection: "row",
-																				gap: "4px",
-																				alignItems: "center",
+																				backgroundColor: `rgb(${
+																					_findRoleById(
+																						_serverData.data,
+																						role.id,
+																					)?.color.join(",") || "255, 255, 255"
+																				})`,
 																			}}
-																		>
-																			<_8pxCircle
-																				css={{
-																					backgroundColor: `rgb(${
-																						_findRoleById(role.id)?.color.join(
-																							",",
-																						) || "255, 255, 255"
-																					})`,
-																				}}
-																			/>
-																			{_findRoleById(role.id)?.name}
-																		</Chip>
-																	),
-																)
+																		/>
+																		{
+																			_findRoleById(_serverData.data, role.id)
+																				?.name
+																		}
+																	</Chip>
+																))
 															: "역할 없음"}
 													</div>
 												</InlineButton>
