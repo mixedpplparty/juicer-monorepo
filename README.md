@@ -1,4 +1,6 @@
 # juicer-monorepo
+## devcontainer doesn't work
+don't use it
 ## .env
 ```yaml
 POSTGRES_DB=juicer_db
