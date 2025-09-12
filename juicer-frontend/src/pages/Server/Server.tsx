@@ -92,7 +92,7 @@ export const Server = () => {
 		);
 	};
 
-	// I have a feeling that this should be done in the backend
+	// filter out @everyone role
 	const filterOutEveryoneRole = (roles: Role[]): Role[] => {
 		return (
 			roles.filter(
