@@ -3,10 +3,11 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Suspense, useState } from "react";
+import { Suspense, useContext, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
+import { ToastContext } from "../../hooks/useToast";
 import {
 	_assignRolesToUser,
 	_createGame,
@@ -75,6 +76,7 @@ export const Server = () => {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
+	const { showToast } = useContext(ToastContext);
 	const _findRoleById = (roleId: string): ServerDataDiscordRole | undefined => {
 		return _serverData.data?.server_data_discord.roles?.find(
 			(r: ServerDataDiscordRole) => r.id === roleId,
