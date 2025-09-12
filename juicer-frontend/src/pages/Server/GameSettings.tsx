@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
+import { useToast } from "../../hooks/useToast";
 import {
 	_deleteGame,
 	_fetchServerData,
@@ -25,6 +26,7 @@ import { Input } from "../../ui/components/Input";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
+	const { showToast } = useToast();
 	const [isLoading, startTransition] = useLoading();
 	const [searchParams] = useSearchParams();
 	const gameId = searchParams.get("gameId");
@@ -62,25 +64,36 @@ export const GameSettings = () => {
 		const gameDescription = formData.get("game-description");
 		const gameCategory = formData.get("game-category");
 		// TODO do whatever when loading
-		await startTransition(
-			_updateGameWithTagsAndRoles(
-				serverId as string,
-				gameId as string,
-				gameName as string,
-				gameDescription as string,
-				gameCategory as string,
-				selectedTags as number[],
-				selectedRoles as string[],
-			),
-		);
+		try {
+			await startTransition(
+				_updateGameWithTagsAndRoles(
+					serverId as string,
+					gameId as string,
+					gameName as string,
+					gameDescription as string,
+					gameCategory as string,
+					selectedTags as number[],
+					selectedRoles as string[],
+				),
+			);
+			showToast("Game updated", "success");
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
+		}
 		await _serverDataQuery.refetch();
+		navigate(`/server?serverId=${serverId}`);
 	};
 
 	const handleDeleteGame = async () => {
 		// TODO do whatever when loading
-		await startTransition(
-			_deleteGame(serverId as string, parseInt(gameId as string)),
-		);
+		try {
+			await startTransition(
+				_deleteGame(serverId as string, parseInt(gameId as string)),
+			);
+			showToast("Game deleted", "success");
+		} catch (error) {
+			showToast(error.response.data.detail, "error");
+		}
 		await _serverDataQuery.refetch();
 		navigate(`/server?serverId=${serverId}`);
 	};
