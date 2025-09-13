@@ -78,7 +78,7 @@ _fetchSearchGamesInServer.query = (serverId: string, query: string | null) => {
 
 export const _fetchMyDataInServer = async (
 	serverId: string | null,
-): Promise<MyDataInServer | null> => {
+): Promise<MyDataInServer> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/me`,
 		{ withCredentials: true },

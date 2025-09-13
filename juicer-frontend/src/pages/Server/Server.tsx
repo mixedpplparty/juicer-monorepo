@@ -23,7 +23,14 @@ import {
 	_syncServerData,
 	_unassignRolesFromUser,
 } from "../../remotes/remotes";
-import type { Category, Game, Role, Tag } from "../../types/types";
+import type {
+	Category,
+	Game,
+	MyDataInServer,
+	Role,
+	ServerData,
+	Tag,
+} from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
@@ -77,10 +84,11 @@ export const Server = () => {
 	const serverId = searchParams.get("serverId");
 	const { showToast } = useToast();
 
-	const _myDataInServer = useSuspenseQuery({
+	const _myDataInServerQuery = useSuspenseQuery({
 		queryKey: ["myDataInServer", serverId],
 		queryFn: () => _fetchMyDataInServer(serverId),
 	});
+	const _myDataInServer = _myDataInServerQuery.data as MyDataInServer;
 
 	const _searchGamesInServerQuery = useQuery(
 		_fetchSearchGamesInServer.query(serverId as string, query || null),
@@ -89,7 +97,7 @@ export const Server = () => {
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data;
+	const _serverData = _serverDataQuery.data.data as ServerData;
 
 	const createServerAction = async () => {
 		try {
@@ -103,7 +111,7 @@ export const Server = () => {
 
 	const toggleGameRolesAssign = async (game: Game) => {
 		try {
-			if (_iHaveAllRolesInTheGame(_serverData.data, game)) {
+			if (_iHaveAllRolesInTheGame(_serverData, game)) {
 				await startTransition(
 					_unassignRolesFromUser(serverId as string, game.id),
 				);
@@ -183,24 +191,23 @@ export const Server = () => {
 						</Button>
 						<img
 							src={
-								_serverData.data?.server_data_discord.icon ||
-								serverPlaceholderIcon
+								_serverData.server_data_discord.icon || serverPlaceholderIcon
 							}
-							alt={_serverData.data?.server_data_discord.name}
+							alt={_serverData.server_data_discord.name}
 							css={{ width: "48px", height: "48px", borderRadius: "50%" }}
 						/>
 						<div
 							css={{ display: "flex", flexDirection: "column", width: "100%" }}
 						>
 							<h1 css={{ margin: 0 }}>
-								{_serverData.data?.server_data_discord.name}
+								{_serverData.server_data_discord.name}
 							</h1>
 							<div>
-								by {_serverData.data?.server_data_discord.owner_name},{" "}
-								{_serverData.data?.server_data_discord.member_count}명
+								by {_serverData.server_data_discord.owner_name},{" "}
+								{_serverData.server_data_discord.member_count}명
 							</div>
 						</div>
-						{_serverData.data?.server_data_db && (
+						{_serverData.server_data_db && (
 							<div
 								css={{
 									display: "flex",
@@ -253,8 +260,8 @@ export const Server = () => {
 								}}
 							>
 								<img
-									src={_myDataInServer.data?.avatar || serverPlaceholderIcon}
-									alt={_myDataInServer.data?.name}
+									src={_myDataInServer.avatar || serverPlaceholderIcon}
+									alt={_myDataInServer.name}
 									css={{ width: "48px", height: "48px", borderRadius: "50%" }}
 								/>
 								<div
@@ -264,17 +271,17 @@ export const Server = () => {
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
 										<h2 css={{ margin: 0 }}>
-											{_myDataInServer.data?.nick
-												? _myDataInServer.data.nick
-												: _myDataInServer.data?.name}
+											{_myDataInServer.nick
+												? _myDataInServer.nick
+												: _myDataInServer.name}
 										</h2>
 									</div>
 									<div
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
 										{filterOutEveryoneRole(
-											_serverData.data,
-											_myDataInServer.data?.roles || [],
+											_serverData,
+											_myDataInServer.roles || [],
 										).map((role: Role) => {
 											return (
 												<Chip
@@ -289,14 +296,13 @@ export const Server = () => {
 													<_8pxCircle
 														css={{
 															backgroundColor: `rgb(${
-																_findRoleById(
-																	_serverData.data,
-																	role.id,
-																)?.color.join(",") || "255, 255, 255"
+																_findRoleById(_serverData, role.id)?.color.join(
+																	",",
+																) || "255, 255, 255"
 															})`,
 														}}
 													/>
-													{_findRoleById(_serverData.data, role.id)?.name}
+													{_findRoleById(_serverData, role.id)?.name}
 												</Chip>
 											);
 										})}
@@ -356,7 +362,7 @@ export const Server = () => {
 												alignItems: "center",
 												display: "flex",
 												flexDirection: "row",
-												...(_iHaveAllRolesInTheGame(_serverData.data, game) && {
+												...(_iHaveAllRolesInTheGame(_serverData, game) && {
 													backgroundColor: "rgba(255, 255, 255, 1)",
 													color: "rgba(0, 0, 0, 1)",
 												}),
@@ -440,7 +446,7 @@ export const Server = () => {
 													>
 														{game.roles_to_add && game.roles_to_add.length > 0
 															? filterOutEveryoneRole(
-																	_serverData.data,
+																	_serverData,
 																	game.roles_to_add,
 																)?.map((role: Role) => (
 																	<Chip
@@ -451,7 +457,7 @@ export const Server = () => {
 																			gap: "4px",
 																			alignItems: "center",
 																			...(_iHaveAllRolesInTheGame(
-																				_serverData.data,
+																				_serverData,
 																				game,
 																			) && {
 																				border: "1px solid black",
@@ -462,22 +468,19 @@ export const Server = () => {
 																			css={{
 																				backgroundColor: `rgb(${
 																					_findRoleById(
-																						_serverData.data,
+																						_serverData,
 																						role.id,
 																					)?.color.join(",") || "255, 255, 255"
 																				})`,
 																			}}
 																		/>
-																		{
-																			_findRoleById(_serverData.data, role.id)
-																				?.name
-																		}
+																		{_findRoleById(_serverData, role.id)?.name}
 																	</Chip>
 																))
 															: "역할 없음"}
 													</div>
 												</InlineButton>
-												{_serverData.data?.admin && (
+												{_serverData.admin && (
 													<div css={{ alignSelf: "stretch" }}>
 														<LinkNoStyle
 															to={`/server/game?gameId=${game.id}&serverId=${serverId}`}
@@ -499,7 +502,7 @@ export const Server = () => {
 								})}
 							</div>
 						)}
-					{_serverData.data?.server_data_db && _serverData.data.admin && (
+					{_serverData.server_data_db && _serverData.admin && (
 						<Card
 							css={{
 								border: "1px solid rgba(255, 255, 255, 0.66)",
@@ -515,7 +518,7 @@ export const Server = () => {
 						</Card>
 					)}
 
-					{!_serverData.data?.server_data_db && (
+					{!_serverData.server_data_db && (
 						<div
 							css={{
 								display: "flex",
@@ -558,7 +561,7 @@ export const Server = () => {
 							<label htmlFor="game-category">카테고리 (선택)</label>
 							<Select id="game-category" name="game-category" defaultValue="">
 								<Option value="">카테고리 선택</Option>
-								{_serverData.data?.server_data_db.categories?.map(
+								{_serverData.server_data_db.categories?.map(
 									(category: Category) => (
 										<Option key={category.id} value={category.id}>
 											{category.name}
