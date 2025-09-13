@@ -14,7 +14,7 @@ import {
 	_fetchSearchGamesInServer,
 	_fetchServerData,
 } from "../../remotes/remotes";
-import type { Category, Tag } from "../../types/types";
+import type { Category, ServerData, Tag } from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
@@ -40,7 +40,7 @@ export const ServerSettings = () => {
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data;
+	const _serverData = _serverDataQuery.data.data as ServerData;
 
 	const createCategoryFormAction = async (formData: FormData) => {
 		const categoryName = formData.get("category-name");
@@ -106,7 +106,7 @@ export const ServerSettings = () => {
 							css={{ display: "flex", flexDirection: "column", width: "100%" }}
 						>
 							<h1 css={{ margin: 0 }}>서버 설정</h1>
-							<div>{_serverData.data?.server_data_discord.name}</div>
+							<div>{_serverData.server_data_discord.name}</div>
 						</div>
 					</div>
 					<div
@@ -145,16 +145,16 @@ export const ServerSettings = () => {
 									카테고리 추가
 								</Button>
 							</div>
-							{!!_serverData.data?.server_data_db.categories?.length || (
+							{!!_serverData.server_data_db.categories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.data?.server_data_db.categories?.length && (
+							{!!_serverData.server_data_db.categories?.length && (
 								<div
 									css={{ display: "flex", flexDirection: "row", gap: "6px" }}
 								>
-									{_serverData.data?.server_data_db.categories?.map(
+									{_serverData.server_data_db.categories?.map(
 										(category: Category) => (
 											<Chip
 												key={category.id}
@@ -216,12 +216,12 @@ export const ServerSettings = () => {
 								</Button>
 							</div>
 							<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
-								{!!_serverData.data?.server_data_db.tags?.length || (
+								{!!_serverData.server_data_db.tags?.length || (
 									<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 										서버에 태그가 없습니다.
 									</div>
 								)}
-								{!!_serverData.data?.server_data_db.tags?.length && (
+								{!!_serverData.server_data_db.tags?.length && (
 									<div
 										css={{
 											display: "flex",
@@ -229,7 +229,7 @@ export const ServerSettings = () => {
 											gap: "6px",
 										}}
 									>
-										{_serverData.data?.server_data_db.tags?.map((tag: Tag) => (
+										{_serverData.server_data_db.tags?.map((tag: Tag) => (
 											<Chip
 												key={tag.id}
 												css={{

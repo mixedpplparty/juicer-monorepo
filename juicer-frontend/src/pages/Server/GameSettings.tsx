@@ -15,7 +15,7 @@ import {
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
 } from "../../remotes/remotes";
-import type { Category, Game, Role, Tag } from "../../types/types";
+import type { Category, Game, Role, ServerData, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
@@ -33,14 +33,14 @@ export const GameSettings = () => {
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data;
+	const _serverData = _serverDataQuery.data.data as ServerData;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
-		_serverData.data?.server_data_db.games
+		_serverData.server_data_db.games
 			?.find((game: Game) => game.id === parseInt(gameId as string))
 			?.tags?.map((tag: Tag) => tag.id) || [],
 	);
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
-		_serverData.data?.server_data_db.games
+		_serverData.server_data_db.games
 			?.find((game: Game) => game.id === parseInt(gameId as string))
 			?.roles_to_add?.map((role: Role) => role.id) || [],
 	);
@@ -112,7 +112,7 @@ export const GameSettings = () => {
 							}}
 						>
 							<h1 css={{ margin: 0 }}>
-								{_findGameById(_serverData.data, gameId as string)?.name}
+								{_findGameById(_serverData, gameId as string)?.name}
 							</h1>
 							<div>게임 설정</div>
 						</div>
@@ -140,7 +140,7 @@ export const GameSettings = () => {
 							aria-required
 							required
 							defaultValue={
-								_findGameById(_serverData.data, gameId as string)?.name || ""
+								_findGameById(_serverData, gameId as string)?.name || ""
 							}
 						/>
 						<label htmlFor="game-description">설명(선택)</label>
@@ -148,8 +148,7 @@ export const GameSettings = () => {
 							id="game-description"
 							name="game-description"
 							defaultValue={
-								_findGameById(_serverData.data, gameId as string)
-									?.description || ""
+								_findGameById(_serverData, gameId as string)?.description || ""
 							}
 						/>
 						<label htmlFor="game-category">카테고리 (선택)</label>
@@ -157,12 +156,11 @@ export const GameSettings = () => {
 							id="game-category"
 							name="game-category"
 							defaultValue={
-								_findGameById(_serverData.data, gameId as string)?.category
-									?.id || ""
+								_findGameById(_serverData, gameId as string)?.category?.id || ""
 							}
 						>
 							<Option value="">카테고리 선택</Option>
-							{_serverData.data?.server_data_db.categories?.map(
+							{_serverData.server_data_db.categories?.map(
 								(category: Category) => (
 									<Option key={category.id} value={category.id}>
 										{category.name}
@@ -172,7 +170,7 @@ export const GameSettings = () => {
 						</Select>
 						<label htmlFor="game-tags">태그 부여(선택)</label>
 						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
-							{_serverData.data?.server_data_db.tags?.map((tag: Tag) => (
+							{_serverData.server_data_db.tags?.map((tag: Tag) => (
 								<CheckableChip
 									key={tag.id}
 									value={tag.id}
@@ -191,7 +189,7 @@ export const GameSettings = () => {
 								</CheckableChip>
 							))}
 						</div>
-						{_serverData.data?.server_data_db.tags?.length === 0 && (
+						{_serverData.server_data_db.tags?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 태그가 없습니다.
 							</div>
@@ -199,8 +197,8 @@ export const GameSettings = () => {
 						<label htmlFor="game-roles">역할 맵핑(선택)</label>
 						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
 							{filterOutEveryoneRole(
-								_serverData.data,
-								_serverData.data?.server_data_db.roles || [],
+								_serverData,
+								_serverData.server_data_db.roles || [],
 							).map((role: Role) => (
 								<CheckableChip
 									key={role.id}
@@ -218,14 +216,14 @@ export const GameSettings = () => {
 								>
 									<_8pxCircle
 										css={{
-											backgroundColor: `rgb(${_findRoleById(_serverData.data, role.id)?.color.join(",") || "255, 255, 255"})`,
+											backgroundColor: `rgb(${_findRoleById(_serverData, role.id)?.color.join(",") || "255, 255, 255"})`,
 										}}
 									/>
-									{_findRoleById(_serverData.data, role.id)?.name}
+									{_findRoleById(_serverData, role.id)?.name}
 								</CheckableChip>
 							))}
 						</div>
-						{_serverData.data?.server_data_db.roles?.length === 0 && (
+						{_serverData.server_data_db.roles?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 역할이 없습니다.
 							</div>

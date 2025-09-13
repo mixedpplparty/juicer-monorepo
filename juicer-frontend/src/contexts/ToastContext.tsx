@@ -1,11 +1,5 @@
 import CloseIcon from "@mui/icons-material/Close";
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useRef,
-	useState,
-} from "react";
+import { createContext, useCallback, useState } from "react";
 import type { ToastObject, ToastProps } from "../types/types";
 import { Toast } from "../ui/components/Toast";
 import { ToastContainer } from "../ui/components/ToastContainer";

@@ -12,7 +12,7 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Loading } from "../Loading/Loading";
 export const Dashboard = () => {
 	const _myInfoQuery = useSuspenseQuery(_fetchMyInfo.query());
-	const _myInfo = _myInfoQuery.data as unknown as MyInfo;
+	const _myInfo = _myInfoQuery.data.data as MyInfo;
 
 	const [isLoading, startTransition] = useLoading();
 
@@ -49,7 +49,7 @@ export const Dashboard = () => {
 							maxHeight: "100%",
 						}}
 					>
-						{_myInfo.data?.guilds.map((guild: Guild) => (
+						{_myInfo.guilds.map((guild: Guild) => (
 							<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
 								<Card
 									css={{
