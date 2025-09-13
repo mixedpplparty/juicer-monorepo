@@ -49,10 +49,6 @@ POSTGRES_PORT = os.environ.get(
 # SECURITY: Configure CORS origins based on environment
 # In production, replace with actual frontend domains
 origins = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost",
-    "http://127.0.0.1",
 ]
 
 # Add production origins from environment variable
