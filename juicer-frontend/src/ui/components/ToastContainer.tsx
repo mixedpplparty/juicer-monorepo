@@ -9,4 +9,6 @@ export const ToastContainer = styled.div({
 	alignItems: "flex-end",
 	gap: "12px",
 	zIndex: 4,
+	maxWidth: "50%",
+	minWidth: "30%",
 });

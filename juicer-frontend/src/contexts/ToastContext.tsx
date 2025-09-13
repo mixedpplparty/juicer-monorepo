@@ -29,7 +29,7 @@ const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 			<ToastContainer>
 				{toasts.map((toast) => (
 					<Toast key={toast.idx} type={toast.type}>
-						{toast.message}
+						<span css={{ flex: 1 }}>{toast.message}</span>
 						<CloseIcon
 							onClick={() => removeToast(toast.idx)}
 							css={{ cursor: "pointer", width: "16px", height: "16px" }}
