@@ -1,6 +1,7 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -64,8 +65,10 @@ export const GameSettings = () => {
 				),
 			);
 			showToast("Game updated", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 		navigate(`/server?serverId=${serverId}`);
@@ -78,8 +81,10 @@ export const GameSettings = () => {
 				_deleteGame(serverId as string, parseInt(gameId as string)),
 			);
 			showToast("Game deleted", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 		navigate(`/server?serverId=${serverId}`);
