@@ -4,7 +4,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
@@ -24,57 +24,19 @@ import {
 	_syncServerData,
 	_unassignRolesFromUser,
 } from "../../remotes/remotes";
-import type {
-	Category,
-	Game,
-	MyDataInServer,
-	Role,
-	ServerData,
-	Tag,
-} from "../../types/types";
+import type { Category, Game, Role, Tag } from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Option, Select } from "../../ui/components/Select";
-import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
-
-const GameCardSkeleton = () => {
-	return (
-		<Card
-			css={{
-				border: "1px solid rgba(255, 255, 255, 0.33)",
-				display: "flex",
-				flexDirection: "column",
-				gap: "12px",
-			}}
-		>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					gap: "8px",
-					alignItems: "center",
-				}}
-			>
-				<Skeleton css={{ width: "25%", height: "1.5rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-			</div>
-			<Skeleton css={{ width: "35%", height: "1rem" }} />
-			<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-			</div>
-		</Card>
-	);
-};
 
 export const Server = () => {
 	//TODO do whatever when loading
@@ -89,16 +51,15 @@ export const Server = () => {
 		queryKey: ["myDataInServer", serverId],
 		queryFn: () => _fetchMyDataInServer(serverId),
 	});
-	const _myDataInServer = _myDataInServerQuery.data as MyDataInServer;
+	const _myDataInServer = _myDataInServerQuery.data;
 
 	const _searchGamesInServerQuery = useQuery(
 		_fetchSearchGamesInServer.query(serverId as string, query || null),
 	);
-
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data.data as ServerData;
+	const _serverData = _serverDataQuery.data;
 
 	const createServerAction = async () => {
 		try {
@@ -347,15 +308,15 @@ export const Server = () => {
 					)}
 
 					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.data?.length === false &&
+						!!_searchGamesInServerQuery?.data?.length === false &&
 						query && <div>검색 결과가 없습니다.</div>}
 
 					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.data?.length === false &&
+						!!_searchGamesInServerQuery?.data?.length === false &&
 						!query && <div>게임이 없습니다.</div>}
 
 					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.data?.length === true && (
+						!!_searchGamesInServerQuery?.data?.length === true && (
 							<div
 								css={{
 									display: "flex",
@@ -363,7 +324,7 @@ export const Server = () => {
 									gap: "12px",
 								}}
 							>
-								{_searchGamesInServerQuery?.data?.data?.map((game: Game) => {
+								{_searchGamesInServerQuery?.data?.map((game: Game) => {
 									return (
 										<Card
 											css={{

@@ -16,7 +16,7 @@ import {
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
 } from "../../remotes/remotes";
-import type { Category, Game, Role, ServerData, Tag } from "../../types/types";
+import type { Category, Game, Role, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
@@ -34,7 +34,7 @@ export const GameSettings = () => {
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data.data as ServerData;
+	const _serverData = _serverDataQuery.data;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
 		_serverData.server_data_db.games
 			?.find((game: Game) => game.id === parseInt(gameId as string))

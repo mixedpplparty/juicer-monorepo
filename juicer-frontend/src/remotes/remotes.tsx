@@ -1,12 +1,19 @@
 import axios from "axios";
-import type { MyDataInServer } from "../types/types";
+import type {
+	AuthData,
+	Game,
+	MyDataInServer,
+	MyInfo,
+	ServerData,
+} from "../types/types";
 
 axios.defaults.withCredentials = true;
 
-export const _fetchMyTokens = async () => {
-	return await axios.get(_fetchMyTokens.apiPath(), {
+export const _fetchMyTokens = async (): Promise<AuthData> => {
+	const _res = await axios.get(_fetchMyTokens.apiPath(), {
 		withCredentials: true,
 	});
+	return _res.data;
 };
 
 _fetchMyTokens.apiPath = () => {
@@ -21,10 +28,11 @@ _fetchMyTokens.query = () => {
 	};
 };
 
-export const _fetchMyInfo = async () => {
-	return await axios.get(_fetchMyInfo.apiPath(), {
+export const _fetchMyInfo = async (): Promise<MyInfo> => {
+	const _res = await axios.get(_fetchMyInfo.apiPath(), {
 		withCredentials: true,
 	});
+	return _res.data;
 };
 
 _fetchMyInfo.apiPath = () => {
@@ -38,10 +46,13 @@ _fetchMyInfo.query = () => {
 	};
 };
 
-export const _fetchServerData = async (serverId: string) => {
-	return await axios.get(_fetchServerData.apiPath(serverId), {
+export const _fetchServerData = async (
+	serverId: string,
+): Promise<ServerData> => {
+	const _res = await axios.get(_fetchServerData.apiPath(serverId), {
 		withCredentials: true,
 	});
+	return _res.data;
 };
 
 _fetchServerData.apiPath = (serverId: string): string => {
@@ -58,11 +69,12 @@ _fetchServerData.query = (serverId: string) => {
 export const _fetchSearchGamesInServer = async (
 	serverId: string,
 	query: string | null,
-): Promise<unknown> => {
-	return await axios.get(_fetchSearchGamesInServer.apiPath(serverId), {
+): Promise<Game[]> => {
+	const _res = await axios.get(_fetchSearchGamesInServer.apiPath(serverId), {
 		withCredentials: true,
 		params: { query },
 	});
+	return _res.data;
 };
 
 _fetchSearchGamesInServer.apiPath = (serverId: string) => {
