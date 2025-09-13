@@ -3,6 +3,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
@@ -103,8 +104,10 @@ export const Server = () => {
 		try {
 			await startTransition(_createServer(serverId as string));
 			showToast("Server created", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 	};
@@ -120,8 +123,10 @@ export const Server = () => {
 				await startTransition(_assignRolesToUser(serverId as string, game.id));
 				showToast("Roles assigned", "success");
 			}
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 
 		await _serverDataQuery.refetch();
@@ -131,8 +136,10 @@ export const Server = () => {
 		try {
 			await startTransition(_syncServerData(serverId as string));
 			showToast("Roles synced with server", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 
 		await _serverDataQuery.refetch();
@@ -161,8 +168,10 @@ export const Server = () => {
 				),
 			);
 			showToast("Game created", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 		await _searchGamesInServerQuery.refetch();

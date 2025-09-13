@@ -2,6 +2,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
@@ -11,7 +12,6 @@ import {
 	_createTag,
 	_deleteCategory,
 	_deleteTag,
-	_fetchSearchGamesInServer,
 	_fetchServerData,
 } from "../../remotes/remotes";
 import type { Category, ServerData, Tag } from "../../types/types";
@@ -22,7 +22,6 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
-import { Toast } from "../../ui/components/Toast";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
@@ -42,45 +41,56 @@ export const ServerSettings = () => {
 	);
 	const _serverData = _serverDataQuery.data.data as ServerData;
 
-	const createCategoryFormAction = async (formData: FormData) => {
+	const createCategoryFormAction = async (
+		formData: FormData,
+	): Promise<void> => {
 		const categoryName = formData.get("category-name");
 		try {
 			await startTransition(
 				_createCategory(serverId as string, categoryName as string),
 			);
 			showToast("Category created", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 		setIsCreateCategoryModalOpen(false);
 	};
-	const createTagFormAction = async (formData: FormData) => {
+	const createTagFormAction = async (formData: FormData): Promise<void> => {
 		const tagName = formData.get("tag-name");
 		try {
 			await startTransition(_createTag(serverId as string, tagName as string));
 			showToast("Tag created", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 		setIsCreateTagModalOpen(false);
 	};
-	const deleteCategoryAction = (categoryId: number) => async () => {
-		try {
-			await startTransition(_deleteCategory(serverId as string, categoryId));
-			showToast("Category deleted", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
-		}
-		await _serverDataQuery.refetch();
-	};
-	const deleteTagAction = (tagId: number) => async () => {
+	const deleteCategoryAction =
+		(categoryId: number) => async (): Promise<void> => {
+			try {
+				await startTransition(_deleteCategory(serverId as string, categoryId));
+				showToast("Category deleted", "success");
+			} catch (error: unknown) {
+				if (isAxiosError(error)) {
+					showToast(error.response?.data.detail as string, "error");
+				}
+			}
+			await _serverDataQuery.refetch();
+		};
+	const deleteTagAction = (tagId: number) => async (): Promise<void> => {
 		try {
 			await startTransition(_deleteTag(serverId as string, tagId));
 			showToast("Tag deleted", "success");
-		} catch (error) {
-			showToast(error.response.data.detail, "error");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
 		}
 		await _serverDataQuery.refetch();
 	};
