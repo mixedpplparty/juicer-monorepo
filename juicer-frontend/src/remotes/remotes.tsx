@@ -2,9 +2,11 @@ import axios from "axios";
 import type {
 	AuthData,
 	Game,
+	MessageOnSuccess,
 	MyDataInServer,
 	MyInfo,
 	ServerData,
+	SyncRolesResponse,
 } from "../types/types";
 
 axios.defaults.withCredentials = true;
@@ -100,7 +102,7 @@ export const _fetchMyDataInServer = async (
 
 export const _createServer = async (
 	serverId: string | null,
-): Promise<unknown> => {
+): Promise<MessageOnSuccess> => {
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/create`,
 		{ withCredentials: true },
@@ -108,7 +110,7 @@ export const _createServer = async (
 	return _res.data;
 };
 
-export const _signOut = async () => {
+export const _signOut = async (): Promise<MessageOnSuccess> => {
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/auth/revoke`,
 		{ withCredentials: true },
@@ -121,7 +123,8 @@ export const _createGame = async (
 	gameName: string,
 	gameDescription: string | null | undefined,
 	gameCategory: string | null | undefined,
-) => {
+): Promise<number> => {
+	//game ID(number) returned on success
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/create`,
 		{ name: gameName, description: gameDescription, category_id: gameCategory },
@@ -138,7 +141,8 @@ export const _updateGameWithTagsAndRoles = async (
 	gameCategory: string,
 	gameTags: number[],
 	gameRoles: string[],
-) => {
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.put(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
 		{
@@ -155,7 +159,8 @@ export const _updateGameWithTagsAndRoles = async (
 export const _createCategory = async (
 	serverId: string,
 	categoryName: string,
-) => {
+): Promise<number> => {
+	//category ID(number) returned on success
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/create`,
 		{ name: categoryName },
@@ -163,7 +168,11 @@ export const _createCategory = async (
 	return _res.data;
 };
 
-export const _createTag = async (serverId: string, tagName: string) => {
+export const _createTag = async (
+	serverId: string,
+	tagName: string,
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/create`,
 		{ name: tagName },
@@ -171,28 +180,43 @@ export const _createTag = async (serverId: string, tagName: string) => {
 	return _res.data;
 };
 
-export const _deleteCategory = async (serverId: string, categoryId: number) => {
+export const _deleteCategory = async (
+	serverId: string,
+	categoryId: number,
+): Promise<MessageOnSuccess> => {
 	const _res = await axios.delete(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/${categoryId}`,
 	);
 	return _res.data;
 };
 
-export const _deleteTag = async (serverId: string, tagId: number) => {
+export const _deleteTag = async (
+	serverId: string,
+	tagId: number,
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.delete(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/${tagId}`,
 	);
 	return _res.data;
 };
 
-export const _deleteGame = async (serverId: string, gameId: number) => {
+export const _deleteGame = async (
+	serverId: string,
+	gameId: number,
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.delete(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
 	);
 	return _res.data;
 };
 
-export const _assignRolesToUser = async (serverId: string, gameId: number) => {
+export const _assignRolesToUser = async (
+	serverId: string,
+	gameId: number,
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/assign`,
 	);
@@ -202,14 +226,17 @@ export const _assignRolesToUser = async (serverId: string, gameId: number) => {
 export const _unassignRolesFromUser = async (
 	serverId: string,
 	gameId: number,
-) => {
+): Promise<boolean> => {
+	//true on success
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/unassign`,
 	);
 	return _res.data;
 };
 
-export const _syncServerData = async (serverId: string) => {
+export const _syncServerData = async (
+	serverId: string,
+): Promise<SyncRolesResponse> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/sync-roles`,
 	);
