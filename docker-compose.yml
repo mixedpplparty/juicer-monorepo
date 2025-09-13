@@ -1,5 +1,34 @@
 
 services:
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v3.5.2
+    container_name: juicer_traefik
+    restart: always
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
+      - traefik.http.routers.traefik.service=api@internal
+
   # PostgreSQL Database Service
   db:
     image: postgres:15-alpine
@@ -23,12 +52,18 @@ services:
     build: ./juicer-backend
     container_name: juicer_backend
     restart: always
-    ports:
-      - '8000:8000'
     env_file:
       - ./.env
     depends_on:
       - db # Ensures the 'db' service starts before the 'backend'
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.backend.entrypoints=websecure
+      - traefik.http.routers.backend.tls.certresolver=letsencrypt
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+      - traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api
+      - traefik.http.routers.backend.middlewares=backend-stripprefix
 
   # Frontend Service
   frontend:
@@ -37,10 +72,16 @@ services:
     restart: always
     env_file:
       - ./.env
-    ports:
-      - '8080:8080' # Map container's port 8080 to host's port 8080
     depends_on:
       - backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.frontend.entrypoints=websecure
+      - traefik.http.routers.frontend.tls.certresolver=letsencrypt
+      - traefik.http.services.frontend.loadbalancer.server.port=8080
+      - traefik.http.routers.frontend.priority=1
 
 volumes:
   postgres_data: # Defines the named volume for data persistence
+  traefik_letsencrypt: # Defines the named volume for Let's Encrypt certificates
