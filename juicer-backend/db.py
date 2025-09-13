@@ -883,9 +883,13 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
         List of game dictionaries that have all specified tags
     """
     async with db.cursor() as cursor:
+        # SECURITY: Use parameterized query to prevent SQL injection
+        if not tag_names:
+            return []
+
         # Build the query to find games that have ALL specified tags
         placeholders = ','.join(['%s'] * len(tag_names))
-        await cursor.execute(f"""
+        query = f"""
             SELECT 
                 g.game_id,
                 g.name,
@@ -921,7 +925,8 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
             )
             GROUP BY g.game_id, g.name, g.description, g.category_id, c.name
             ORDER BY g.name
-        """, (server_id, server_id, *tag_names, len(tag_names)))
+        """
+        await cursor.execute(query, (server_id, server_id, *tag_names, len(tag_names)))
         results = await cursor.fetchall()
         return [
             {

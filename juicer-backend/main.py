@@ -1,5 +1,6 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
 from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, create_tag, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
+from security import check_rate_limit, validate_game_name, validate_tag_name, validate_category_name, validate_description, validate_role_ids, validate_tag_ids, validate_server_id
 import discord
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +16,7 @@ from dotenv import load_dotenv
 from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, CreateTagBody, UpdateGameBody
 
 file_dir = os.path.dirname(__file__)
@@ -32,6 +33,8 @@ discord_client = discord.Client(intents=intents)
 
 # load .env
 load_dotenv()
+
+# SECURITY: Use environment variables for all sensitive configuration
 REDIRECT_AFTER_SIGN_IN_URI = os.environ.get('REDIRECT_AFTER_SIGN_IN_URI')
 REDIRECT_AFTER_SIGN_IN_FAILED_URI = os.environ.get(
     'REDIRECT_AFTER_SIGN_IN_FAILED_URI')
@@ -43,7 +46,8 @@ POSTGRES_PASSWORD = os.environ.get(
 POSTGRES_PORT = os.environ.get(
     'POSTGRES_PORT')
 
-# allowed origins(cors)
+# SECURITY: Configure CORS origins based on environment
+# In production, replace with actual frontend domains
 origins = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
@@ -51,10 +55,15 @@ origins = [
     "http://127.0.0.1",
 ]
 
+# Add production origins from environment variable
+if os.environ.get('ALLOWED_ORIGINS'):
+    origins.extend(os.environ.get('ALLOWED_ORIGINS').split(','))
+
 
 # db-related
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@db:{POSTGRES_PORT}/{POSTGRES_DB}"
-print(DATABASE_URL)
+# SECURITY: Don't log sensitive database credentials
+# print(DATABASE_URL)  # Removed for security
 db_pool: AsyncConnectionPool | None = None
 
 
@@ -91,7 +100,14 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,  # for cookie ping-pong
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With"
+    ],  # SECURITY: Specify allowed headers instead of wildcard
 )
 
 
@@ -231,13 +247,14 @@ async def discord_callback(code: str, response: Response):
             # err
             return RedirectResponse(url=REDIRECT_AFTER_SIGN_IN_FAILED_URI)
 
-        # http-only cookie
+        # SECURITY: Secure cookie configuration
         response.set_cookie(
             key="discord_access_token",
             value=access_token,
             httponly=True,  # prevents js access
-            samesite="lax",  # allow cross-site cookies for localhost:5173
-            secure=False,    # set True when serving over HTTPS
+            samesite="lax",  # CSRF protection
+            # HTTPS only in production
+            secure=os.environ.get('ENVIRONMENT') == 'production',
             # Set cookie expiry from token
             max_age=token_data.get("expires_in"),
         )
@@ -249,8 +266,9 @@ async def discord_callback(code: str, response: Response):
                 key="discord_refresh_token",
                 value=refresh_token,
                 httponly=True,  # prevents js access
-                samesite="lax",  # allow cross-site cookies for localhost:5173
-                secure=False,    # set True when serving over HTTPS
+                samesite="lax",  # CSRF protection
+                # HTTPS only in production
+                secure=os.environ.get('ENVIRONMENT') == 'production',
                 # Set cookie expiry from token
                 max_age=token_data.get("expires_in"),
             )
@@ -309,8 +327,9 @@ async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), r
             key="discord_access_token",
             value=refresh_token.get("access_token"),
             httponly=True,  # prevents js access
-            samesite="lax",  # allow cross-site cookies for localhost:5173
-            secure=False,    # set True when serving over HTTPS
+            samesite="lax",  # CSRF protection
+            # HTTPS only in production
+            secure=os.environ.get('ENVIRONMENT') == 'production',
             # Set cookie expiry from token
             max_age=refresh_token.get("expires_in"),
         )
@@ -318,8 +337,9 @@ async def discord_refresh(discord_refresh_token: Optional[str] = Cookie(None), r
             key="discord_refresh_token",
             value=refresh_token.get("refresh_token"),
             httponly=True,  # prevents js access
-            samesite="lax",  # allow cross-site cookies for localhost:5173
-            secure=False,    # set True when serving over HTTPS
+            samesite="lax",  # CSRF protection
+            # HTTPS only in production
+            secure=os.environ.get('ENVIRONMENT') == 'production',
             # Set cookie expiry from token
             max_age=refresh_token.get("expires_in"),
         )
@@ -414,7 +434,15 @@ async def get_db_member_data(discord_access_token: Optional[str] = Cookie(None),
 
 @discord_client.event
 @app.get("/discord/server/{server_id}")
-async def get_db_server_data(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def get_db_server_data(server_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None):
+    # SECURITY: Rate limiting and input validation
+    await check_rate_limit(request)
+    if not validate_server_id(server_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid server ID format"
+        )
+
     auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
     user_data = auth_data["user_data"]
     guild = auth_data["guild"]
@@ -591,33 +619,34 @@ async def get_games(server_id: int, discord_access_token: Optional[str] = Cookie
 
 @discord_client.event
 @app.post("/discord/server/{server_id}/games/create")
-async def create_game_request(server_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+async def create_game_request(server_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None):
+    # SECURITY: Rate limiting and input validation
+    await check_rate_limit(request)
+    if not validate_server_id(server_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid server ID format"
+        )
+
+    # Validate and sanitize input
+    try:
+        validated_name = validate_game_name(body.name)
+        validated_description = validate_description(body.description)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
 
     try:
-        res = await create_game(db, server_id, body.name, body.description, body.category_id)
+        res = await create_game(db, server_id, validated_name, validated_description, body.category_id)
         return res
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create game: {str(e)}"
-        )
-
-# LEGACY
-
-
-@discord_client.event
-@app.put("/discord/server/{server_id}/games/{game_id}/legacy")
-async def update_game_request(server_id: int, game_id: int, body: CreateGameBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
-    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
-
-    try:
-        res = await update_game(db, game_id, server_id, body.name, body.category_id, body.description)
-        return res
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update game: {str(e)}"
         )
 
 

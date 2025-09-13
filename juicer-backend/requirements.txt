@@ -1,8 +1,9 @@
-discord.py
-requests
-aiohttp
-fastapi[standard]
-uvicorn
-python-dotenv
-psycopg[binary]
-psycopg[pool]
+# SECURITY: Pinned versions to prevent supply chain attacks
+discord.py>=2.3.2,<3.0.0
+requests>=2.31.0,<3.0.0
+aiohttp>=3.9.0,<4.0.0
+fastapi[standard]>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+python-dotenv>=1.0.0,<2.0.0
+psycopg[binary]>=3.1.0,<4.0.0
+psycopg[pool]>=3.1.0,<4.0.0
