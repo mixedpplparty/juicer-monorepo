@@ -94,3 +94,9 @@ export type AuthData = {
 export type ToastProps = {
 	type: "error" | "success" | "info" | null;
 };
+
+export type ToastObject = {
+	idx: number;
+	message: string;
+	type: ToastProps["type"];
+};

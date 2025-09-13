@@ -1,7 +1,14 @@
-import { createContext, useContext, useRef, useState } from "react";
-import type { ToastProps } from "../types/types";
+import CloseIcon from "@mui/icons-material/Close";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useRef,
+	useState,
+} from "react";
+import type { ToastObject, ToastProps } from "../types/types";
 import { Toast } from "../ui/components/Toast";
-
+import { ToastContainer } from "../ui/components/ToastContainer";
 export const ToastContext = createContext<{
 	showToast: (message: string, type: ToastProps["type"]) => void;
 }>({
@@ -9,27 +16,33 @@ export const ToastContext = createContext<{
 });
 
 const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-	const [message, setMessage] = useState<string | null>(null);
-	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const [type, setType] = useState<ToastProps["type"]>("info");
+	const [toasts, setToasts] = useState<ToastObject[]>([]);
+	const removeToast = useCallback((idx: number) => {
+		setToasts((prev) => prev.filter((toast) => toast.idx !== idx));
+	}, []);
 
 	const showToast = (message: string, type: ToastProps["type"]) => {
-		if (timeout.current) {
-			clearTimeout(timeout.current);
-		}
-		setMessage(message);
-		setIsOpen(true);
-		setType(type);
-		timeout.current = setTimeout(() => {
-			setIsOpen(false);
+		const idx = Date.now(); //use instead of toasts.length for reliability
+		setToasts((prev) => [...prev, { message, type, idx }]);
+		setTimeout(() => {
+			removeToast(idx);
 		}, 3000);
 	};
 
 	return (
 		<ToastContext.Provider value={{ showToast }}>
 			{children}
-			{isOpen && <Toast type={type}>{message}</Toast>}
+			<ToastContainer>
+				{toasts.map((toast) => (
+					<Toast key={toast.idx} type={toast.type}>
+						{toast.message}
+						<CloseIcon
+							onClick={() => removeToast(toast.idx)}
+							css={{ cursor: "pointer", width: "16px", height: "16px" }}
+						/>
+					</Toast>
+				))}
+			</ToastContainer>
 		</ToastContext.Provider>
 	);
 };
