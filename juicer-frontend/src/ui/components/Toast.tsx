@@ -15,7 +15,6 @@ const slideInAnimation = keyframes({
 
 export const Toast = styled.div<ToastProps>((props) => ({
 	left: "50%",
-	maxWidth: "50%",
 	background:
 		props.type === "error"
 			? "#ed5555"
@@ -30,4 +29,7 @@ export const Toast = styled.div<ToastProps>((props) => ({
 	border: "1px solid rgba(255, 255, 255, 0.66)",
 	zIndex: 4,
 	animation: `${slideInAnimation} 0.3s ease-out forwards`,
+	width: "100%",
+	display: "flex",
+	alignItems: "center",
 }));
