@@ -100,3 +100,12 @@ export type ToastObject = {
 	message: string;
 	type: ToastProps["type"];
 };
+
+export type MessageOnSuccess = {
+	detail: string;
+};
+
+export type SyncRolesResponse = {
+	roles_created: string[];
+	roles_deleted: string[];
+};

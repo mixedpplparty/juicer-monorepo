@@ -352,7 +352,7 @@ async def discord_revoke(response: Response, discord_access_token: Optional[str]
 async def discord_remove_cookies(response: Response):
     response.delete_cookie("discord_access_token")
     response.delete_cookie("discord_refresh_token")
-    return {"message": "Cookies removed"}
+    return {"detail": "Cookies removed"}
 
 
 @app.get("/discord/user-data")
@@ -468,7 +468,7 @@ async def create_server_request(server_id: int, discord_access_token: Optional[s
     try:
         res = await create_server(db, server_id)
         if res:
-            return {"message": "Server created. Roles need to be synced."}
+            return {"detail": "Server created. Roles need to be synced."}
         elif not res:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -833,7 +833,7 @@ async def delete_category_request(server_id: int, category_id: int, discord_acce
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=res['message']
             )
-        return res
+        return {"detail": res['message']}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
