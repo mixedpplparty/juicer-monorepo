@@ -14,7 +14,7 @@ import {
 	_deleteTag,
 	_fetchServerData,
 } from "../../remotes/remotes";
-import type { Category, ServerData, Tag } from "../../types/types";
+import type { Category, Tag } from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
@@ -39,7 +39,7 @@ export const ServerSettings = () => {
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
 	);
-	const _serverData = _serverDataQuery.data.data as ServerData;
+	const _serverData = _serverDataQuery.data;
 
 	const createCategoryFormAction = async (
 		formData: FormData,

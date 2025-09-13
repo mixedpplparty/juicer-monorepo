@@ -12,7 +12,7 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Loading } from "../Loading/Loading";
 export const Dashboard = () => {
 	const _myInfoQuery = useSuspenseQuery(_fetchMyInfo.query());
-	const _myInfo = _myInfoQuery.data.data as MyInfo;
+	const _myInfo = _myInfoQuery.data;
 
 	const [isLoading, startTransition] = useLoading();
 
