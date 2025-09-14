@@ -79,7 +79,14 @@ services:
 
   # Frontend Service
   frontend:
-    build: ./juicer-frontend
+    build:
+      context: ./juicer-frontend
+      args:
+        VITE_BACKEND_URI: ${VITE_BACKEND_URI}
+        VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}
+        VITE_USER_AUTH_URI: ${VITE_USER_AUTH_URI}
+        VITE_API_ENDPOINT: ${VITE_API_ENDPOINT}
+        VITE_CLIENT_ID: ${VITE_CLIENT_ID}
     container_name: juicer_frontend
     restart: always
     env_file:
