@@ -10,7 +10,7 @@ from fastapi import Cookie, HTTPException, status
 # load .env
 load_dotenv()
 CLIENT_ID = os.environ.get('VITE_CLIENT_ID')
-CLIENT_SECRET = os.environ.get('VITE_CLIENT_SECRET')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 REDIRECT_URI = os.environ.get('REDIRECT_URI')
 API_ENDPOINT = os.environ.get('VITE_API_ENDPOINT')
 
