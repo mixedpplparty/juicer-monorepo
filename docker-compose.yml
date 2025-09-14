@@ -7,7 +7,7 @@ services:
     restart: always
     command:
       - --api.dashboard=true
-      - --api.insecure=true
+      - --api.insecure=false  # Secure dashboard access
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
@@ -15,19 +15,28 @@ services:
       - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --global.sendanonymoususage=false
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Traefik dashboard
+      - "80:80"   # HTTP - will redirect to HTTPS
+      - "443:443" # HTTPS
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_letsencrypt:/letsencrypt
     labels:
       - traefik.enable=true
-      - traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`)
-      - traefik.http.routers.traefik.entrypoints=websecure
-      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
-      - traefik.http.routers.traefik.service=api@internal
+      # HTTP to HTTPS redirect
+      - traefik.http.routers.http-redirect.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.http-redirect.entrypoints=web
+      - traefik.http.routers.http-redirect.middlewares=redirect-to-https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+      # Secure dashboard access
+      - traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/dashboard`)
+      - traefik.http.routers.traefik-dashboard.entrypoints=websecure
+      - traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt
+      - traefik.http.routers.traefik-dashboard.service=api@internal
+      - traefik.http.routers.traefik-dashboard.middlewares=auth
+      - traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}
 
   # PostgreSQL Database Service
   db:
@@ -41,10 +50,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persists database data
       - ./juicer-db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - '${POSTGRES_PORT}:${POSTGRES_PORT}' # Expose port to host for development/debugging
+    # SECURITY: Remove port exposure - database should only be accessible internally
     expose:
-      - '${POSTGRES_PORT}' # expose port to linked services
+      - '${POSTGRES_PORT}' # expose port to linked services only
     command: -p ${POSTGRES_PORT}
 
   # Backend Service
@@ -58,12 +66,16 @@ services:
       - db # Ensures the 'db' service starts before the 'backend'
     labels:
       - traefik.enable=true
+      - traefik.port=8000
       - traefik.http.routers.backend.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/api`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls.certresolver=letsencrypt
       - traefik.http.services.backend.loadbalancer.server.port=8000
       - traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api
-      - traefik.http.routers.backend.middlewares=backend-stripprefix
+      - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Forwarded-For=""
+      - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Real-IP=""
+      - traefik.http.routers.backend.middlewares=backend-stripprefix,backend-security
 
   # Frontend Service
   frontend:
@@ -81,6 +93,15 @@ services:
       - traefik.http.routers.frontend.tls.certresolver=letsencrypt
       - traefik.http.services.frontend.loadbalancer.server.port=8080
       - traefik.http.routers.frontend.priority=1
+      # Security headers for frontend
+      - traefik.http.middlewares.frontend-security.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.frontend-security.headers.customrequestheaders.X-Forwarded-For=""
+      - traefik.http.middlewares.frontend-security.headers.customrequestheaders.X-Real-IP=""
+      - traefik.http.middlewares.frontend-security.headers.customresponseheaders.X-Frame-Options=DENY
+      - traefik.http.middlewares.frontend-security.headers.customresponseheaders.X-Content-Type-Options=nosniff
+      - traefik.http.middlewares.frontend-security.headers.customresponseheaders.X-XSS-Protection=1;mode=block
+      - traefik.http.middlewares.frontend-security.headers.customresponseheaders.Referrer-Policy=strict-origin-when-cross-origin
+      - traefik.http.routers.frontend.middlewares=frontend-security
 
 volumes:
   postgres_data: # Defines the named volume for data persistence
