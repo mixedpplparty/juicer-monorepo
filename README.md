@@ -19,6 +19,26 @@ VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=(discord_cli
 VITE_BACKEND_URI=http://your_domain:8000
 ENVIRONMENT=production
 ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
+# Domain Configuration
+TRAEFIK_DOMAIN=yourdomain.com
+# Let's Encrypt Configuration
+ACME_EMAIL=your-email@example.com
+# Traefik Dashboard Authentication
+# Generate with: htpasswd -nb admin your_password
+# all $s have to be doubled
+TRAEFIK_AUTH=admin:$$2y$10$$example_hash_here
+```
+
+### TRAEFIK_AUTH
+```bash
+# Install htpasswd (if not available)
+# On Ubuntu/Debian: sudo apt-get install apache2-utils
+# On macOS: brew install httpd
+
+# Generate password hash
+htpasswd -nb admin your_secure_password
+
+# Add the output to your .env file as TRAEFIK_AUTH
 ```
 
 ### ENVIRONMENT
