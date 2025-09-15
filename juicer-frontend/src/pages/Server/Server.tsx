@@ -249,7 +249,12 @@ export const Server = () => {
 										</h2>
 									</div>
 									<div
-										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
+										css={{
+											display: "flex",
+											flexDirection: "row",
+											gap: "4px",
+											flexWrap: "wrap",
+										}}
 									>
 										{filterOutEveryoneRole(
 											_serverData,
@@ -389,6 +394,7 @@ export const Server = () => {
 															display: "flex",
 															flexDirection: "row",
 															gap: "4px",
+															flexWrap: "wrap",
 														}}
 													>
 														{game.tags && game.tags.length > 0
@@ -414,6 +420,7 @@ export const Server = () => {
 															display: "flex",
 															flexDirection: "row",
 															gap: "4px",
+															flexWrap: "wrap",
 														}}
 													>
 														{game.roles_to_add && game.roles_to_add.length > 0
