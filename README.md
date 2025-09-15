@@ -1,4 +1,5 @@
 # juicer-monorepo
+
 ## to send non-secure(non-HTTPS/TLS) requests from FE side
 ### juicer-frontend/nginx.conf
 remove `add_header X-Forwarded-Proto "https" always;`
@@ -53,5 +54,5 @@ htpasswd -nb admin your_secure_password
 ## Discord Dev Portal Settings
 1. Create Application
 2. Head to `OAuth2`
-3. Add `http://your_domain:8000/discord/auth/callback` to Redirect URI
-4. Select `http://your_domain:8000/discord/auth/callback` as Redirect URI
+3. Add `http://your_domain/api/discord/auth/callback` to Redirect URI
+4. Select `http://your_domain/api/discord/auth/callback` as Redirect URI
