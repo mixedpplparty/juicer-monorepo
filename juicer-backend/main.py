@@ -817,6 +817,52 @@ async def unassign_roles_from_user_request(server_id: int, game_id: int, discord
 
 
 @discord_client.event
+@app.get("/discord/server/{server_id}/roles/{role_id}/assign")
+async def assign_roles_to_user_request(server_id: int, role_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
+    user_data = auth_data["user_data"]
+    try:
+        user_id = user_data.get("id")
+        role_obj = discord_client.get_guild(server_id).get_role(role_id)
+        if role_obj.name == "@everyone":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot assign @everyone role to user"
+            )
+        await discord_client.get_guild(server_id).get_member(user_id).add_roles(
+            role_obj)
+        return True
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign role to user: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.get("/discord/server/{server_id}/roles/{role_id}/unassign")
+async def assign_roles_to_user_request(server_id: int, role_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token)
+    user_data = auth_data["user_data"]
+    try:
+        user_id = user_data.get("id")
+        role_obj = discord_client.get_guild(server_id).get_role(role_id)
+        if role_obj.name == "@everyone":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot unassign @everyone role from user"
+            )
+        await discord_client.get_guild(server_id).get_member(user_id).remove_roles(
+            role_obj)
+        return True
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to unassign role from user: {str(e)}"
+        )
+
+
+@discord_client.event
 @app.post("/discord/server/{server_id}/categories/create")
 async def create_category_request(server_id: int, body: CreateCategoryBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
     await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
