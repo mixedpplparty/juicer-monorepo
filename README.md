@@ -1,6 +1,12 @@
 # juicer-monorepo
-## devcontainer doesn't work
-don't use it
+## to send non-secure(non-HTTPS/TLS) requests from FE side
+### juicer-frontend/nginx.conf
+remove `add_header X-Forwarded-Proto "https" always;`
+### juicer-frontend/index.html
+remove `<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />`
+### don't forget to edit .env
+remove `ENVIRONMENT=production` for the backend to receive non-HTTPS requests
+
 ## .env
 ```yaml
 POSTGRES_DB=juicer_db
