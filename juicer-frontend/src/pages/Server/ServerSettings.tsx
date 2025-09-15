@@ -25,6 +25,7 @@ import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
+	// usages of isLoading to be added later
 	const [isLoading, startTransition] = useLoading();
 	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
 		useState<boolean>(false);

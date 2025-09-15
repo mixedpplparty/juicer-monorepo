@@ -41,6 +41,7 @@ import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	//TODO do whatever when loading
 	const [query, setQuery] = useState<string | null>(null);
+	// usages of isLoading to be added later
 	const [isLoading, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();

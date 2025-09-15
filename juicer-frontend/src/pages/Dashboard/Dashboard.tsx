@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
 import { _fetchMyInfo, _signOut } from "../../remotes/remotes";
-import type { Guild, MyInfo } from "../../types/types";
+import type { Guild } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
@@ -14,6 +14,8 @@ export const Dashboard = () => {
 	const _myInfoQuery = useSuspenseQuery(_fetchMyInfo.query());
 	const _myInfo = _myInfoQuery.data;
 
+	// usages of isLoading to be added later
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [isLoading, startTransition] = useLoading();
 
 	const signOut = async () => {
