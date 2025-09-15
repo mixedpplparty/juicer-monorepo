@@ -234,6 +234,28 @@ export const _unassignRolesFromUser = async (
 	return _res.data;
 };
 
+export const _assignRoleByIdToUser = async (
+	serverId: string,
+	roleId: string,
+): Promise<boolean> => {
+	//true on success
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/${roleId}/assign`,
+	);
+	return _res.data;
+};
+
+export const _unassignRoleByIdFromUser = async (
+	serverId: string,
+	roleId: string,
+): Promise<boolean> => {
+	//true on success
+	const _res = await axios.get(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/${roleId}/unassign`,
+	);
+	return _res.data;
+};
+
 export const _syncServerData = async (
 	serverId: string,
 ): Promise<SyncRolesResponse> => {

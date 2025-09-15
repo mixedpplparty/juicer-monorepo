@@ -48,3 +48,10 @@ export const filterOutEveryoneRole = (
 		) || []
 	);
 };
+
+export const _iHaveRole = (
+	_serverData: ServerData,
+	roleId: string,
+): boolean => {
+	return _findRoleById(_serverData, roleId)?.me_in_role || false;
+};
