@@ -27,6 +27,7 @@ import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
 	const { showToast } = useToast();
+	// usages of isLoading to be added later
 	const [isLoading, startTransition] = useLoading();
 	const [searchParams] = useSearchParams();
 	const gameId = searchParams.get("gameId");
