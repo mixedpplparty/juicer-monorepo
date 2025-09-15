@@ -36,8 +36,8 @@ services:
       - traefik.http.routers.dashboard.entrypoints=websecure
       - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
       - traefik.http.routers.dashboard.service=api@internal
-      - traefik.http.routers.dashboard.middlewares=auth
-      - traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}
+      - traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_AUTH}
+      - traefik.http.routers.dashboard.middlewares=dashboard-auth
 
   # PostgreSQL Database Service
   db:
