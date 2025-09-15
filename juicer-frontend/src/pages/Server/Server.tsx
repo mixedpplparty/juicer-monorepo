@@ -431,7 +431,7 @@ export const Server = () => {
 																			flexDirection: "row",
 																			gap: "4px",
 																			alignItems: "center",
-																			cursor: "poiinter",
+																			cursor: "pointer",
 																			...(_iHaveRole(_serverData, role.id) && {
 																				border: "1px solid black",
 																				background: "rgba(255, 255, 255, 1)",
