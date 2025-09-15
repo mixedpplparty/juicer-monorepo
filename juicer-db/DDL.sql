@@ -4,10 +4,18 @@ CREATE TABLE servers (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Table for role categories, specific to each server
+CREATE TABLE role_categories (
+    role_category_id SERIAL PRIMARY KEY,
+    server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL
+);
+
 -- Table for roles within a server (needed for referential integrity)
 CREATE TABLE roles (
     role_id BIGINT PRIMARY KEY,
-    server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE
+    server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE,
+    role_category_id INT REFERENCES role_categories(role_category_id) ON DELETE SET NULL -- Each role can have zero or one category
 );
 
 -- Table for game categories, specific to each server
@@ -25,6 +33,7 @@ CREATE TABLE games (
     category_id INT REFERENCES categories(category_id) ON DELETE SET NULL, -- If a category is deleted, the game remains but without a category
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    thumbnail BYTEA CHECK (octet_length(thumbnail) <= 1048576), -- Optional thumbnail image stored in binary, max 1MB
     -- UNIQUE(server_id, name) -- Game names must be unique within a server
 );
 
