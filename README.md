@@ -1,5 +1,9 @@
 # juicer-monorepo
 
+## if /dashboard, /api, /backend doesn't work
+Please, PLEASE make sure not to forget the trailing slash
+e.g. `https:/your-domain/dashboard/`
+
 ## to send non-secure(non-HTTPS/TLS) requests from FE side
 ### juicer-frontend/nginx.conf
 remove `add_header X-Forwarded-Proto "https" always;`
