@@ -120,7 +120,7 @@ export const GameSettings = () => {
 							<h1 css={{ margin: 0 }}>
 								{_findGameById(_serverData, gameId as string)?.name}
 							</h1>
-							<div>게임 설정</div>
+							<div>주제 설정</div>
 						</div>
 						<Button
 							css={{
@@ -132,14 +132,14 @@ export const GameSettings = () => {
 							onClick={handleDeleteGame}
 						>
 							<DeleteIcon css={{ width: "20px", height: "20px" }} />
-							게임 삭제
+							주제 삭제
 						</Button>
 					</div>
 					<form
 						action={onGameSettingsChangeSubmitAction}
 						css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 					>
-						<label htmlFor="game-name">게임 이름</label>
+						<label htmlFor="game-name">이름</label>
 						<Input
 							id="game-name"
 							name="game-name"
