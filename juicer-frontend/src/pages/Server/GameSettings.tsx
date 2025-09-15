@@ -15,6 +15,7 @@ import {
 	_deleteGame,
 	_fetchServerData,
 	_updateGameWithTagsAndRoles,
+	_uploadThumbnailToGame,
 } from "../../remotes/remotes";
 import type { Category, Game, Role, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
@@ -52,7 +53,25 @@ export const GameSettings = () => {
 		const gameName = formData.get("game-name");
 		const gameDescription = formData.get("game-description");
 		const gameCategory = formData.get("game-category");
+		const gameThumbnail = formData.get("game-thumbnail");
 		// TODO do whatever when loading
+		try {
+			await startTransition(
+				_uploadThumbnailToGame(
+					serverId as string,
+					gameId as string,
+					gameThumbnail as File,
+				),
+			);
+			showToast(
+				"Game thumbnail uploaded. Trying to update other info...",
+				"success",
+			);
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
+		}
 		try {
 			await startTransition(
 				_updateGameWithTagsAndRoles(
@@ -148,6 +167,13 @@ export const GameSettings = () => {
 							defaultValue={
 								_findGameById(_serverData, gameId as string)?.name || ""
 							}
+						/>
+						<label htmlFor="game-thumbnail">썸네일(선택)</label>
+						<Input
+							id="game-thumbnail"
+							name="game-thumbnail"
+							type="file"
+							accept="image/*"
 						/>
 						<label htmlFor="game-description">설명(선택)</label>
 						<Input

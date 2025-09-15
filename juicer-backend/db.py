@@ -1,4 +1,5 @@
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, List, Dict, Union
+import base64
 from tempfile import SpooledTemporaryFile
 from psycopg import AsyncConnection
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
@@ -329,7 +330,7 @@ async def delete_game(db: AsyncConnection, game_id: int, server_id: int) -> bool
 # GAME THUMBNAIL OPERATIONS
 # ============================================================================
 
-async def add_or_update_game_thumbnail(db: AsyncConnection, game_id: int, server_id: int, thumbnail_file: SpooledTemporaryFile) -> bool:
+async def add_or_update_game_thumbnail(db: AsyncConnection, game_id: int, server_id: int, thumbnail_file: Union[str, bytes, bytearray]) -> bool:
     """
     Adds or overwrites a game's thumbnail image. Enforces 1 MB max size.
 
@@ -342,11 +343,26 @@ async def add_or_update_game_thumbnail(db: AsyncConnection, game_id: int, server
     Returns:
         True if updated, False if game not found
     """
-    # Read all bytes from provided file
-    thumbnail_file.seek(0)
-    image_bytes = thumbnail_file.read()
-    if image_bytes is None:
-        image_bytes = b""
+    # Normalize input to bytes
+    image_bytes: bytes
+    if isinstance(thumbnail_file, (bytes, bytearray)):
+        image_bytes = bytes(thumbnail_file)
+    elif isinstance(thumbnail_file, str):
+        data_str = thumbnail_file.strip()
+        # Handle data URL (e.g., "data:image/webp;base64,....")
+        if data_str.startswith("data:") and "," in data_str:
+            try:
+                base64_part = data_str.split(",", 1)[1]
+                image_bytes = base64.b64decode(base64_part, validate=False)
+            except Exception:
+                # Fallback: try decoding the whole string
+                image_bytes = base64.b64decode(data_str, validate=False)
+        else:
+            # Assume plain base64 string
+            image_bytes = base64.b64decode(data_str, validate=False)
+    else:
+        # Unsupported type
+        raise ValueError("thumbnail_file must be bytes or base64 string")
 
     # Enforce 1 MB limit proactively to avoid DB error
     if len(image_bytes) > 1048576:
