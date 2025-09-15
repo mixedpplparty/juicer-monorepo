@@ -1,7 +1,7 @@
 # juicer-monorepo
 
 ## if /dashboard, /api, /backend doesn't work
-Please, PLEASE make sure not to forget the trailing slash
+Make sure not to forget the trailing slash:
 e.g. `https:/your-domain/dashboard/`
 
 ## to send non-secure(non-HTTPS/TLS) requests from FE side
@@ -11,6 +11,9 @@ remove `add_header X-Forwarded-Proto "https" always;`
 remove `<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />`
 ### don't forget to edit .env
 remove `ENVIRONMENT=production` for the backend to receive non-HTTPS requests
+
+## docker-compose.yml
+for security, in production mode, in `servies.traefik.command`, remove `api=true` and `api.dashboard=true`
 
 ## .env
 ```yaml
