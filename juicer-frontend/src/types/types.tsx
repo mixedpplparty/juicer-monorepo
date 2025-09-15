@@ -19,11 +19,17 @@ export type ServerDataDb = {
 	server_id: string;
 	roles: Role[] | null;
 	categories: Category[] | null;
+	role_categories: RoleCategory[] | null;
 	tags: Tag[] | null;
 	games: Game[] | null;
 };
 
 export type Category = {
+	id: number;
+	name: string;
+};
+
+export type RoleCategory = {
 	id: number;
 	name: string;
 };
@@ -39,6 +45,7 @@ export type TagId = {
 
 export type Role = {
 	id: string;
+	role_category_id: number | null;
 };
 
 export type Game = {
