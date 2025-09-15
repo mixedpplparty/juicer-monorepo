@@ -297,9 +297,9 @@ export const Server = () => {
 							alignItems: "center",
 						}}
 					>
-						<h2 css={{ margin: 0, flex: 1 }}>게임</h2>
+						<h2 css={{ margin: 0, flex: 1 }}>주제</h2>
 						<Input
-							placeholder="게임 이름 검색"
+							placeholder="이름/카테고리/태그 검색"
 							value={query || ""}
 							onChange={(e) => setQuery(e.target.value)}
 						/>
@@ -321,7 +321,7 @@ export const Server = () => {
 
 					{_searchGamesInServerQuery?.data &&
 						!!_searchGamesInServerQuery?.data?.length === false &&
-						!query && <div>게임이 없습니다.</div>}
+						!query && <div>주제가 없습니다.</div>}
 
 					{_searchGamesInServerQuery?.data &&
 						!!_searchGamesInServerQuery?.data?.length === true && (
@@ -494,7 +494,7 @@ export const Server = () => {
 							onClick={() => setIsAddGameModalOpen(true)}
 						>
 							<AddIcon css={{ width: "16px", height: "16px" }} />
-							게임 추가하기
+							주제 추가하기
 						</Card>
 					)}
 
@@ -529,12 +529,12 @@ export const Server = () => {
 			</FullPageBase>
 			{isAddGameModalOpen && (
 				<ModalPortal>
-					<Modal title="게임 추가" onClose={() => setIsAddGameModalOpen(false)}>
+					<Modal title="주제 추가" onClose={() => setIsAddGameModalOpen(false)}>
 						<form
 							action={addGameFormAction}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
-							<label htmlFor="game-name">게임 이름</label>
+							<label htmlFor="game-name">이름</label>
 							<Input id="game-name" name="game-name" aria-required required />
 							<label htmlFor="game-description">설명 (선택)</label>
 							<Input id="game-description" name="game-description" />
@@ -561,7 +561,7 @@ export const Server = () => {
 								}}
 								type="submit"
 							>
-								게임 추가
+								주제 추가
 							</Button>
 						</form>
 					</Modal>
