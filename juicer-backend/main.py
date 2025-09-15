@@ -829,7 +829,7 @@ async def assign_single_role_to_user_request(server_id: int, role_id: int, disco
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot assign @everyone role to user"
             )
-        await discord_client.get_guild(server_id).get_member(user_id).add_roles(
+        await discord_client.get_guild(server_id).get_member(int(user_id)).add_roles(
             role_obj)
         return True
     except Exception as e:
@@ -852,7 +852,7 @@ async def unassign_single_role_from_user_request(server_id: int, role_id: int, d
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot unassign @everyone role from user"
             )
-        await discord_client.get_guild(server_id).get_member(user_id).remove_roles(
+        await discord_client.get_guild(server_id).get_member(int(user_id)).remove_roles(
             role_obj)
         return True
     except Exception as e:
