@@ -162,7 +162,12 @@ export const ServerSettings = () => {
 							)}
 							{!!_serverData.server_data_db.categories?.length && (
 								<div
-									css={{ display: "flex", flexDirection: "row", gap: "6px" }}
+									css={{
+										display: "flex",
+										flexDirection: "row",
+										gap: "6px",
+										flexWrap: "wrap",
+									}}
 								>
 									{_serverData.server_data_db.categories?.map(
 										(category: Category) => (
@@ -225,7 +230,13 @@ export const ServerSettings = () => {
 									태그 추가
 								</Button>
 							</div>
-							<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "row",
+									gap: "6px",
+								}}
+							>
 								{!!_serverData.server_data_db.tags?.length || (
 									<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 										서버에 태그가 없습니다.
@@ -237,6 +248,7 @@ export const ServerSettings = () => {
 											display: "flex",
 											flexDirection: "row",
 											gap: "6px",
+											flexWrap: "wrap",
 										}}
 									>
 										{_serverData.server_data_db.tags?.map((tag: Tag) => (
@@ -280,13 +292,28 @@ export const ServerSettings = () => {
 						title="카테고리 추가"
 						onClose={() => setIsCreateCategoryModalOpen(false)}
 					>
-						<form action={createCategoryFormAction}>
+						<form
+							action={createCategoryFormAction}
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
 							<Input
 								type="text"
 								name="category-name"
 								placeholder="카테고리 이름"
 							/>
-							<Button type="submit">카테고리 추가</Button>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "100%",
+									gap: "8px",
+								}}
+								type="submit"
+							>
+								카테고리 추가
+							</Button>
 						</form>
 					</Modal>
 				</ModalPortal>
@@ -297,9 +324,24 @@ export const ServerSettings = () => {
 						title="태그 추가"
 						onClose={() => setIsCreateTagModalOpen(false)}
 					>
-						<form action={createTagFormAction}>
+						<form
+							action={createTagFormAction}
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
 							<Input type="text" name="tag-name" placeholder="태그 이름" />
-							<Button type="submit">태그 추가</Button>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "100%",
+									gap: "8px",
+								}}
+								type="submit"
+							>
+								태그 추가
+							</Button>
 						</form>
 					</Modal>
 				</ModalPortal>
