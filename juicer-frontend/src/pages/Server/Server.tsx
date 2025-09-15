@@ -9,20 +9,20 @@ import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
 	_findRoleById,
-	_iHaveAllRolesInTheGame,
+	_iHaveRole,
 	filterOutEveryoneRole,
 } from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
-	_assignRolesToUser,
+	_assignRoleByIdToUser,
 	_createGame,
 	_createServer,
 	_fetchMyDataInServer,
 	_fetchSearchGamesInServer,
 	_fetchServerData,
 	_syncServerData,
-	_unassignRolesFromUser,
+	_unassignRoleByIdFromUser,
 } from "../../remotes/remotes";
 import type { Category, Game, Role, Tag } from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
@@ -74,25 +74,26 @@ export const Server = () => {
 		await _serverDataQuery.refetch();
 	};
 
-	const toggleGameRolesAssign = async (game: Game) => {
+	const toggleRoleAssign = async (roleId: string) => {
 		try {
-			if (_iHaveAllRolesInTheGame(_serverData, game)) {
+			if (_iHaveRole(_serverData, roleId)) {
 				await startTransition(
-					_unassignRolesFromUser(serverId as string, game.id),
+					_unassignRoleByIdFromUser(serverId as string, roleId),
 				);
 				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Roles unassigned", "success");
+				showToast("Role unassigned", "success");
 			} else {
-				await startTransition(_assignRolesToUser(serverId as string, game.id));
+				await startTransition(
+					_assignRoleByIdToUser(serverId as string, roleId),
+				);
 				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Roles assigned", "success");
+				showToast("Role assigned", "success");
 			}
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-
 		await _serverDataQuery.refetch();
 	};
 
@@ -340,10 +341,6 @@ export const Server = () => {
 												alignItems: "center",
 												display: "flex",
 												flexDirection: "row",
-												...(_iHaveAllRolesInTheGame(_serverData, game) && {
-													backgroundColor: "rgba(255, 255, 255, 1)",
-													color: "rgba(0, 0, 0, 1)",
-												}),
 											}}
 											key={game.id}
 										>
@@ -363,9 +360,7 @@ export const Server = () => {
 														width: "100%",
 														gap: "4px",
 														flex: 1,
-														cursor: "pointer",
 													}}
-													onClick={() => toggleGameRolesAssign(game)}
 												>
 													<div
 														css={{
@@ -436,13 +431,14 @@ export const Server = () => {
 																			flexDirection: "row",
 																			gap: "4px",
 																			alignItems: "center",
-																			...(_iHaveAllRolesInTheGame(
-																				_serverData,
-																				game,
-																			) && {
+																			cursor: "poiinter",
+																			...(_iHaveRole(_serverData, role.id) && {
 																				border: "1px solid black",
+																				background: "rgba(255, 255, 255, 1)",
+																				color: "rgba(0, 0, 0, 1)",
 																			}),
 																		}}
+																		onClick={() => toggleRoleAssign(role.id)}
 																	>
 																		<_8pxCircle
 																			css={{
