@@ -14,7 +14,7 @@ POSTGRES_DB=juicer_db
 POSTGRES_USER=juicer_postgres_user
 POSTGRES_PASSWORD=(whatever)
 POSTGRES_PORT=8008
-REDIRECT_URI=http://your_domain:8000/discord/auth/callback
+REDIRECT_URI=http://your_domain/backend/discord/auth/callback
 REDIRECT_AFTER_SIGN_IN_URI=http://your_domain:8080/
 REDIRECT_AFTER_SIGN_IN_FAILED_URI=http://your_domain:8080/sign-in-failed
 DISCORD_BOT_TOKEN=(discord bot token)
@@ -23,7 +23,7 @@ CLIENT_SECRET=(discord client secret)
 VITE_API_ENDPOINT=https://discord.com/api/v10
 VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id))&response_type=code&redirect_uri=http%3A%2F%2Fyour_domain%3A8000%2Fdiscord%2Fauth%2Fcallback&scope=identify
 VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id)&permissions=268438576&integration_type=0&scope=bot
-VITE_BACKEND_URI=http://your_domain:8000
+VITE_BACKEND_URI=http://your_domain/backend
 ENVIRONMENT=production
 ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
 # Domain Configuration

@@ -6,6 +6,7 @@ services:
     container_name: juicer_traefik
     restart: always
     command:
+      - --api=true
       - --api.dashboard=true
       - --api.insecure=false  # Secure dashboard access
       - --providers.docker=true
@@ -31,11 +32,11 @@ services:
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
       # Secure dashboard access
-      - traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/traefik-dashboard`)
-      - traefik.http.routers.traefik-dashboard.entrypoints=websecure
-      - traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt
-      - traefik.http.routers.traefik-dashboard.service=api@internal
-      - traefik.http.routers.traefik-dashboard.middlewares=auth
+      - traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DOMAIN}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.middlewares=auth
       - traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}
 
   # PostgreSQL Database Service
@@ -67,11 +68,11 @@ services:
     labels:
       - traefik.enable=true
       - traefik.port=8000
-      - traefik.http.routers.backend.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.backend.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/backend`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls.certresolver=letsencrypt
       - traefik.http.services.backend.loadbalancer.server.port=8000
-      - traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api
+      - traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/backend
       - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Forwarded-For=""
       - traefik.http.middlewares.backend-security.headers.customrequestheaders.X-Real-IP=""
