@@ -1,4 +1,5 @@
 from typing import Optional, Any, List, Dict
+from tempfile import SpooledTemporaryFile
 from psycopg import AsyncConnection
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
 
@@ -20,7 +21,8 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
   -- Aggregate all top-level info for the server
   SELECT
     s.server_id,
-    (SELECT json_agg(json_build_object('id', r.role_id::text)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
+    (SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id)) FROM roles r WHERE r.server_id = s.server_id) AS roles,
+    (SELECT json_agg(json_build_object('id', rc.role_category_id, 'name', rc.name)) FROM role_categories rc WHERE rc.server_id = s.server_id) AS role_categories,
     (SELECT json_agg(json_build_object('id', c.category_id, 'name', c.name)) FROM categories c WHERE c.server_id = s.server_id) AS categories,
     (SELECT json_agg(json_build_object('id', t.tag_id, 'name', t.name)) FROM tags t WHERE t.server_id = s.server_id) AS tags,
     -- Aggregate all games and their nested details
@@ -40,7 +42,7 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
           ) AS tags,
           -- Nested aggregation for each game's roles
           (
-            SELECT json_agg(json_build_object('id', r.role_id::text))
+            SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
             FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
             WHERE gr.game_id = g.game_id
           ) AS roles_to_add
@@ -59,6 +61,7 @@ SELECT
   json_build_object(
     'server_id', server_id::text,
     'roles', COALESCE(roles, '[]'::json),
+    'role_categories', COALESCE(role_categories, '[]'::json),
     'categories', COALESCE(categories, '[]'::json),
     'tags', COALESCE(tags, '[]'::json),
     'games', COALESCE(games, '[]'::json)
@@ -163,7 +166,7 @@ async def get_games_by_server(db: AsyncConnection, server_id: int) -> List[Dict[
                 ) as tags,
                 COALESCE(
                     (
-                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
                         FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
@@ -320,6 +323,86 @@ async def delete_game(db: AsyncConnection, game_id: int, server_id: int) -> bool
             (game_id, server_id)
         )
         return cursor.rowcount > 0
+
+
+# ============================================================================
+# GAME THUMBNAIL OPERATIONS
+# ============================================================================
+
+async def add_or_update_game_thumbnail(db: AsyncConnection, game_id: int, server_id: int, thumbnail_file: SpooledTemporaryFile) -> bool:
+    """
+    Adds or overwrites a game's thumbnail image. Enforces 1 MB max size.
+
+    Args:
+        db: Database connection
+        game_id: Game ID
+        server_id: Server ID (ownership check)
+        thumbnail_file: SpooledTemporaryFile containing image bytes
+
+    Returns:
+        True if updated, False if game not found
+    """
+    # Read all bytes from provided file
+    thumbnail_file.seek(0)
+    image_bytes = thumbnail_file.read()
+    if image_bytes is None:
+        image_bytes = b""
+
+    # Enforce 1 MB limit proactively to avoid DB error
+    if len(image_bytes) > 1048576:
+        raise ValueError("Thumbnail exceeds 1 MB size limit")
+
+    async with db.cursor() as cursor:
+        # Ensure the game belongs to the server
+        await cursor.execute(
+            "SELECT 1 FROM games WHERE game_id = %s AND server_id = %s",
+            (game_id, server_id)
+        )
+        if not await cursor.fetchone():
+            return False
+
+        await cursor.execute(
+            "UPDATE games SET thumbnail = %s WHERE game_id = %s AND server_id = %s",
+            (image_bytes, game_id, server_id)
+        )
+        return cursor.rowcount > 0
+
+
+async def delete_game_thumbnail(db: AsyncConnection, game_id: int, server_id: int) -> bool:
+    """
+    Deletes a game's thumbnail (sets to NULL).
+
+    Args:
+        db: Database connection
+        game_id: Game ID
+        server_id: Server ID (ownership check)
+
+    Returns:
+        True if updated, False if game not found
+    """
+    async with db.cursor() as cursor:
+        await cursor.execute(
+            "UPDATE games SET thumbnail = NULL WHERE game_id = %s AND server_id = %s",
+            (game_id, server_id)
+        )
+        return cursor.rowcount > 0
+
+
+async def get_game_thumbnail(db: AsyncConnection, game_id: int, server_id: int) -> Optional[bytes]:
+    """
+    Retrieves a game's thumbnail bytes.
+
+    Returns None if game not found or thumbnail is NULL.
+    """
+    async with db.cursor() as cursor:
+        await cursor.execute(
+            "SELECT thumbnail FROM games WHERE game_id = %s AND server_id = %s",
+            (game_id, server_id)
+        )
+        row = await cursor.fetchone()
+        if not row:
+            return None
+        return row[0]
 
 
 # ============================================================================
@@ -811,8 +894,110 @@ async def delete_category(db: AsyncConnection, category_id: int, server_id: int)
 
 
 # ============================================================================
+# ROLE CATEGORY OPERATIONS
+# ============================================================================
+
+async def create_role_category(db: AsyncConnection, server_id: int, name: str) -> Optional[int]:
+    """
+    Creates a role category for a server and returns its ID.
+    """
+    async with db.cursor() as cursor:
+        # Verify server exists
+        await cursor.execute("SELECT 1 FROM servers WHERE server_id = %s", (server_id,))
+        if not await cursor.fetchone():
+            raise ValueError(f"Server {server_id} does not exist")
+
+        await cursor.execute(
+            "INSERT INTO role_categories (server_id, name) VALUES (%s, %s) RETURNING role_category_id",
+            (server_id, name)
+        )
+        row = await cursor.fetchone()
+        return row[0] if row else None
+
+
+async def delete_role_category(db: AsyncConnection, role_category_id: int, server_id: int) -> Dict[str, Any]:
+    """
+    Deletes a role category by ID for a server.
+    Refuses to delete if any roles reference it and returns those role IDs.
+    """
+    async with db.cursor() as cursor:
+        # Verify category exists in this server
+        await cursor.execute(
+            "SELECT 1 FROM role_categories WHERE role_category_id = %s AND server_id = %s",
+            (role_category_id, server_id)
+        )
+        if not await cursor.fetchone():
+            return {
+                'success': False,
+                'message': f"Role category {role_category_id} not found in server {server_id}"
+            }
+
+        # Check roles referencing this category
+        await cursor.execute(
+            "SELECT role_id FROM roles WHERE role_category_id = %s AND server_id = %s",
+            (role_category_id, server_id)
+        )
+        role_rows = await cursor.fetchall()
+        if role_rows:
+            role_ids = [str(row[0]) for row in role_rows]
+            return {
+                'success': False,
+                'message': f"Cannot delete role category {role_category_id}. {len(role_ids)} role(s) reference it.",
+                'roles': role_ids
+            }
+
+        # Safe to delete
+        await cursor.execute(
+            "DELETE FROM role_categories WHERE role_category_id = %s AND server_id = %s",
+            (role_category_id, server_id)
+        )
+
+        if cursor.rowcount > 0:
+            return {'success': True, 'message': f"Role category {role_category_id} deleted"}
+        else:
+            return {'success': False, 'message': f"Failed to delete role category {role_category_id}"}
+
+
+async def map_role_category_to_role(db: AsyncConnection, role_id: int, role_category_id: int | None, server_id: int) -> bool:
+    """
+    Maps a role category to a role (each role can have zero or one category).
+    """
+    async with db.cursor() as cursor:
+        if role_category_id is None:
+            # unassign the role category from the role
+            await cursor.execute(
+                "UPDATE roles SET role_category_id = NULL WHERE role_id = %s AND server_id = %s",
+                (role_id, server_id)
+            )
+            return cursor.rowcount > 0
+
+        # Verify role exists in server
+        await cursor.execute(
+            "SELECT 1 FROM roles WHERE role_id = %s AND server_id = %s",
+            (role_id, server_id)
+        )
+        if not await cursor.fetchone():
+            raise ValueError(f"Role {role_id} not found in server {server_id}")
+
+        # Verify category exists in server
+        await cursor.execute(
+            "SELECT 1 FROM role_categories WHERE role_category_id = %s AND server_id = %s",
+            (role_category_id, server_id)
+        )
+        if not await cursor.fetchone():
+            raise ValueError(
+                f"Role category {role_category_id} not found in server {server_id}")
+
+        await cursor.execute(
+            "UPDATE roles SET role_category_id = %s WHERE role_id = %s AND server_id = %s",
+            (role_category_id, role_id, server_id)
+        )
+        return cursor.rowcount > 0
+
+# ============================================================================
 # SEARCH OPERATIONS
 # ============================================================================
+
 
 async def find_games_by_category(db: AsyncConnection, server_id: int, category_name: str) -> List[Dict[str, Any]]:
     """
@@ -842,7 +1027,7 @@ async def find_games_by_category(db: AsyncConnection, server_id: int, category_n
                 ) as tags,
                 COALESCE(
                     (
-                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
                         FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
@@ -904,7 +1089,7 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
                 ) as tags,
                 COALESCE(
                     (
-                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
                         FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
@@ -961,7 +1146,7 @@ async def find_games_by_name(db: AsyncConnection, server_id: int, name_query: st
                 ) as tags,
                 COALESCE(
                     (
-                        SELECT json_agg(json_build_object('id', r.role_id::text))
+                        SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
                         FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),

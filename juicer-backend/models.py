@@ -34,3 +34,7 @@ class UpdateGameBody(BaseModel):
 
 class CreateTagBody(BaseModel):
     name: str
+
+
+class CreateRoleCategoryBody(BaseModel):
+    name: str

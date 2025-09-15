@@ -1,5 +1,5 @@
 from api import exchange_code_async, refresh_token_async, revoke_token_async, discord_user_get_data
-from db import add_tags_to_game, create_category, create_game, create_role_in_db, create_server, create_tag, delete_category, delete_game, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
+from db import add_or_update_game_thumbnail, add_tags_to_game, create_category, create_game, create_role_category, create_role_in_db, create_server, create_tag, delete_category, delete_game, delete_role_category, find_games_by_category, find_games_by_name, find_games_by_tags, get_all_roles_in_server, get_all_tags_in_server, get_game_roles, get_games_by_server, get_server_data_with_details, handle_discord_role_removed, map_category_to_game, map_role_category_to_role, map_roles_to_game, remove_tag_by_id, remove_tag_from_game, update_game, update_game_with_tags_and_roles
 from security import check_rate_limit, validate_game_name, validate_tag_name, validate_category_name, validate_description, validate_role_ids, validate_tag_ids, validate_server_id
 import discord
 import asyncio
@@ -16,8 +16,10 @@ from dotenv import load_dotenv
 from psycopg_pool import AsyncConnectionPool
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, CreateTagBody, UpdateGameBody
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, UploadFile, File
+from models import CreateGameBody, AddTagsBody, AddRolesBody, CreateCategoryBody, AddCategoryToGameBody, CreateRoleCategoryBody, CreateTagBody, UpdateGameBody
+from db import delete_game_thumbnail, get_game_thumbnail
+from image import validate_image, compress_image
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -981,4 +983,146 @@ async def search_games_by_all_request(server_id: int, query: str | None = None, 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to search games by all: {str(e)}"
+        )
+
+# THUMBNAIL-RELATED OPERATIONS
+
+
+@discord_client.event
+@app.put("/discord/server/{server_id}/games/{game_id}/thumbnail/upload")
+async def upload_game_thumbnail_request(file: UploadFile, server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None) -> bool:
+    # SECURITY: Rate limiting and input validation
+    await check_rate_limit(request)
+    if not validate_server_id(server_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid server ID format"
+        )
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+    user_data = auth_data["user_data"]
+    guild = auth_data["guild"]
+
+    # determine if user has manage server permission
+    if not guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User does not have manage server permission in that server."
+        )
+
+    if not await validate_image(file):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image file."
+        )
+    contents = await compress_image(file)
+    try:
+        res = await add_or_update_game_thumbnail(db, game_id, server_id, contents)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload game thumbnail: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.delete("/discord/server/{server_id}/games/{game_id}/thumbnail/delete")
+async def delete_game_thumbnail_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None) -> bool:
+    # SECURITY: Rate limiting and input validation
+    await check_rate_limit(request)
+    if not validate_server_id(server_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid server ID format"
+        )
+    auth_data = await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+    user_data = auth_data["user_data"]
+    guild = auth_data["guild"]
+
+    if not guild.get_member(int(user_data.get("id"))).guild_permissions.manage_guild:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User does not have manage server permission in that server."
+        )
+
+    try:
+        res = await delete_game_thumbnail(db, game_id, server_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete game thumbnail: {str(e)}"
+        )
+
+
+@app.get("/discord/server/{server_id}/games/{game_id}/thumbnail")
+async def get_game_thumbnail_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None):
+    # SECURITY: Rate limiting and input validation
+    await check_rate_limit(request)
+    if not validate_server_id(server_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid server ID format"
+        )
+
+    await authenticate_and_authorize_user(server_id, discord_access_token)
+
+    try:
+        res = await get_game_thumbnail(db, game_id, server_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get game thumbnail: {str(e)}"
+        )
+
+# ROLE-CATEGORY RELATED OPERATIONS
+
+
+@discord_client.event
+@app.post("/discord/server/{server_id}/roles/role-categories/create")
+async def create_role_category_request(server_id: int, body: CreateRoleCategoryBody, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+
+    try:
+        res = await create_role_category(db, server_id, body.name)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create role category: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.delete("/discord/server/{server_id}/roles/role-categories/{role_category_id}")
+async def delete_role_category_request(server_id: int, role_category_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+
+    try:
+        res = await delete_role_category(db, role_category_id, server_id)
+        if res['success'] == False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=res['message']
+            )
+        return {"detail": res['message']}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete role category: {str(e)}"
+        )
+
+
+@discord_client.event
+@app.post("/discord/server/{server_id}/roles/{role_id}/role-categories/{role_category_id}/assign")
+async def assign_role_category_to_role_request(server_id: int, role_id: int, role_category_id: int | None, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db)):
+    await authenticate_and_authorize_user(server_id, discord_access_token, require_manage_guild=True)
+    try:
+        res = await map_role_category_to_role(db, role_id, role_category_id, server_id)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to assign role category to role: {str(e)}"
         )
