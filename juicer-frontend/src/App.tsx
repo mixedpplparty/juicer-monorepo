@@ -14,7 +14,7 @@ const App = () => {
 	const _authQuery = useQuery(_fetchMyTokens.query());
 
 	if (_authQuery.isLoading) {
-		return <Loading />;
+		return <Loading message="Authenticating..." />;
 	} // can't use suspense here
 
 	const isAuthenticated =
