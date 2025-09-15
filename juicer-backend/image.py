@@ -15,12 +15,27 @@ async def validate_image(file: UploadFile):
         raise ValueError("File is not an image")
     if not filetype.is_image(contents):
         raise ValueError("File is not an image")
+    # Reset pointer so subsequent readers can read from the start
+    try:
+        file.file.seek(0)
+    except Exception:
+        pass
     return True
 
 
 async def compress_image(file: UploadFile):
+    # Ensure we read from the beginning in case validate_image consumed the stream
+    try:
+        file.file.seek(0)
+    except Exception:
+        pass
     contents = await file.read()
-    image = Image.open(BytesIO(contents))
+    if not contents:
+        raise ValueError("Empty or unreadable image data")
+    try:
+        image = Image.open(BytesIO(contents))
+    except Exception as exc:
+        raise ValueError("Invalid image data") from exc
     width, height = image.size
     target_width = 384
     target_height = 384
@@ -31,5 +46,5 @@ async def compress_image(file: UploadFile):
     image = image.resize((target_width, target_height),
                          Image.Resampling.LANCZOS)
     buffer = BytesIO()
-    image.save(buffer, format="JPEG", optimize=True, quality=30)
+    image.save(buffer, format="WEBP", optimize=True, quality=30)
     return buffer.getvalue()

@@ -1069,7 +1069,13 @@ async def get_game_thumbnail_request(server_id: int, game_id: int, discord_acces
 
     try:
         res = await get_game_thumbnail(db, game_id, server_id)
-        return res
+        if res is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Thumbnail not found"
+            )
+        # We currently compress to WEBP in image.py; default to that media type
+        return Response(content=res, media_type="image/webp")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

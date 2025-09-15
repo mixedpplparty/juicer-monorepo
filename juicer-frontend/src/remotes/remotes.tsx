@@ -93,14 +93,16 @@ _fetchSearchGamesInServer.query = (serverId: string, query: string | null) => {
 export const _fetchThumbnailsInGame = async (
 	serverId: string,
 	gameId: string,
-): Promise<File> => {
+): Promise<string> => {
 	const _res = await axios.get(
 		_fetchThumbnailsInGame.apiPath(serverId, gameId),
 		{
 			withCredentials: true,
+			responseType: "blob",
 		},
 	);
-	return _res.data;
+	const blobUrl = URL.createObjectURL(_res.data);
+	return blobUrl;
 };
 
 _fetchThumbnailsInGame.apiPath = (serverId: string, gameId: string) => {
@@ -121,10 +123,16 @@ export const _uploadThumbnailToGame = async (
 	gameId: string,
 	thumbnail: File,
 ): Promise<boolean> => {
-	const _res = await axios.post(
+	const formData = new FormData();
+	formData.append("file", thumbnail, thumbnail.name);
+
+	const _res = await axios.put(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail/upload`,
-		{ file: thumbnail },
-		{ withCredentials: true },
+		formData,
+		{
+			withCredentials: true,
+			headers: { "Content-Type": "multipart/form-data" },
+		},
 	);
 	return _res.data;
 };
