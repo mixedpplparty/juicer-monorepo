@@ -13,6 +13,7 @@ import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
 	_deleteGame,
+	_deleteThumbnailFromGame,
 	_fetchServerData,
 	_fetchThumbnailsInGame,
 	_updateGameWithTagsAndRoles,
@@ -21,7 +22,7 @@ import {
 import type { Category, Game, Role, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
-import { CheckableChip } from "../../ui/components/Chip";
+import { CheckableChip, Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
@@ -49,6 +50,19 @@ export const GameSettings = () => {
 			?.roles_to_add?.map((role: Role) => role.id) || [],
 	);
 	const navigate = useNavigate();
+
+	const onDeleteThumbnailAction = async () => {
+		try {
+			await startTransition(_deleteThumbnailFromGame(serverId as string, gameId as string));
+			showToast("Game thumbnail deleted", "success");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
+		}
+		await _serverDataQuery.refetch();
+		navigate(`/server?serverId=${serverId}`);
+	}
 
 	const onGameSettingsChangeSubmitAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
@@ -171,7 +185,10 @@ export const GameSettings = () => {
 								_findGameById(_serverData, gameId as string)?.name || ""
 							}
 						/>
-						<label htmlFor="game-thumbnail">썸네일(미선택 시 현행 유지)</label>
+						<div css={{ display: "flex", flexDirection: "row", gap: "12px" }}>
+							<label htmlFor="game-thumbnail" css={{ flex: 1 }}>썸네일(미선택 시 현행 유지)</label>
+							<span css={{ cursor: "pointer", color: "#ed5555" }} onClick={onDeleteThumbnailAction}>썸네일 삭제</span>
+						</div>
 						<Input
 							id="game-thumbnail"
 							name="game-thumbnail"
