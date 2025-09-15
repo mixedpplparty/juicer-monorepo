@@ -363,7 +363,7 @@ export const Server = () => {
 													css={{
 														width: "64px",
 														height: "64px",
-														borderRadius: "50%",
+														borderRadius: "16px",
 													}}
 												/>
 												<div

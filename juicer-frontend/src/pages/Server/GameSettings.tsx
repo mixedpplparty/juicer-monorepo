@@ -1,6 +1,6 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -14,6 +14,7 @@ import { useToast } from "../../hooks/useToast";
 import {
 	_deleteGame,
 	_fetchServerData,
+	_fetchThumbnailsInGame,
 	_updateGameWithTagsAndRoles,
 	_uploadThumbnailToGame,
 } from "../../remotes/remotes";
@@ -56,17 +57,19 @@ export const GameSettings = () => {
 		const gameThumbnail = formData.get("game-thumbnail");
 		// TODO do whatever when loading
 		try {
-			await startTransition(
-				_uploadThumbnailToGame(
-					serverId as string,
-					gameId as string,
-					gameThumbnail as File,
-				),
-			);
-			showToast(
-				"Game thumbnail uploaded. Trying to update other info...",
-				"success",
-			);
+			if (gameThumbnail instanceof File && gameThumbnail.size > 0) {
+				await startTransition(
+					_uploadThumbnailToGame(
+						serverId as string,
+						gameId as string,
+						gameThumbnail as File,
+					),
+				);
+				showToast(
+					"Game thumbnail uploaded. Trying to update other info...",
+					"success",
+				);
+			}
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -168,7 +171,7 @@ export const GameSettings = () => {
 								_findGameById(_serverData, gameId as string)?.name || ""
 							}
 						/>
-						<label htmlFor="game-thumbnail">썸네일(선택)</label>
+						<label htmlFor="game-thumbnail">썸네일(미선택 시 현행 유지)</label>
 						<Input
 							id="game-thumbnail"
 							name="game-thumbnail"
