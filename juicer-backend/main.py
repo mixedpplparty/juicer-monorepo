@@ -1026,7 +1026,7 @@ async def upload_game_thumbnail_request(file: UploadFile, server_id: int, game_i
 
 
 @discord_client.event
-@app.delete("/discord/server/{server_id}/games/{game_id}/thumbnail/delete")
+@app.delete("/discord/server/{server_id}/games/{game_id}/thumbnail")
 async def delete_game_thumbnail_request(server_id: int, game_id: int, discord_access_token: Optional[str] = Cookie(None), db: AsyncGenerator[any, any] = Depends(get_db), request: Request = None) -> bool:
     # SECURITY: Rate limiting and input validation
     await check_rate_limit(request)
