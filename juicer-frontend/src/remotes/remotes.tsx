@@ -90,6 +90,55 @@ _fetchSearchGamesInServer.query = (serverId: string, query: string | null) => {
 	};
 };
 
+export const _fetchThumbnailsInGame = async (
+	serverId: string,
+	gameId: string,
+): Promise<File> => {
+	const _res = await axios.get(
+		_fetchThumbnailsInGame.apiPath(serverId, gameId),
+		{
+			withCredentials: true,
+		},
+	);
+	return _res.data;
+};
+
+_fetchThumbnailsInGame.apiPath = (serverId: string, gameId: string) => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail`;
+};
+
+_fetchThumbnailsInGame.queries = (serverId: string, gameIds: string[]) => {
+	return [
+		...gameIds.map((gameId) => ({
+			queryKey: ["thumbnailsInGame", serverId, gameId],
+			queryFn: () => _fetchThumbnailsInGame(serverId, gameId),
+		})),
+	];
+};
+
+export const _uploadThumbnailToGame = async (
+	serverId: string,
+	gameId: string,
+	thumbnail: File,
+): Promise<boolean> => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail/upload`,
+		{ file: thumbnail },
+		{ withCredentials: true },
+	);
+	return _res.data;
+};
+
+export const _deleteThumbnailFromGame = async (
+	serverId: string,
+	gameId: string,
+): Promise<boolean> => {
+	const _res = await axios.delete(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail`,
+	);
+	return _res.data;
+};
+
 export const _fetchMyDataInServer = async (
 	serverId: string | null,
 ): Promise<MyDataInServer> => {
@@ -261,6 +310,27 @@ export const _syncServerData = async (
 ): Promise<SyncRolesResponse> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/sync-roles`,
+	);
+	return _res.data;
+};
+
+export const _createRoleCategory = async (
+	serverId: string,
+	roleCategoryName: string,
+): Promise<number> => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/role-categories/create`,
+		{ name: roleCategoryName },
+	);
+	return _res.data;
+};
+
+export const _deleteRoleCategory = async (
+	serverId: string,
+	roleCategoryId: number,
+): Promise<boolean> => {
+	const _res = await axios.delete(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/role-categories/${roleCategoryId}`,
 	);
 	return _res.data;
 };
