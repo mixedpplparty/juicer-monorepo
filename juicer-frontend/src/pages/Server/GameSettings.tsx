@@ -174,7 +174,14 @@ export const GameSettings = () => {
 							)}
 						</Select>
 						<label htmlFor="game-tags">태그 부여(선택)</label>
-						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "6px",
+								flexWrap: "wrap",
+							}}
+						>
 							{_serverData.server_data_db.tags?.map((tag: Tag) => (
 								<CheckableChip
 									key={tag.id}
@@ -200,7 +207,14 @@ export const GameSettings = () => {
 							</div>
 						)}
 						<label htmlFor="game-roles">역할 맵핑(선택)</label>
-						<div css={{ display: "flex", flexDirection: "row", gap: "6px" }}>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "6px",
+								flexWrap: "wrap",
+							}}
+						>
 							{filterOutEveryoneRole(
 								_serverData,
 								_serverData.server_data_db.roles || [],
