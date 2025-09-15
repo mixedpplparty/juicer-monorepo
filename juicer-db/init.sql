@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WHlyuaaMyLRePhTFAKHitIHswxQEuR3iEmBtT5wo0cH3U9tTGg9B6LAuw1BBwdx
+\restrict SKRhFbAIl148SepKmbX1byPwcfBB1oOToFej7vOdYBNcnjCy0n21zr7FbsCOjNg
 
 -- Dumped from database version 15.14
 -- Dumped by pg_dump version 15.14
@@ -18,12 +18,28 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: juicer_postgres_user
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO juicer_postgres_user;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: juicer_postgres_user
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: categories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: categories; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.categories (
@@ -33,10 +49,10 @@ CREATE TABLE public.categories (
 );
 
 
-ALTER TABLE public.categories OWNER TO postgres;
+ALTER TABLE public.categories OWNER TO juicer_postgres_user;
 
 --
--- Name: categories_category_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: categories_category_id_seq; Type: SEQUENCE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE SEQUENCE public.categories_category_id_seq
@@ -48,17 +64,17 @@ CREATE SEQUENCE public.categories_category_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.categories_category_id_seq OWNER TO postgres;
+ALTER TABLE public.categories_category_id_seq OWNER TO juicer_postgres_user;
 
 --
--- Name: categories_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: categories_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER SEQUENCE public.categories_category_id_seq OWNED BY public.categories.category_id;
 
 
 --
--- Name: game_roles; Type: TABLE; Schema: public; Owner: postgres
+-- Name: game_roles; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.game_roles (
@@ -67,10 +83,10 @@ CREATE TABLE public.game_roles (
 );
 
 
-ALTER TABLE public.game_roles OWNER TO postgres;
+ALTER TABLE public.game_roles OWNER TO juicer_postgres_user;
 
 --
--- Name: game_tags; Type: TABLE; Schema: public; Owner: postgres
+-- Name: game_tags; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.game_tags (
@@ -79,10 +95,10 @@ CREATE TABLE public.game_tags (
 );
 
 
-ALTER TABLE public.game_tags OWNER TO postgres;
+ALTER TABLE public.game_tags OWNER TO juicer_postgres_user;
 
 --
--- Name: games; Type: TABLE; Schema: public; Owner: postgres
+-- Name: games; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.games (
@@ -96,10 +112,10 @@ CREATE TABLE public.games (
 );
 
 
-ALTER TABLE public.games OWNER TO postgres;
+ALTER TABLE public.games OWNER TO juicer_postgres_user;
 
 --
--- Name: games_game_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: games_game_id_seq; Type: SEQUENCE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE SEQUENCE public.games_game_id_seq
@@ -111,17 +127,17 @@ CREATE SEQUENCE public.games_game_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.games_game_id_seq OWNER TO postgres;
+ALTER TABLE public.games_game_id_seq OWNER TO juicer_postgres_user;
 
 --
--- Name: games_game_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: games_game_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER SEQUENCE public.games_game_id_seq OWNED BY public.games.game_id;
 
 
 --
--- Name: role_categories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: role_categories; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.role_categories (
@@ -131,10 +147,10 @@ CREATE TABLE public.role_categories (
 );
 
 
-ALTER TABLE public.role_categories OWNER TO postgres;
+ALTER TABLE public.role_categories OWNER TO juicer_postgres_user;
 
 --
--- Name: role_categories_role_category_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: role_categories_role_category_id_seq; Type: SEQUENCE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE SEQUENCE public.role_categories_role_category_id_seq
@@ -146,17 +162,17 @@ CREATE SEQUENCE public.role_categories_role_category_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.role_categories_role_category_id_seq OWNER TO postgres;
+ALTER TABLE public.role_categories_role_category_id_seq OWNER TO juicer_postgres_user;
 
 --
--- Name: role_categories_role_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: role_categories_role_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER SEQUENCE public.role_categories_role_category_id_seq OWNED BY public.role_categories.role_category_id;
 
 
 --
--- Name: roles; Type: TABLE; Schema: public; Owner: postgres
+-- Name: roles; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.roles (
@@ -166,10 +182,10 @@ CREATE TABLE public.roles (
 );
 
 
-ALTER TABLE public.roles OWNER TO postgres;
+ALTER TABLE public.roles OWNER TO juicer_postgres_user;
 
 --
--- Name: servers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: servers; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.servers (
@@ -178,10 +194,10 @@ CREATE TABLE public.servers (
 );
 
 
-ALTER TABLE public.servers OWNER TO postgres;
+ALTER TABLE public.servers OWNER TO juicer_postgres_user;
 
 --
--- Name: tags; Type: TABLE; Schema: public; Owner: postgres
+-- Name: tags; Type: TABLE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE TABLE public.tags (
@@ -191,10 +207,10 @@ CREATE TABLE public.tags (
 );
 
 
-ALTER TABLE public.tags OWNER TO postgres;
+ALTER TABLE public.tags OWNER TO juicer_postgres_user;
 
 --
--- Name: tags_tag_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: tags_tag_id_seq; Type: SEQUENCE; Schema: public; Owner: juicer_postgres_user
 --
 
 CREATE SEQUENCE public.tags_tag_id_seq
@@ -206,45 +222,45 @@ CREATE SEQUENCE public.tags_tag_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.tags_tag_id_seq OWNER TO postgres;
+ALTER TABLE public.tags_tag_id_seq OWNER TO juicer_postgres_user;
 
 --
--- Name: tags_tag_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: tags_tag_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER SEQUENCE public.tags_tag_id_seq OWNED BY public.tags.tag_id;
 
 
 --
--- Name: categories category_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: categories category_id; Type: DEFAULT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.categories ALTER COLUMN category_id SET DEFAULT nextval('public.categories_category_id_seq'::regclass);
 
 
 --
--- Name: games game_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: games game_id; Type: DEFAULT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.games ALTER COLUMN game_id SET DEFAULT nextval('public.games_game_id_seq'::regclass);
 
 
 --
--- Name: role_categories role_category_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: role_categories role_category_id; Type: DEFAULT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.role_categories ALTER COLUMN role_category_id SET DEFAULT nextval('public.role_categories_role_category_id_seq'::regclass);
 
 
 --
--- Name: tags tag_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: tags tag_id; Type: DEFAULT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.tags ALTER COLUMN tag_id SET DEFAULT nextval('public.tags_tag_id_seq'::regclass);
 
 
 --
--- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.categories (category_id, server_id, name) FROM stdin;
@@ -252,7 +268,7 @@ COPY public.categories (category_id, server_id, name) FROM stdin;
 
 
 --
--- Data for Name: game_roles; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: game_roles; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.game_roles (game_id, role_id) FROM stdin;
@@ -260,7 +276,7 @@ COPY public.game_roles (game_id, role_id) FROM stdin;
 
 
 --
--- Data for Name: game_tags; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: game_tags; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.game_tags (game_id, tag_id) FROM stdin;
@@ -268,7 +284,7 @@ COPY public.game_tags (game_id, tag_id) FROM stdin;
 
 
 --
--- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.games (game_id, server_id, category_id, name, description, thumbnail) FROM stdin;
@@ -276,7 +292,7 @@ COPY public.games (game_id, server_id, category_id, name, description, thumbnail
 
 
 --
--- Data for Name: role_categories; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: role_categories; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.role_categories (role_category_id, server_id, name) FROM stdin;
@@ -284,7 +300,7 @@ COPY public.role_categories (role_category_id, server_id, name) FROM stdin;
 
 
 --
--- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.roles (role_id, server_id, role_category_id) FROM stdin;
@@ -292,7 +308,7 @@ COPY public.roles (role_id, server_id, role_category_id) FROM stdin;
 
 
 --
--- Data for Name: servers; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: servers; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.servers (server_id, created_at) FROM stdin;
@@ -300,7 +316,7 @@ COPY public.servers (server_id, created_at) FROM stdin;
 
 
 --
--- Data for Name: tags; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: tags; Type: TABLE DATA; Schema: public; Owner: juicer_postgres_user
 --
 
 COPY public.tags (tag_id, server_id, name) FROM stdin;
@@ -308,35 +324,35 @@ COPY public.tags (tag_id, server_id, name) FROM stdin;
 
 
 --
--- Name: categories_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: categories_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: juicer_postgres_user
 --
 
 SELECT pg_catalog.setval('public.categories_category_id_seq', 1, false);
 
 
 --
--- Name: games_game_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: games_game_id_seq; Type: SEQUENCE SET; Schema: public; Owner: juicer_postgres_user
 --
 
 SELECT pg_catalog.setval('public.games_game_id_seq', 1, false);
 
 
 --
--- Name: role_categories_role_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: role_categories_role_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: juicer_postgres_user
 --
 
 SELECT pg_catalog.setval('public.role_categories_role_category_id_seq', 1, false);
 
 
 --
--- Name: tags_tag_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: tags_tag_id_seq; Type: SEQUENCE SET; Schema: public; Owner: juicer_postgres_user
 --
 
 SELECT pg_catalog.setval('public.tags_tag_id_seq', 1, false);
 
 
 --
--- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.categories
@@ -344,7 +360,7 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- Name: game_roles game_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_roles game_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_roles
@@ -352,7 +368,7 @@ ALTER TABLE ONLY public.game_roles
 
 
 --
--- Name: game_tags game_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_tags game_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_tags
@@ -360,7 +376,7 @@ ALTER TABLE ONLY public.game_tags
 
 
 --
--- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.games
@@ -368,7 +384,7 @@ ALTER TABLE ONLY public.games
 
 
 --
--- Name: role_categories role_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: role_categories role_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.role_categories
@@ -376,7 +392,7 @@ ALTER TABLE ONLY public.role_categories
 
 
 --
--- Name: roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.roles
@@ -384,7 +400,7 @@ ALTER TABLE ONLY public.roles
 
 
 --
--- Name: servers servers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: servers servers_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.servers
@@ -392,7 +408,7 @@ ALTER TABLE ONLY public.servers
 
 
 --
--- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.tags
@@ -400,7 +416,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
--- Name: categories categories_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: categories categories_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.categories
@@ -408,7 +424,7 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- Name: game_roles game_roles_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_roles game_roles_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_roles
@@ -416,7 +432,7 @@ ALTER TABLE ONLY public.game_roles
 
 
 --
--- Name: game_roles game_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_roles game_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_roles
@@ -424,7 +440,7 @@ ALTER TABLE ONLY public.game_roles
 
 
 --
--- Name: game_tags game_tags_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_tags game_tags_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_tags
@@ -432,7 +448,7 @@ ALTER TABLE ONLY public.game_tags
 
 
 --
--- Name: game_tags game_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: game_tags game_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.game_tags
@@ -440,7 +456,7 @@ ALTER TABLE ONLY public.game_tags
 
 
 --
--- Name: games games_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: games games_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.games
@@ -448,7 +464,7 @@ ALTER TABLE ONLY public.games
 
 
 --
--- Name: games games_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: games games_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.games
@@ -456,7 +472,7 @@ ALTER TABLE ONLY public.games
 
 
 --
--- Name: role_categories role_categories_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: role_categories role_categories_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.role_categories
@@ -464,7 +480,7 @@ ALTER TABLE ONLY public.role_categories
 
 
 --
--- Name: roles roles_role_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: roles roles_role_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.roles
@@ -472,7 +488,7 @@ ALTER TABLE ONLY public.roles
 
 
 --
--- Name: roles roles_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: roles roles_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.roles
@@ -480,7 +496,7 @@ ALTER TABLE ONLY public.roles
 
 
 --
--- Name: tags tags_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tags tags_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: juicer_postgres_user
 --
 
 ALTER TABLE ONLY public.tags
@@ -488,8 +504,16 @@ ALTER TABLE ONLY public.tags
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: juicer_postgres_user
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WHlyuaaMyLRePhTFAKHitIHswxQEuR3iEmBtT5wo0cH3U9tTGg9B6LAuw1BBwdx
+\unrestrict SKRhFbAIl148SepKmbX1byPwcfBB1oOToFej7vOdYBNcnjCy0n21zr7FbsCOjNg
 

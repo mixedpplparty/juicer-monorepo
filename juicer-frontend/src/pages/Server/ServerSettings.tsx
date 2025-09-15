@@ -5,19 +5,32 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import {
+	_findRoleById,
+	filterOutEveryoneRole,
+} from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
 	_createCategory,
+	_createRoleCategory,
 	_createTag,
 	_deleteCategory,
+	_deleteRoleCategory,
 	_deleteTag,
 	_fetchServerData,
 } from "../../remotes/remotes";
-import type { Category, Tag } from "../../types/types";
+import type {
+	Category,
+	Role,
+	RoleCategory,
+	ServerDataDiscordRole,
+	Tag,
+} from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
+import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -30,6 +43,8 @@ export const ServerSettings = () => {
 	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
 		useState<boolean>(false);
 	const [isCreateTagModalOpen, setIsCreateTagModalOpen] =
+		useState<boolean>(false);
+	const [isCreateRoleCategoryModalOpen, setIsCreateRoleCategoryModalOpen] =
 		useState<boolean>(false);
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
@@ -59,6 +74,23 @@ export const ServerSettings = () => {
 		await _serverDataQuery.refetch();
 		setIsCreateCategoryModalOpen(false);
 	};
+	const createRoleCategoryFormAction = async (
+		formData: FormData,
+	): Promise<void> => {
+		const roleCategoryName = formData.get("role-category-name");
+		try {
+			await startTransition(
+				_createRoleCategory(serverId as string, roleCategoryName as string),
+			);
+			showToast("Role category created", "success");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
+		}
+		await _serverDataQuery.refetch();
+		setIsCreateRoleCategoryModalOpen(false);
+	};
 	const createTagFormAction = async (formData: FormData): Promise<void> => {
 		const tagName = formData.get("tag-name");
 		try {
@@ -72,6 +104,20 @@ export const ServerSettings = () => {
 		await _serverDataQuery.refetch();
 		setIsCreateTagModalOpen(false);
 	};
+	const deleteRoleCategoryAction =
+		(roleCategoryId: number) => async (): Promise<void> => {
+			try {
+				await startTransition(
+					_deleteRoleCategory(serverId as string, roleCategoryId),
+				);
+				showToast("Role category deleted", "success");
+			} catch (error: unknown) {
+				if (isAxiosError(error)) {
+					showToast(error.response?.data.detail as string, "error");
+				}
+			}
+			await _serverDataQuery.refetch();
+		};
 	const deleteCategoryAction =
 		(categoryId: number) => async (): Promise<void> => {
 			try {
@@ -142,7 +188,142 @@ export const ServerSettings = () => {
 									flexDirection: "row",
 								}}
 							>
-								<h2 css={{ margin: 0, flex: 1 }}>카테고리</h2>
+								<h2 css={{ margin: 0, flex: 1 }}>분류 없는 역할</h2>
+							</div>
+							{!!_serverData.server_data_discord.roles?.length || (
+								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+									서버에 역할이 없습니다.
+								</div>
+							)}
+							{!!_serverData.server_data_discord.roles?.length && (
+								<div
+									css={{
+										display: "flex",
+										flexDirection: "row",
+										gap: "4px",
+										flexWrap: "wrap",
+									}}
+								>
+									{filterOutEveryoneRole(
+										_serverData,
+										_serverData.server_data_db.roles || [],
+									).map((role: Role) => {
+										return (
+											<Chip
+												key={role.id}
+												css={{
+													display: "flex",
+													flexDirection: "row",
+													gap: "4px",
+													alignItems: "center",
+												}}
+											>
+												<_8pxCircle
+													css={{
+														backgroundColor: `rgb(${
+															_findRoleById(_serverData, role.id)?.color.join(
+																",",
+															) || "255, 255, 255"
+														})`,
+													}}
+												/>
+												{_findRoleById(_serverData, role.id)?.name}
+											</Chip>
+										);
+									})}
+								</div>
+							)}
+						</div>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "column",
+								width: "100%",
+								gap: "12px",
+							}}
+						>
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "row",
+								}}
+							>
+								<h2 css={{ margin: 0, flex: 1 }}>역할 분류</h2>
+								<Button
+									css={{
+										background: "#5865F2",
+										display: "flex",
+										alignItems: "center",
+										gap: "8px",
+									}}
+									onClick={() => setIsCreateRoleCategoryModalOpen(true)}
+								>
+									<AddIcon css={{ width: "16px", height: "16px" }} />
+									역할 분류 추가
+								</Button>
+							</div>
+							{!!_serverData.server_data_db.role_categories?.length || (
+								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+									서버에 역할 카테고리가 없습니다.
+								</div>
+							)}
+							{!!_serverData.server_data_db.role_categories?.length && (
+								<div
+									css={{
+										display: "flex",
+										flexDirection: "row",
+										gap: "6px",
+										flexWrap: "wrap",
+									}}
+								>
+									{_serverData.server_data_db.role_categories?.map(
+										(roleCategory: RoleCategory) => (
+											<Chip
+												key={roleCategory.id}
+												css={{
+													display: "flex",
+													flexDirection: "row",
+													gap: "4px",
+												}}
+											>
+												<InlineButton
+													css={{
+														height: "100%",
+														alignItems: "center",
+														justifyContent: "center",
+													}}
+													onClick={deleteRoleCategoryAction(roleCategory.id)}
+												>
+													<DeleteIcon
+														css={{
+															width: "16px",
+															height: "16px",
+															color: "#FFF",
+														}}
+													/>
+												</InlineButton>
+												{roleCategory.name}
+											</Chip>
+										),
+									)}
+								</div>
+							)}
+						</div>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "column",
+								width: "100%",
+								gap: "12px",
+							}}
+						>
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "row",
+								}}
+							>
+								<h2 css={{ margin: 0, flex: 1 }}>주제 분류</h2>
 								<Button
 									css={{
 										background: "#5865F2",
@@ -153,12 +334,12 @@ export const ServerSettings = () => {
 									onClick={() => setIsCreateCategoryModalOpen(true)}
 								>
 									<AddIcon css={{ width: "16px", height: "16px" }} />
-									카테고리 추가
+									주제 분류류 추가
 								</Button>
 							</div>
 							{!!_serverData.server_data_db.categories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
-									서버에 카테고리가 없습니다.
+									서버에 주제 카테고리가 없습니다.
 								</div>
 							)}
 							{!!_serverData.server_data_db.categories?.length && (
@@ -342,6 +523,38 @@ export const ServerSettings = () => {
 								type="submit"
 							>
 								태그 추가
+							</Button>
+						</form>
+					</Modal>
+				</ModalPortal>
+			)}
+			{isCreateRoleCategoryModalOpen && (
+				<ModalPortal>
+					<Modal
+						title="역할 분류 추가"
+						onClose={() => setIsCreateRoleCategoryModalOpen(false)}
+					>
+						<form
+							action={createRoleCategoryFormAction}
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
+							<Input
+								type="text"
+								name="role-category-name"
+								placeholder="역할 분류 이름"
+							/>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									width: "100%",
+									gap: "8px",
+								}}
+								type="submit"
+							>
+								역할 분류 추가
 							</Button>
 						</form>
 					</Modal>

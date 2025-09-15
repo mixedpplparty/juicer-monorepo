@@ -1,0 +1,52 @@
+services:
+
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: juicer_db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./juicer-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    command: -p ${POSTGRES_PORT}
+
+  # Backend Service
+  backend:
+    build: ./juicer-backend
+    container_name: juicer_backend
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./juicer-frontend
+      args:
+        VITE_BACKEND_URI: ${VITE_BACKEND_URI}
+        VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}
+        VITE_USER_AUTH_URI: ${VITE_USER_AUTH_URI}
+        VITE_API_ENDPOINT: ${VITE_API_ENDPOINT}
+        VITE_CLIENT_ID: ${VITE_CLIENT_ID}
+    container_name: juicer_frontend
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+
