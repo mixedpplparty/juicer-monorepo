@@ -22,8 +22,7 @@ CREATE TABLE roles (
 CREATE TABLE categories (
     category_id SERIAL PRIMARY KEY,
     server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    -- UNIQUE(server_id, name) -- Category names must be unique within a server
+    name VARCHAR(100) NOT NULL
 );
 
 -- Table for games, linked to a server and a category
@@ -33,16 +32,14 @@ CREATE TABLE games (
     category_id INT REFERENCES categories(category_id) ON DELETE SET NULL, -- If a category is deleted, the game remains but without a category
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    thumbnail BYTEA CHECK (octet_length(thumbnail) <= 1048576), -- Optional thumbnail image stored in binary, max 1MB
-    -- UNIQUE(server_id, name) -- Game names must be unique within a server
+    thumbnail BYTEA CHECK (octet_length(thumbnail) <= 1048576) -- Optional thumbnail image stored in binary, max 1MB
 );
 
 -- Table for tags, specific to each server
 CREATE TABLE tags (
     tag_id SERIAL PRIMARY KEY,
     server_id BIGINT NOT NULL REFERENCES servers(server_id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    -- UNIQUE(server_id, name) -- Tag names must be unique within a server
+    name VARCHAR(50) NOT NULL
 );
 
 -- JUNCTION TABLE for the many-to-many relationship between games and tags
