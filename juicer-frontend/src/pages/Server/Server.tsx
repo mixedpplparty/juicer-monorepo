@@ -79,9 +79,11 @@ export const Server = () => {
 				await startTransition(
 					_unassignRolesFromUser(serverId as string, game.id),
 				);
+				await startTransition(_myDataInServerQuery.refetch());
 				showToast("Roles unassigned", "success");
 			} else {
 				await startTransition(_assignRolesToUser(serverId as string, game.id));
+				await startTransition(_myDataInServerQuery.refetch());
 				showToast("Roles assigned", "success");
 			}
 		} catch (error: unknown) {
