@@ -79,12 +79,15 @@ export const Server = () => {
 		try {
 			await startTransition(_createServer(serverId as string));
 			showToast("Server created", "success");
+			await startTransition(_syncServerData(serverId as string));
+			showToast("Roles synced with server", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
 		await _serverDataQuery.refetch();
+		await _searchGamesInServerQuery.refetch();
 	};
 
 	const toggleRoleAssign = async (roleId: string) => {
