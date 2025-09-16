@@ -12,6 +12,7 @@ import {
 	_iHaveRole,
 	filterOutEveryoneRole,
 } from "../../functions/ServerFunctions";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -42,6 +43,7 @@ import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	//TODO do whatever when loading
 	const [query, setQuery] = useState<string | null>(null);
+	const debouncedQuery = useDebouncedValue<string | null>(query, 300);
 	// usages of isLoading to be added later
 	const [isLoading, startTransition] = useLoading();
 	const navigate = useNavigate();
@@ -56,7 +58,7 @@ export const Server = () => {
 	const _myDataInServer = _myDataInServerQuery.data;
 
 	const _searchGamesInServerQuery = useQuery(
-		_fetchSearchGamesInServer.query(serverId as string, query || null),
+		_fetchSearchGamesInServer.query(serverId as string, debouncedQuery || null),
 	);
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
