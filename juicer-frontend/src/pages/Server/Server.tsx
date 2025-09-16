@@ -38,6 +38,7 @@ import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Option, Select } from "../../ui/components/Select";
+import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
 
 export const Server = () => {
@@ -356,18 +357,22 @@ export const Server = () => {
 												}}
 												key={game.id}
 											>
-												<img
-													src={
-														_gameThumbnailQueries[idx].data ||
-														serverPlaceholderIcon
-													}
-													alt={game.name}
-													css={{
-														width: "64px",
-														height: "64px",
-														borderRadius: "16px",
-													}}
-												/>
+												{_gameThumbnailQueries[idx].isLoading ? (
+													<Skeleton css={{ width: "64px", height: "64px" }} />
+												) : (
+													<img
+														src={
+															_gameThumbnailQueries[idx].data ||
+															serverPlaceholderIcon
+														}
+														alt={game.name}
+														css={{
+															width: "64px",
+															height: "64px",
+															borderRadius: "16px",
+														}}
+													/>
+												)}
 												<div
 													css={{
 														display: "flex",
