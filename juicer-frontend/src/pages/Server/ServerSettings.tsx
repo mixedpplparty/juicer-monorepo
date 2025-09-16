@@ -31,6 +31,7 @@ import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { DragDropZone } from "../../ui/components/DragDropZone";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -214,12 +215,14 @@ export const ServerSettings = () => {
 											return (
 												<RoleChip
 													key={role.id}
+													id={role.id}
 													name={_findRoleById(_serverData, role.id)?.name || ""}
 													color={
 														_findRoleById(_serverData, role.id)?.color || [
 															255, 255, 255,
 														]
 													}
+													draggable={true}
 												/>
 											);
 										})}
@@ -274,28 +277,37 @@ export const ServerSettings = () => {
 												key={roleCategory.id}
 												css={{
 													display: "flex",
-													flexDirection: "row",
+													flexDirection: "column",
 													gap: "4px",
 													alignItems: "center",
 												}}
 											>
-												<InlineButton
+												<div
 													css={{
-														height: "100%",
-														alignItems: "center",
-														justifyContent: "center",
+														display: "flex",
+														flexDirection: "row",
+														gap: "4px",
 													}}
-													onClick={deleteRoleCategoryAction(roleCategory.id)}
 												>
-													<DeleteIcon
+													<InlineButton
 														css={{
-															width: "16px",
-															height: "16px",
-															color: "#FFF",
+															height: "100%",
+															alignItems: "center",
+															justifyContent: "center",
 														}}
-													/>
-												</InlineButton>
-												<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
+														onClick={deleteRoleCategoryAction(roleCategory.id)}
+													>
+														<DeleteIcon
+															css={{
+																width: "16px",
+																height: "16px",
+																color: "#FFF",
+															}}
+														/>
+													</InlineButton>
+													<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
+												</div>
+												<DragDropZone>test</DragDropZone>
 											</div>
 										),
 									)}

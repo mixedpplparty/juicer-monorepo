@@ -1,8 +1,7 @@
 from typing import Optional, Any, List, Dict, Union
 import base64
-from tempfile import SpooledTemporaryFile
 from psycopg import AsyncConnection
-from psycopg.errors import UniqueViolation, ForeignKeyViolation
+from psycopg.errors import UniqueViolation
 
 
 async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> Optional[Any]:
