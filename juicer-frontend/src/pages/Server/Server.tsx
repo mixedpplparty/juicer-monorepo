@@ -415,23 +415,23 @@ export const Server = () => {
 																flexWrap: "wrap",
 															}}
 														>
-															{game.tags && game.tags.length > 0
-																? game.tags?.map((tag: Tag) => (
-																		<div
-																			key={tag.id}
-																			css={{
-																				display: "flex",
-																				flexDirection: "row",
-																				gap: "4px",
-																				alignItems: "center",
-																				border: "none",
-																				background: "none",
-																			}}
-																		>
-																			#{tag.name}
-																		</div>
-																	))
-																: "태그 없음"}
+															{game.tags &&
+																game.tags.length > 0 &&
+																game.tags?.map((tag: Tag) => (
+																	<div
+																		key={tag.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																			border: "none",
+																			background: "none",
+																		}}
+																	>
+																		#{tag.name}
+																	</div>
+																))}
 														</div>
 														<div
 															css={{
@@ -441,48 +441,41 @@ export const Server = () => {
 																flexWrap: "wrap",
 															}}
 														>
-															{game.roles_to_add && game.roles_to_add.length > 0
-																? filterOutEveryoneRole(
-																		_serverData,
-																		game.roles_to_add,
-																	)?.map((role: Role) => (
-																		<Chip
-																			key={role.id}
+															{game.roles_to_add &&
+																game.roles_to_add.length > 0 &&
+																filterOutEveryoneRole(
+																	_serverData,
+																	game.roles_to_add,
+																)?.map((role: Role) => (
+																	<Chip
+																		key={role.id}
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																			cursor: "pointer",
+																			...(_iHaveRole(_serverData, role.id) && {
+																				border: "1px solid black",
+																				background: "rgba(255, 255, 255, 1)",
+																				color: "rgba(0, 0, 0, 1)",
+																			}),
+																		}}
+																		onClick={() => toggleRoleAssign(role.id)}
+																	>
+																		<_8pxCircle
 																			css={{
-																				display: "flex",
-																				flexDirection: "row",
-																				gap: "4px",
-																				alignItems: "center",
-																				cursor: "pointer",
-																				...(_iHaveRole(
-																					_serverData,
-																					role.id,
-																				) && {
-																					border: "1px solid black",
-																					background: "rgba(255, 255, 255, 1)",
-																					color: "rgba(0, 0, 0, 1)",
-																				}),
+																				backgroundColor: `rgb(${
+																					_findRoleById(
+																						_serverData,
+																						role.id,
+																					)?.color.join(",") || "255, 255, 255"
+																				})`,
 																			}}
-																			onClick={() => toggleRoleAssign(role.id)}
-																		>
-																			<_8pxCircle
-																				css={{
-																					backgroundColor: `rgb(${
-																						_findRoleById(
-																							_serverData,
-																							role.id,
-																						)?.color.join(",") ||
-																						"255, 255, 255"
-																					})`,
-																				}}
-																			/>
-																			{
-																				_findRoleById(_serverData, role.id)
-																					?.name
-																			}
-																		</Chip>
-																	))
-																: "역할 없음"}
+																		/>
+																		{_findRoleById(_serverData, role.id)?.name}
+																	</Chip>
+																))}
 														</div>
 													</div>
 													{_serverData.admin && (
