@@ -327,7 +327,7 @@ export const ServerSettings = () => {
 									onClick={() => setIsCreateCategoryModalOpen(true)}
 								>
 									<AddIcon css={{ width: "16px", height: "16px" }} />
-									주제 분류류 추가
+									주제 분류 추가
 								</Button>
 							</div>
 							{!!_serverData.server_data_db.categories?.length || (

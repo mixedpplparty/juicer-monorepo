@@ -7,26 +7,31 @@ export const GameCardSkeleton = () => {
 			css={{
 				border: "1px solid rgba(255, 255, 255, 0.33)",
 				display: "flex",
-				flexDirection: "column",
-				gap: "12px",
+				flexDirection: "row",
+				alignItems: "center",
 			}}
 		>
+			<Skeleton css={{ width: "64px", height: "64px" }} />
 			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					gap: "8px",
-					alignItems: "center",
-				}}
+				css={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}
 			>
-				<Skeleton css={{ width: "25%", height: "1.5rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-			</div>
-			<Skeleton css={{ width: "35%", height: "1rem" }} />
-			<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
-				<Skeleton css={{ width: "10%", height: "1rem" }} />
+				<div
+					css={{
+						display: "flex",
+						flexDirection: "row",
+						gap: "8px",
+						alignItems: "center",
+					}}
+				>
+					<Skeleton css={{ width: "25%", height: "1.5rem" }} />
+					<Skeleton css={{ width: "10%", height: "1rem" }} />
+				</div>
+				<Skeleton css={{ width: "35%", height: "1rem" }} />
+				<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
+					<Skeleton css={{ width: "10%", height: "1rem" }} />
+					<Skeleton css={{ width: "10%", height: "1rem" }} />
+					<Skeleton css={{ width: "10%", height: "1rem" }} />
+				</div>
 			</div>
 		</Card>
 	);
