@@ -35,6 +35,7 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { RoleChip } from "../../ui/components/RoleChip";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
@@ -207,30 +208,21 @@ export const ServerSettings = () => {
 									{filterOutEveryoneRole(
 										_serverData,
 										_serverData.server_data_db.roles || [],
-									).map((role: Role) => {
-										return (
-											<Chip
-												key={role.id}
-												css={{
-													display: "flex",
-													flexDirection: "row",
-													gap: "4px",
-													alignItems: "center",
-												}}
-											>
-												<_8pxCircle
-													css={{
-														backgroundColor: `rgb(${
-															_findRoleById(_serverData, role.id)?.color.join(
-																",",
-															) || "255, 255, 255"
-														})`,
-													}}
+									)
+										.filter((role: Role) => role.role_category_id === null)
+										.map((role: Role) => {
+											return (
+												<RoleChip
+													key={role.id}
+													name={_findRoleById(_serverData, role.id)?.name || ""}
+													color={
+														_findRoleById(_serverData, role.id)?.color || [
+															255, 255, 255,
+														]
+													}
 												/>
-												{_findRoleById(_serverData, role.id)?.name}
-											</Chip>
-										);
-									})}
+											);
+										})}
 								</div>
 							)}
 						</div>
@@ -271,19 +263,20 @@ export const ServerSettings = () => {
 								<div
 									css={{
 										display: "flex",
-										flexDirection: "row",
+										flexDirection: "column",
 										gap: "6px",
 										flexWrap: "wrap",
 									}}
 								>
 									{_serverData.server_data_db.role_categories?.map(
 										(roleCategory: RoleCategory) => (
-											<Chip
+											<div
 												key={roleCategory.id}
 												css={{
 													display: "flex",
 													flexDirection: "row",
 													gap: "4px",
+													alignItems: "center",
 												}}
 											>
 												<InlineButton
@@ -302,8 +295,8 @@ export const ServerSettings = () => {
 														}}
 													/>
 												</InlineButton>
-												{roleCategory.name}
-											</Chip>
+												<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
+											</div>
 										),
 									)}
 								</div>
