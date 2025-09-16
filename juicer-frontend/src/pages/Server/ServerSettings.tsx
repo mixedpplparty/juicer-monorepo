@@ -279,7 +279,6 @@ export const ServerSettings = () => {
 													display: "flex",
 													flexDirection: "column",
 													gap: "4px",
-													alignItems: "center",
 												}}
 											>
 												<div
@@ -287,6 +286,7 @@ export const ServerSettings = () => {
 														display: "flex",
 														flexDirection: "row",
 														gap: "4px",
+														alignItems: "center",
 													}}
 												>
 													<InlineButton
@@ -307,7 +307,9 @@ export const ServerSettings = () => {
 													</InlineButton>
 													<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
 												</div>
-												<DragDropZone>test</DragDropZone>
+												<DragDropZone id={roleCategory.id}>
+													Drag here
+												</DragDropZone>
 											</div>
 										),
 									)}

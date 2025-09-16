@@ -7,9 +7,6 @@ export const RoleChip = ({
 	draggable,
 	onDragStart,
 	onDragEnd,
-	onDragEnter,
-	onDragLeave,
-	onDragOver,
 	id,
 }: {
 	name: string;
@@ -17,9 +14,6 @@ export const RoleChip = ({
 	draggable?: boolean;
 	onDragStart?: () => void;
 	onDragEnd?: () => void;
-	onDragEnter?: () => void;
-	onDragLeave?: () => void;
-	onDragOver?: () => void;
 	id?: string;
 }) => {
 	return (
@@ -34,9 +28,6 @@ export const RoleChip = ({
 			id={id}
 			onDragStart={onDragStart}
 			onDragEnd={onDragEnd}
-			onDragEnter={onDragEnter}
-			onDragLeave={onDragLeave}
-			onDragOver={onDragOver}
 		>
 			<_8pxCircle
 				css={{
