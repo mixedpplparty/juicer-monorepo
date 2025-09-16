@@ -37,6 +37,7 @@ import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
@@ -275,26 +276,15 @@ export const Server = () => {
 											_myDataInServer.roles || [],
 										).map((role: Role) => {
 											return (
-												<Chip
+												<RoleChip
 													key={role.id}
-													css={{
-														display: "flex",
-														flexDirection: "row",
-														gap: "4px",
-														alignItems: "center",
-													}}
-												>
-													<_8pxCircle
-														css={{
-															backgroundColor: `rgb(${
-																_findRoleById(_serverData, role.id)?.color.join(
-																	",",
-																) || "255, 255, 255"
-															})`,
-														}}
-													/>
-													{_findRoleById(_serverData, role.id)?.name}
-												</Chip>
+													name={_findRoleById(_serverData, role.id)?.name || ""}
+													color={
+														_findRoleById(_serverData, role.id)?.color || [
+															255, 255, 255,
+														]
+													}
+												/>
 											);
 										})}
 									</div>
