@@ -114,6 +114,7 @@ _fetchThumbnailsInGame.queries = (serverId: string, gameIds: string[]) => {
 		...gameIds.map((gameId) => ({
 			queryKey: ["thumbnailsInGame", serverId, gameId],
 			queryFn: () => _fetchThumbnailsInGame(serverId, gameId),
+			retry: false,
 		})),
 	];
 };
