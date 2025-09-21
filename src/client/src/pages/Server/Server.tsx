@@ -4,6 +4,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import type { Category, Game, Role, Tag } from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
@@ -26,7 +27,6 @@ import {
 	_syncServerData,
 	_unassignRoleByIdFromUser,
 } from "../../remotes/remotes";
-import type { Category, Game, Role, Tag } from "../../types/types";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";

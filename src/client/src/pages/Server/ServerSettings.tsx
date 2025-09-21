@@ -3,6 +3,13 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import type {
+	Category,
+	Role,
+	RoleCategory,
+	ServerDataDiscordRole,
+	Tag,
+} from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -20,13 +27,6 @@ import {
 	_deleteTag,
 	_fetchServerData,
 } from "../../remotes/remotes";
-import type {
-	Category,
-	Role,
-	RoleCategory,
-	ServerDataDiscordRole,
-	Tag,
-} from "../../types/types";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
