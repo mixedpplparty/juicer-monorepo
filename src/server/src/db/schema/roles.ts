@@ -1,6 +1,6 @@
 import { bigint, integer, pgTable } from "drizzle-orm/pg-core";
-import { roleCategories } from "./role-categories.js";
-import { servers } from "./servers.js";
+import { roleCategories } from "./role-categories.ts";
+import { servers } from "./servers.ts";
 
 export const roles = pgTable("roles", {
 	roleId: bigint("role_id", { mode: "number" }).notNull().primaryKey(),
