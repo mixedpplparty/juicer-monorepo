@@ -11,6 +11,7 @@ RUN npm install -g pnpm
 COPY package.json tsconfig.json pnpm*yaml ./
 
 # Copy the rest of the source code
+# Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
 COPY client ./client
 COPY shared ./shared
 
