@@ -2,7 +2,7 @@
 FROM postgres:17-alpine
 
 # Install Node.js and pnpm
-RUN apk add --no-cache nodejs npm
+RUN apk add --no-cache acl nodejs npm
 RUN npm install -g pnpm
 
 # Set working directory for our setup scripts
@@ -16,8 +16,14 @@ COPY shared ./shared
 # Install dependencies
 RUN pnpm install
 
+# Install dependencies for server
+RUN pnpm install --prefix /app/server
+
+# give permissions to user postgres to read and write in the server directory
+RUN chmod -R o+rwx /app/server
+
 # Copy our custom initialization script that runs migrations
-COPY ../db-init-migrations.sh /docker-entrypoint-initdb.d/02-run-migrations.sh
+COPY db-init-migrations.sh /docker-entrypoint-initdb.d/02-run-migrations.sh
 
 # Make the script executable
 RUN chmod +x /docker-entrypoint-initdb.d/02-run-migrations.sh
