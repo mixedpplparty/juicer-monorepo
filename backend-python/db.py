@@ -37,13 +37,13 @@ async def get_server_data_with_details(db: AsyncConnection, server_id: int) -> O
           -- Nested aggregation for each game's tags
           (
             SELECT json_agg(json_build_object('id', t.tag_id, 'name', t.name))
-            FROM game_tags gt JOIN tags t ON gt.tag_id = t.tag_id
+            FROM games_tags gt JOIN tags t ON gt.tag_id = t.tag_id
             WHERE gt.game_id = g.game_id
           ) AS tags,
           -- Nested aggregation for each game's roles
           (
             SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
-            FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+            FROM games_roles gr JOIN roles r ON gr.role_id = r.role_id
             WHERE gr.game_id = g.game_id
           ) AS roles_to_add
         FROM games g
@@ -167,14 +167,14 @@ async def get_games_by_server(db: AsyncConnection, server_id: int) -> List[Dict[
                 COALESCE(
                     (
                         SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
-                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        FROM games_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
                     '[]'::json
                 ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
-            LEFT JOIN game_tags gt ON g.game_id = gt.game_id
+            LEFT JOIN games_tags gt ON g.game_id = gt.game_id
             LEFT JOIN tags t ON gt.tag_id = t.tag_id
             WHERE g.server_id = %s
             GROUP BY g.game_id, g.name, g.description, g.category_id, c.name
@@ -249,9 +249,9 @@ async def update_game_with_tags_and_roles(db: AsyncConnection, game_id: int, ser
         if cursor.rowcount <= 0:
             return False
 
-        # Sync game_tags
+        # Sync games_tags
         await cursor.execute(
-            "SELECT tag_id FROM game_tags WHERE game_id = %s",
+            "SELECT tag_id FROM games_tags WHERE game_id = %s",
             (game_id,)
         )
         existing_tag_rows = await cursor.fetchall()
@@ -264,19 +264,19 @@ async def update_game_with_tags_and_roles(db: AsyncConnection, game_id: int, ser
         if tags_to_remove:
             for tag_id in tags_to_remove:
                 await cursor.execute(
-                    "DELETE FROM game_tags WHERE game_id = %s AND tag_id = %s",
+                    "DELETE FROM games_tags WHERE game_id = %s AND tag_id = %s",
                     (game_id, tag_id)
                 )
         if tags_to_add:
             for tag_id in tags_to_add:
                 await cursor.execute(
-                    "INSERT INTO game_tags (game_id, tag_id) VALUES (%s, %s) ON CONFLICT (game_id, tag_id) DO NOTHING",
+                    "INSERT INTO games_tags (game_id, tag_id) VALUES (%s, %s) ON CONFLICT (game_id, tag_id) DO NOTHING",
                     (game_id, tag_id)
                 )
 
-        # Sync game_roles
+        # Sync games_roles
         await cursor.execute(
-            "SELECT role_id FROM game_roles WHERE game_id = %s",
+            "SELECT role_id FROM games_roles WHERE game_id = %s",
             (game_id,)
         )
         existing_role_rows = await cursor.fetchall()
@@ -292,13 +292,13 @@ async def update_game_with_tags_and_roles(db: AsyncConnection, game_id: int, ser
         if roles_to_remove:
             for role_id in roles_to_remove:
                 await cursor.execute(
-                    "DELETE FROM game_roles WHERE game_id = %s AND role_id = %s",
+                    "DELETE FROM games_roles WHERE game_id = %s AND role_id = %s",
                     (game_id, role_id)
                 )
         if roles_to_add:
             for role_id in roles_to_add:
                 await cursor.execute(
-                    "INSERT INTO game_roles (game_id, role_id) VALUES (%s, %s) ON CONFLICT (game_id, role_id) DO NOTHING",
+                    "INSERT INTO games_roles (game_id, role_id) VALUES (%s, %s) ON CONFLICT (game_id, role_id) DO NOTHING",
                     (game_id, role_id)
                 )
 
@@ -467,7 +467,7 @@ async def add_tags_to_game(db: AsyncConnection, game_id: int, server_id: int, ta
 
             # Add tag to game (ignore if already exists)
             await cursor.execute("""
-                INSERT INTO game_tags (game_id, tag_id) 
+                INSERT INTO games_tags (game_id, tag_id) 
                 VALUES (%s, %s) 
                 ON CONFLICT (game_id, tag_id) DO NOTHING
             """, (game_id, tag_id))
@@ -515,7 +515,7 @@ async def add_tags_to_game_by_ids(db: AsyncConnection, game_id: int, server_id: 
 
             # Add tag to game (ignore if already exists)
             await cursor.execute("""
-                INSERT INTO game_tags (game_id, tag_id) 
+                INSERT INTO games_tags (game_id, tag_id) 
                 VALUES (%s, %s) 
                 ON CONFLICT (game_id, tag_id) DO NOTHING
             """, (game_id, tag_id))
@@ -546,7 +546,7 @@ async def remove_tag_from_game(db: AsyncConnection, game_id: int, server_id: int
 
         # Remove the tag from the game
         await cursor.execute("""
-            DELETE FROM game_tags 
+            DELETE FROM games_tags 
             WHERE game_id = %s 
             AND tag_id = (
                 SELECT tag_id FROM tags 
@@ -616,7 +616,7 @@ async def map_roles_to_game(db: AsyncConnection, game_id: int, server_id: int, r
 
             # Map role to game (ignore if already exists)
             await cursor.execute("""
-                INSERT INTO game_roles (game_id, role_id) 
+                INSERT INTO games_roles (game_id, role_id) 
                 VALUES (%s, %s) 
                 ON CONFLICT (game_id, role_id) DO NOTHING
             """, (game_id, role_id))
@@ -639,7 +639,7 @@ async def get_game_roles(db: AsyncConnection, game_id: int, server_id: int) -> L
     async with db.cursor() as cursor:
         await cursor.execute("""
             SELECT r.role_id::text
-            FROM game_roles gr
+            FROM games_roles gr
             JOIN roles r ON gr.role_id = r.role_id
             JOIN games g ON gr.game_id = g.game_id
             WHERE g.game_id = %s AND g.server_id = %s
@@ -727,7 +727,7 @@ async def handle_discord_role_removed(db: AsyncConnection, role_id: int, server_
         # Get all games that have this role mapped (for reporting)
         await cursor.execute("""
             SELECT DISTINCT g.game_id, g.name
-            FROM game_roles gr
+            FROM games_roles gr
             JOIN games g ON gr.game_id = g.game_id
             WHERE gr.role_id = %s AND g.server_id = %s
             ORDER BY g.name
@@ -759,7 +759,7 @@ async def handle_discord_role_removed(db: AsyncConnection, role_id: int, server_
         else:
             # Only remove the mappings, keep the role record
             await cursor.execute(
-                "DELETE FROM game_roles WHERE role_id = %s",
+                "DELETE FROM games_roles WHERE role_id = %s",
                 (role_id,)
             )
 
@@ -1043,14 +1043,14 @@ async def find_games_by_category(db: AsyncConnection, server_id: int, category_n
                 COALESCE(
                     (
                         SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
-                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        FROM games_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
                     '[]'::json
                 ) as roles_to_add
             FROM games g
             JOIN categories c ON g.category_id = c.category_id
-            LEFT JOIN game_tags gt ON g.game_id = gt.game_id
+            LEFT JOIN games_tags gt ON g.game_id = gt.game_id
             LEFT JOIN tags t ON gt.tag_id = t.tag_id
             WHERE g.server_id = %s AND c.name = %s
             GROUP BY g.game_id, g.name, g.description, g.category_id, c.name
@@ -1105,19 +1105,19 @@ async def find_games_by_tags(db: AsyncConnection, server_id: int, tag_names: Lis
                 COALESCE(
                     (
                         SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
-                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        FROM games_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
                     '[]'::json
                 ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
-            LEFT JOIN game_tags gt ON g.game_id = gt.game_id
+            LEFT JOIN games_tags gt ON g.game_id = gt.game_id
             LEFT JOIN tags t ON gt.tag_id = t.tag_id
             WHERE g.server_id = %s
             AND g.game_id IN (
                 SELECT gt2.game_id
-                FROM game_tags gt2
+                FROM games_tags gt2
                 JOIN tags t2 ON gt2.tag_id = t2.tag_id
                 WHERE t2.server_id = %s AND t2.name IN ({placeholders})
                 GROUP BY gt2.game_id
@@ -1162,14 +1162,14 @@ async def find_games_by_name(db: AsyncConnection, server_id: int, name_query: st
                 COALESCE(
                     (
                         SELECT json_agg(json_build_object('id', r.role_id::text, 'role_category_id', r.role_category_id))
-                        FROM game_roles gr JOIN roles r ON gr.role_id = r.role_id
+                        FROM games_roles gr JOIN roles r ON gr.role_id = r.role_id
                         WHERE gr.game_id = g.game_id
                     ),
                     '[]'::json
                 ) as roles_to_add
             FROM games g
             LEFT JOIN categories c ON g.category_id = c.category_id
-            LEFT JOIN game_tags gt ON g.game_id = gt.game_id
+            LEFT JOIN games_tags gt ON g.game_id = gt.game_id
             LEFT JOIN tags t ON gt.tag_id = t.tag_id
             WHERE g.server_id = %s AND g.name ILIKE %s
             GROUP BY g.game_id, g.name, g.description, g.category_id, c.name

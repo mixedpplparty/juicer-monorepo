@@ -11,4 +11,5 @@ const pool = new Pool({
 	idleTimeoutMillis: 0,
 	allowExitOnIdle: false,
 });
+
 export const db = drizzle({ client: pool });
