@@ -1,9 +1,10 @@
 import "dotenv/config";
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 const pool = new Pool({
-	host: process.env.POSTGRES_HOST,
+	host: "localhost",
 	port: parseInt(process.env.POSTGRES_PORT as string),
 	user: process.env.POSTGRES_USER,
 	password: process.env.POSTGRES_PASSWORD,
