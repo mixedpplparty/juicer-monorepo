@@ -1,65 +1,134 @@
-# juicer-monorepo
+# Juicer Monorepo
 
-## if /dashboard, /api, /backend doesn't work
-Make sure not to forget the trailing slash:
-e.g. `https:/your-domain/dashboard/`
+A TypeScript monorepo with shared types between frontend and backend.
 
-## to send non-secure(non-HTTPS/TLS) requests from FE side
-### juicer-frontend/nginx.conf
-remove `add_header X-Forwarded-Proto "https" always;`
-### juicer-frontend/index.html
-remove `<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />`
-### don't forget to edit .env
-remove `ENVIRONMENT=production` for the backend to receive non-HTTPS requests
+## Project Structure
 
-## docker-compose.yml
-for security, in production mode, in `servies.traefik.command`, remove `api=true` and `api.dashboard=true`
-
-## .env
-```yaml
-POSTGRES_DB=juicer_db
-POSTGRES_USER=juicer_postgres_user
-POSTGRES_PASSWORD=(whatever)
-POSTGRES_PORT=8008
-REDIRECT_URI=http://your_domain/backend/discord/auth/callback
-REDIRECT_AFTER_SIGN_IN_URI=http://your_domain:8080/
-REDIRECT_AFTER_SIGN_IN_FAILED_URI=http://your_domain:8080/sign-in-failed
-DISCORD_BOT_TOKEN=(discord bot token)
-VITE_CLIENT_ID=(discord client id)
-CLIENT_SECRET=(discord client secret)
-VITE_API_ENDPOINT=https://discord.com/api/v10
-VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id))&response_type=code&redirect_uri=http%3A%2F%2Fyour_domain%3A8000%2Fdiscord%2Fauth%2Fcallback&scope=identify
-VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id)&permissions=268438576&integration_type=0&scope=bot
-VITE_BACKEND_URI=http://your_domain/backend
-ENVIRONMENT=production
-ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
-# Domain Configuration
-TRAEFIK_DOMAIN=yourdomain.com
-# Let's Encrypt Configuration
-ACME_EMAIL=your-email@example.com
-# Traefik Dashboard Authentication
-# Generate with: htpasswd -nb admin your_password
-# all $s have to be doubled
-TRAEFIK_AUTH=admin:$$2y$10$$example_hash_here
+```
+src/
+├── shared/          # Shared types and utilities
+├── frontend/        # React frontend (Vite + TypeScript)
+├── backend/         # Hono backend (Node.js + TypeScript)
+└── db/             # Database schemas and migrations
 ```
 
-### TRAEFIK_AUTH
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm 8+
+- Docker & Docker Compose
+
+### Local Development
+
+1. **Install dependencies**
+   ```bash
+   npm run install:all
+   ```
+
+2. **Build shared types**
+   ```bash
+   npm run build:shared
+   ```
+
+3. **Start development servers**
+   ```bash
+   # Start all services
+   npm run dev
+
+   # Or start individually
+   npm run dev --workspace=src/frontend
+   npm run dev --workspace=src/backend
+   ```
+
+### Docker Development
+
 ```bash
-# Install htpasswd (if not available)
-# On Ubuntu/Debian: sudo apt-get install apache2-utils
-# On macOS: brew install httpd
+# Start all services with Docker
+docker-compose -f docker-compose-dev.yml up --build
 
-# Generate password hash
-htpasswd -nb admin your_secure_password
-
-# Add the output to your .env file as TRAEFIK_AUTH
+# Start specific services
+docker-compose -f docker-compose-dev.yml up db backend
 ```
 
-### ENVIRONMENT
-`production` makes HTTPS required for backend
+### Production Deployment
 
-## Discord Dev Portal Settings
-1. Create Application
-2. Head to `OAuth2`
-3. Add `http://your_domain/api/discord/auth/callback` to Redirect URI
-4. Select `http://your_domain/api/discord/auth/callback` as Redirect URI
+```bash
+# Production build and deploy
+docker-compose up --build -d
+```
+
+## Available Scripts
+
+### Root Level
+- `npm run dev` - Start all development servers
+- `npm run build` - Build all packages
+- `npm run lint` - Lint all packages with Biome
+- `npm run lint:fix` - Fix linting issues
+- `npm run format` - Format code with Biome
+
+### Workspace-specific
+- `npm run build --workspace=src/shared` - Build shared types
+- `npm run dev --workspace=src/frontend` - Start frontend dev server
+- `npm run dev --workspace=src/backend` - Start backend dev server
+
+## Shared Types
+
+The `src/shared` package contains TypeScript definitions shared between frontend and backend:
+
+```typescript
+import type { ServerData, Game, Role } from '@juicer/shared'
+```
+
+Types are automatically built when building frontend or backend projects.
+
+## Architecture Decisions
+
+### Separate Containers vs Single Container
+
+We use **separate containers** for frontend and backend because:
+
+1. **Independent Scaling** - Scale frontend and backend independently based on load
+2. **Technology Flexibility** - Use different base images optimized for each service
+3. **Development Experience** - Develop and deploy services independently
+4. **Security** - Isolate services and apply different security policies
+5. **Monitoring** - Monitor and debug services separately
+
+### Build Process
+
+1. **Shared types** are built first in both frontend and backend Dockerfiles
+2. **TypeScript project references** ensure proper dependency tracking
+3. **Biome** provides consistent linting across all packages
+4. **npm workspaces** manage dependencies efficiently
+
+## Environment Variables
+
+Create a `.env` file with:
+
+```env
+# Database
+POSTGRES_DB=juicer_db
+POSTGRES_USER=juicer_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_PORT=5432
+
+# Frontend
+VITE_BACKEND_URI=http://localhost:8000
+VITE_BOT_INSTALL_URI=https://discord.com/install
+VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize
+VITE_API_ENDPOINT=http://localhost:8000
+VITE_CLIENT_ID=your_discord_client_id
+
+# Production (docker-compose.yml only)
+TRAEFIK_DOMAIN=your-domain.com
+ACME_EMAIL=your-email@domain.com
+TRAEFIK_AUTH=your_basic_auth_hash
+```
+
+## Ports
+
+- **Frontend**: 8080
+- **Backend**: 8000  
+- **Database**: 5432 (dev), exposed internally only (prod)
+- **Traefik**: 80, 443 (prod only)

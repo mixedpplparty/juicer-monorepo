@@ -1,23 +1,28 @@
 {
-  "name": "backend",
-  "type": "module",
-  "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
-  },
-  "dependencies": {
-    "@hono/node-server": "^1.19.3",
-    "dotenv": "^17.2.2",
-    "drizzle-orm": "^0.44.5",
-    "hono": "^4.9.8",
-    "pg": "^8.16.3"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.17",
-    "@types/pg": "^8.15.5",
-    "drizzle-kit": "^0.31.4",
-    "tsx": "^4.7.1",
-    "typescript": "^5.8.3"
-  }
+	"name": "@juicer/backend",
+	"type": "module",
+	"scripts": {
+		"prebuild": "cd ../shared && npm run build",
+		"dev": "npm run prebuild && tsx watch src/index.ts",
+		"build": "npm run prebuild && tsc",
+		"start": "node dist/index.js",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"dependencies": {
+		"@hono/node-server": "^1.19.3",
+		"@juicer/shared": "file:../shared",
+		"dotenv": "^17.2.2",
+		"drizzle-orm": "^0.44.5",
+		"hono": "^4.9.8",
+		"pg": "^8.16.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^20.11.17",
+		"@types/pg": "^8.15.5",
+		"drizzle-kit": "^0.31.4",
+		"tsx": "^4.7.1",
+		"typescript": "^5.8.3"
+	}
 }

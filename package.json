@@ -1,0 +1,33 @@
+{
+	"name": "juicer-monorepo",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"src/shared",
+		"src/frontend",
+		"src/backend"
+	],
+	"scripts": {
+		"dev": "pnpm run dev:shared && concurrently \"pnpm run dev --workspace=src/frontend\" \"pnpm run dev --workspace=src/backend\"",
+		"dev:shared": "pnpm run build --workspace=src/shared",
+		"build": "pnpm run build --workspace=src/shared && pnpm run build --workspace=src/frontend && pnpm run build --workspace=src/backend",
+		"build:shared": "pnpm run build --workspace=src/shared",
+		"build:frontend": "pnpm run build --workspace=src/frontend",
+		"build:backend": "pnpm run build --workspace=src/backend",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"clean": "pnpm run clean --workspace=src/shared && pnpm run clean --workspace=src/frontend && pnpm run clean --workspace=src/backend",
+		"install:all": "pnpm install && pnpm install --workspace=src/shared && pnpm install --workspace=src/frontend && pnpm install --workspace=src/backend"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.2",
+		"concurrently": "^9.1.0",
+		"typescript": "^5.8.3"
+	},
+	"engines": {
+		"node": ">=22.19.0",
+		"pnpm": ">=10.0.0"
+	}
+}

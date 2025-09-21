@@ -58,7 +58,9 @@ services:
 
   # Backend Service
   backend:
-    build: ./src/backend
+    build:
+      context: .
+      dockerfile: ./src/backend/Dockerfile
     container_name: juicer_backend
     restart: always
     env_file:
@@ -81,7 +83,8 @@ services:
   # Frontend Service
   frontend:
     build:
-      context: ./src/frontend
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
       args:
         VITE_BACKEND_URI: ${VITE_BACKEND_URI}
         VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}

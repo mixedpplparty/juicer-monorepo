@@ -1,46 +1,63 @@
-# ---- Stage 1: Build the application ----
-FROM node:24-alpine AS build
+# Multi-stage build for frontend
+FROM node:24-alpine AS base
 
-# Set working directory
+# Install dependencies needed for building
+RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Copy root package.json and package-lock.json
+COPY package*.json ./
+COPY src/shared/package*.json ./src/shared/
+COPY src/frontend/package*.json ./src/frontend/
 
-# Copy package files and install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+# Install dependencies
+RUN npm ci
 
-# Copy the rest of the source code
-COPY . .
+# Copy shared source code and build it
+COPY src/shared ./src/shared
+RUN cd src/shared && npm run build
 
-# Accept build arguments for environment variables
+# Copy frontend source code
+COPY src/frontend ./src/frontend
+
+# Build arguments for environment variables
 ARG VITE_BACKEND_URI
 ARG VITE_BOT_INSTALL_URI
 ARG VITE_USER_AUTH_URI
 ARG VITE_API_ENDPOINT
 ARG VITE_CLIENT_ID
 
-# Set environment variables for build (Vite needs these as ENV, not ARG)
+# Set environment variables for build
 ENV VITE_BACKEND_URI=$VITE_BACKEND_URI
 ENV VITE_BOT_INSTALL_URI=$VITE_BOT_INSTALL_URI
 ENV VITE_USER_AUTH_URI=$VITE_USER_AUTH_URI
 ENV VITE_API_ENDPOINT=$VITE_API_ENDPOINT
 ENV VITE_CLIENT_ID=$VITE_CLIENT_ID
 
-# Build the project for production
-RUN pnpm run build
+# Build the frontend
+WORKDIR /app/src/frontend
+RUN npm run build
 
-# ---- Stage 2: Serve the application with Nginx ----
-FROM nginx:alpine
+# Production stage with Nginx
+FROM nginx:alpine AS production
 
-# Copy the built static files from the 'build' stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy custom nginx configuration
+COPY src/frontend/nginx.conf /etc/nginx/nginx.conf
 
-# Copy the custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy built frontend from previous stage
+COPY --from=base /app/src/frontend/dist /usr/share/nginx/html
 
-# Expose port 8080
+# Create non-root user
+RUN addgroup -g 1001 -S nginx_group
+RUN adduser -S frontend -u 1001 -G nginx_group
+
+# Change ownership of nginx directories
+RUN chown -R frontend:nginx_group /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html
+
+# Switch to non-root user
+USER frontend
+
 EXPOSE 8080
 
-# Nginx will be started automatically by the base image
+CMD ["nginx", "-g", "daemon off;"]
