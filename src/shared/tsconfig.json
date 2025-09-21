@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "ESNext",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"declaration": true,
@@ -13,7 +13,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"allowImportingTsExtensions": false,
-		"noEmit": false
+		"noEmit": false,
+		"composite": true
 	},
 	"include": ["**/*.ts"],
 	"exclude": ["node_modules", "dist"]
