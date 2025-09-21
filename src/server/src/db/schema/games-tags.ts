@@ -1,6 +1,6 @@
 import { bigint, pgTable, primaryKey } from "drizzle-orm/pg-core";
-import { games } from "./games.js";
-import { tags } from "./tags.js";
+import { games } from "./games.ts";
+import { tags } from "./tags.ts";
 
 export const gamesTags = pgTable(
 	"games_tags",

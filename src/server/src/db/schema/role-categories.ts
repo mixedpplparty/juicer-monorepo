@@ -1,5 +1,5 @@
 import { bigint, pgTable, serial, varchar } from "drizzle-orm/pg-core";
-import { servers } from "./servers.js";
+import { servers } from "./servers.ts";
 
 export const roleCategories = pgTable("role_categories", {
 	roleCategoryId: serial("role_category_id").primaryKey(),

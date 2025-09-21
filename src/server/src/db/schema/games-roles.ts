@@ -1,6 +1,6 @@
 import { bigint, pgTable, primaryKey } from "drizzle-orm/pg-core";
-import { games } from "./games.js";
-import { roles } from "./roles.js";
+import { games } from "./games.ts";
+import { roles } from "./roles.ts";
 
 export const gamesRoles = pgTable(
 	"games_roles",
