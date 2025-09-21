@@ -50,7 +50,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persists database data
-      - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     # SECURITY: Remove port exposure - database should only be accessible internally
     expose:
       - '${POSTGRES_PORT}' # expose port to linked services only
@@ -58,13 +58,16 @@ services:
 
   # Backend Service
   backend:
-    build: ./src/backend
+    build:
+      context: ./src/
+      dockerfile: ./server.Dockerfile
     container_name: juicer_backend
     restart: always
     env_file:
       - ./.env
     depends_on:
       - db # Ensures the 'db' service starts before the 'backend'
+      - shared
     labels:
       - traefik.enable=true
       - traefik.port=8000
@@ -81,7 +84,8 @@ services:
   # Frontend Service
   frontend:
     build:
-      context: ./src/frontend
+      context: ./src/
+      dockerfile: ./client.Dockerfile
       args:
         VITE_BACKEND_URI: ${VITE_BACKEND_URI}
         VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}
@@ -94,6 +98,7 @@ services:
       - ./.env
     depends_on:
       - backend
+      - shared
     labels:
       - traefik.enable=true
       - traefik.http.routers.frontend.rule=Host(`${TRAEFIK_DOMAIN}`)
@@ -110,6 +115,7 @@ services:
       - traefik.http.middlewares.frontend-security.headers.customresponseheaders.X-XSS-Protection=1;mode=block
       - traefik.http.middlewares.frontend-security.headers.customresponseheaders.Referrer-Policy=strict-origin-when-cross-origin
       - traefik.http.routers.frontend.middlewares=frontend-security
+
 
 volumes:
   postgres_data: # Defines the named volume for data persistence

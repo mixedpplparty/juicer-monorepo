@@ -2,6 +2,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import type { Category, Game, Role, Tag } from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -19,7 +20,6 @@ import {
 	_updateGameWithTagsAndRoles,
 	_uploadThumbnailToGame,
 } from "../../remotes/remotes";
-import type { Category, Game, Role, Tag } from "../../types/types";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip, Chip } from "../../ui/components/Chip";
@@ -53,7 +53,9 @@ export const GameSettings = () => {
 
 	const onDeleteThumbnailAction = async () => {
 		try {
-			await startTransition(_deleteThumbnailFromGame(serverId as string, gameId as string));
+			await startTransition(
+				_deleteThumbnailFromGame(serverId as string, gameId as string),
+			);
 			showToast("Game thumbnail deleted", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
@@ -62,7 +64,7 @@ export const GameSettings = () => {
 		}
 		await _serverDataQuery.refetch();
 		navigate(`/server?serverId=${serverId}`);
-	}
+	};
 
 	const onGameSettingsChangeSubmitAction = async (formData: FormData) => {
 		const gameName = formData.get("game-name");
@@ -186,8 +188,15 @@ export const GameSettings = () => {
 							}
 						/>
 						<div css={{ display: "flex", flexDirection: "row", gap: "12px" }}>
-							<label htmlFor="game-thumbnail" css={{ flex: 1 }}>썸네일(미선택 시 현행 유지)</label>
-							<span css={{ cursor: "pointer", color: "#ed5555" }} onClick={onDeleteThumbnailAction}>썸네일 삭제</span>
+							<label htmlFor="game-thumbnail" css={{ flex: 1 }}>
+								썸네일(미선택 시 현행 유지)
+							</label>
+							<span
+								css={{ cursor: "pointer", color: "#ed5555" }}
+								onClick={onDeleteThumbnailAction}
+							>
+								썸네일 삭제
+							</span>
 						</div>
 						<Input
 							id="game-thumbnail"

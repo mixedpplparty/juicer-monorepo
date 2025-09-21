@@ -1,10 +1,10 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import type { Guild } from "juicer-shared";
 import { Suspense } from "react";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
 import { _fetchMyInfo, _signOut } from "../../remotes/remotes";
-import type { Guild } from "../../types/types";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";

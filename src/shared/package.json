@@ -7,6 +7,9 @@
 		"build": "tsc",
 		"dev": "tsc --watch"
 	},
+	"dependencies": {
+		"discord-api-types": "^0.38.23"
+	},
 	"devDependencies": {
 		"typescript": "^5.8.3"
 	}

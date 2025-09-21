@@ -7,7 +7,7 @@ import type {
 	MyInfo,
 	ServerData,
 	SyncRolesResponse,
-} from "../types/types";
+} from "juicer-shared";
 
 axios.defaults.withCredentials = true;
 
