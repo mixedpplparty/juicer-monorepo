@@ -129,7 +129,7 @@ importers:
         specifier: ^0.31.4
         version: 0.31.4
       tsx:
-        specifier: ^4.7.1
+        specifier: ^4.20.5
         version: 4.20.5
       typescript:
         specifier: ^5.8.3
