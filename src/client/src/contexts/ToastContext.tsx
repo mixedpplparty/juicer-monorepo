@@ -1,6 +1,6 @@
 import CloseIcon from "@mui/icons-material/Close";
+import type { ToastObject, ToastProps } from "juicer-shared";
 import { createContext, useCallback, useState } from "react";
-import type { ToastObject, ToastProps } from "../types/types";
 import { Toast } from "../ui/components/Toast";
 import { ToastContainer } from "../ui/components/ToastContainer";
 export const ToastContext = createContext<{

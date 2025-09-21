@@ -1,6 +1,6 @@
 import { keyframes } from "@emotion/react";
 import styled from "@emotion/styled";
-import type { ToastProps } from "../../types/types";
+import type { ToastProps } from "juicer-shared";
 
 const slideInAnimation = keyframes({
 	from: {

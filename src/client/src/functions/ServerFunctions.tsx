@@ -3,7 +3,7 @@ import type {
 	Role,
 	ServerData,
 	ServerDataDiscordRole,
-} from "../types/types";
+} from "juicer-shared";
 
 export const _findRoleById = (
 	_serverData: ServerData,

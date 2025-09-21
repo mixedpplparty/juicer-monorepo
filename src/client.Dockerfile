@@ -8,11 +8,15 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy package files and install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+COPY package.json tsconfig.json pnpm*yaml ./
 
 # Copy the rest of the source code
-COPY . .
+# Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
+COPY client ./client
+COPY shared ./shared
+
+RUN pnpm install 
+
 
 # Accept build arguments for environment variables
 ARG VITE_BACKEND_URI
@@ -29,16 +33,17 @@ ENV VITE_API_ENDPOINT=$VITE_API_ENDPOINT
 ENV VITE_CLIENT_ID=$VITE_CLIENT_ID
 
 # Build the project for production
-RUN pnpm run build
+RUN pnpm run build:shared
+RUN pnpm run build:client
 
 # ---- Stage 2: Serve the application with Nginx ----
 FROM nginx:alpine
 
 # Copy the built static files from the 'build' stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/client/dist /usr/share/nginx/html
 
 # Copy the custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/client/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 8080
 EXPOSE 8080
