@@ -17,7 +17,6 @@
 		"@mui/material": "^7.3.2",
 		"@tanstack/react-query": "^5.86.0",
 		"axios": "^1.11.0",
-		"discord-api-types": "^0.38.23",
 		"es-hangul": "^2.3.5",
 		"jotai": "^2.13.1",
 		"qs": "^6.14.0",
@@ -35,7 +34,7 @@
 		"eslint-plugin-react-hooks": "^5.2.0",
 		"eslint-plugin-react-refresh": "^0.4.20",
 		"globals": "^16.3.0",
-		"typescript": "~5.8.3",
+		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.39.1",
 		"vite": "^7.1.2",
 		"vite-plugin-svgr": "^4.5.0"
