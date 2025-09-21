@@ -1,0 +1,31 @@
+{
+	"name": "juicer",
+	"version": "0.0.1",
+	"description": "",
+	"workspaces": [
+		"./server",
+		"./client",
+		"./shared"
+	],
+	"scripts": {
+		"dev:client": "cd client && pnpm run dev",
+		"dev:server": "cd server && pnpm run dev",
+		"dev:shared": "cd shared && pnpm run dev",
+		"dev": "concurrently \"pnpm run dev:shared\" \"pnpm run dev:server\" \"pnpm run dev:client\"",
+		"build:client": "cd client && pnpm run build",
+		"build:shared": "cd shared && pnpm run build",
+		"build:server": "cd server && pnpm run build",
+		"build": "pnpm run build:shared && pnpm run build:server && pnpm run build:client",
+		"postinstall": "pnpm run build:shared && pnpm run build:server"
+	},
+	"peerDependencies": {
+		"typescript": "~5.8.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.2"
+	},
+	"keywords": [],
+	"author": "MareNectaris",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1"
+}
