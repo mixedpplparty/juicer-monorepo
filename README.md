@@ -50,3 +50,18 @@ htpasswd -nb admin your_secure_password
 2. Head to `OAuth2`
 3. Add `http://your_domain/api/discord/auth/callback` to Redirect URI
 4. Select `http://your_domain/api/discord/auth/callback` as Redirect URI
+
+## running project
+
+1. [Install Docker](https://www.docker.com/)
+2. To run locally for development, run in the project root:
+
+`docker compose -f docker-compose-dev.yml up --build -d`
+
+or to run with Traefik, run in the project root:
+
+`docker compose up --build -d`
+
+3. to shutdown:
+
+`docker compose down`
