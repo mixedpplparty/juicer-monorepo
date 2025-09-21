@@ -11,14 +11,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./juicer-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     command: -p ${POSTGRES_PORT}
 
   # Backend Service
   backend:
-    build: ./juicer-backend
+    build: ./src/backend
     container_name: juicer_backend
     restart: always
     env_file:
@@ -31,7 +31,7 @@ services:
   # Frontend Service
   frontend:
     build:
-      context: ./juicer-frontend
+      context: ./src/frontend
       args:
         VITE_BACKEND_URI: ${VITE_BACKEND_URI}
         VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}

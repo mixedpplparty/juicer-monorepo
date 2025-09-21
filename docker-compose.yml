@@ -50,7 +50,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persists database data
-      - ./juicer-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     # SECURITY: Remove port exposure - database should only be accessible internally
     expose:
       - '${POSTGRES_PORT}' # expose port to linked services only
@@ -58,7 +58,7 @@ services:
 
   # Backend Service
   backend:
-    build: ./juicer-backend
+    build: ./src/backend
     container_name: juicer_backend
     restart: always
     env_file:
@@ -81,7 +81,7 @@ services:
   # Frontend Service
   frontend:
     build:
-      context: ./juicer-frontend
+      context: ./src/frontend
       args:
         VITE_BACKEND_URI: ${VITE_BACKEND_URI}
         VITE_BOT_INSTALL_URI: ${VITE_BOT_INSTALL_URI}
