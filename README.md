@@ -1,49 +1,34 @@
 # juicer-monorepo
 
 ## if /dashboard, /api, /backend doesn't work
+
 Make sure not to forget the trailing slash:
 e.g. `https:/your-domain/dashboard/`
 
 ## to send non-secure(non-HTTPS/TLS) requests from FE side
+
 ### juicer-frontend/nginx.conf
+
 remove `add_header X-Forwarded-Proto "https" always;`
 ### juicer-frontend/index.html
+
 remove `<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />`
 ### don't forget to edit .env
+
 remove `ENVIRONMENT=production` for the backend to receive non-HTTPS requests
 
 ## docker-compose.yml
-for security, in production mode, in `servies.traefik.command`, remove `api=true` and `api.dashboard=true`
+
+~~for security, in production mode, in `servies.traefik.command`, remove `api=true` and `api.dashboard=true`~~\
+
+You can setup authentication in the `TRAEFIK_AUTH` section below if you want basic authentication in dashboard. You have the choice to remove the dashboard feature completely by removing `api=true` and `api.dashboard=true`
 
 ## .env
-```yaml
-POSTGRES_DB=juicer_db
-POSTGRES_USER=juicer_postgres_user
-POSTGRES_PASSWORD=(whatever)
-POSTGRES_PORT=8008
-REDIRECT_URI=http://your_domain/backend/discord/auth/callback
-REDIRECT_AFTER_SIGN_IN_URI=http://your_domain:8080/
-REDIRECT_AFTER_SIGN_IN_FAILED_URI=http://your_domain:8080/sign-in-failed
-DISCORD_BOT_TOKEN=(discord bot token)
-VITE_CLIENT_ID=(discord client id)
-CLIENT_SECRET=(discord client secret)
-VITE_API_ENDPOINT=https://discord.com/api/v10
-VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id))&response_type=code&redirect_uri=http%3A%2F%2Fyour_domain%3A8000%2Fdiscord%2Fauth%2Fcallback&scope=identify
-VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=(discord_client_id)&permissions=268438576&integration_type=0&scope=bot
-VITE_BACKEND_URI=http://your_domain/backend
-ENVIRONMENT=production
-ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
-# Domain Configuration
-TRAEFIK_DOMAIN=yourdomain.com
-# Let's Encrypt Configuration
-ACME_EMAIL=your-email@example.com
-# Traefik Dashboard Authentication
-# Generate with: htpasswd -nb admin your_password
-# all $s have to be doubled
-TRAEFIK_AUTH=admin:$$2y$10$$example_hash_here
-```
+
+Refer to [.env.example](.env.example)
 
 ### TRAEFIK_AUTH
+
 ```bash
 # Install htpasswd (if not available)
 # On Ubuntu/Debian: sudo apt-get install apache2-utils
@@ -56,9 +41,11 @@ htpasswd -nb admin your_secure_password
 ```
 
 ### ENVIRONMENT
+
 `production` makes HTTPS required for backend
 
 ## Discord Dev Portal Settings
+
 1. Create Application
 2. Head to `OAuth2`
 3. Add `http://your_domain/api/discord/auth/callback` to Redirect URI

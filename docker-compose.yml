@@ -6,7 +6,7 @@ services:
     container_name: juicer_traefik
     restart: always
     command:
-      - --api=true
+      - --api=true 
       - --api.dashboard=true
       - --api.insecure=false  # Secure dashboard access
       - --providers.docker=true
