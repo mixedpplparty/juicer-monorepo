@@ -2,32 +2,26 @@
 
 set -e
 
-echo "Running database migrations..."
+db_migration_main() {
+  echo "Running database migrations..."
 
-# Wait for postgres to be ready
-until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" ; do
-  echo "Waiting for PostgreSQL to be ready..."
-  sleep 2
-done
+  # Wait for postgres to be ready
+  until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT" ; do
+    echo "Waiting for PostgreSQL to be ready..."
+    sleep 5
+  done
 
-cd /app/server
+  cd /app/server
 
-echo "Generating database schema..."
-pnpm run db:generate
+  echo "Generating database schema..."
+  pnpm run db:generate
 
-echo "Running database migrations..."
+  echo "Running database migrations..."
+  pnpm run db:migrate
 
-# Background function to wait for PostgreSQL and run migrations
-migrate_when_ready() {
-    until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -p "$POSTGRES_PORT" ; do
-        echo "Waiting for PostgreSQL to finalize in background..."
-        sleep 2
-    done
-    echo "PostgreSQL is ready, running migrations..."
-    pnpm run db:migrate
+  echo "Database setup completed successfully!"
 }
+export -f db_migration_main
 
-# Run migration in background
-migrate_when_ready &
-
-echo "Database setup completed successfully!"
+# run in background and keep the script running after exit
+nohup bash -c db_migration_main &

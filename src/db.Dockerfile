@@ -33,4 +33,3 @@ WORKDIR /var/lib/postgresql/data
 
 # Use the default postgres entrypoint
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["postgres"]
