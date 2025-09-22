@@ -39,6 +39,9 @@ export type Role = {
     id: string;
     role_category_id: number | null;
 };
+export type Channel = {
+    id: string;
+};
 export type Game = {
     id: number;
     name: string;
@@ -46,6 +49,7 @@ export type Game = {
     category: Category | null;
     tags: Tag[] | null;
     roles_to_add: Role[] | null;
+    channels: Channel[] | null;
 };
 export type ServerDataDiscord = {
     id: string;
@@ -97,4 +101,23 @@ export type MessageOnSuccess = {
 export type SyncRolesResponse = {
     roles_created: string[];
     roles_deleted: string[];
+};
+export type CreateServerResponse = {
+    serverId: string;
+    createdAt: Date;
+};
+export type CreateGameRequestBody = {
+    serverId: string;
+    name: string;
+    description: string | null;
+    categoryId: number | null;
+};
+export type CreateGameResponse = {
+    gameId: number;
+    name: string;
+    description: string | null;
+    categoryId: number | null;
+    serverId: string;
+    thumbnail: Buffer | null;
+    channels: string[] | null;
 };
