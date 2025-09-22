@@ -3,6 +3,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import "dotenv/config";
+import { getCookie, setCookie } from "hono/cookie";
+import { exchangeCode, refreshAuthToken } from "./api.ts";
+import authRoutes from "./routes/auth.ts";
 
 const REDIRECT_AFTER_SIGN_IN_URI = process.env.REDIRECT_AFTER_SIGN_IN_URI;
 const REDIRECT_AFTER_SIGN_IN_FAILED_URI =
@@ -13,6 +16,7 @@ const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const DISCORD_API_ENDPOINT = process.env.DISCORD_API_ENDPOINT;
 const DISCORD_USER_AUTH_URI = process.env.DISCORD_USER_AUTH_URI;
 const DISCORD_BOT_INSTALL_URI = process.env.DISCORD_BOT_INSTALL_URI;
+const ENVIRONMENT = process.env.ENVIRONMENT;
 
 const app = new Hono();
 
@@ -40,9 +44,7 @@ const csrfMiddleware = csrf({
 app.use("*", corsMiddleware);
 app.use(csrfMiddleware);
 
-app.get("/", (c) => {
-	return c.text("Hello Hono!");
-});
+app.route("/discord/auth", authRoutes);
 
 serve(
 	{
