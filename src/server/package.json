@@ -11,6 +11,9 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.19.3",
+		"axios": "^1.12.2",
+		"discord-api-types": "^0.38.26",
+		"discord.js": "^14.22.1",
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.44.5",
 		"hono": "^4.9.8",
