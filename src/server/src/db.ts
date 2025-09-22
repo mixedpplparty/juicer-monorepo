@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, ilike, inArray, like } from "drizzle-orm";
 import type {
 	CreateCategoryRequestBody,
 	CreateGameRequestBody,
@@ -348,16 +348,74 @@ export const updateRoleCategoryOfRole = async ({
 	}
 };
 
-export const findGamesByCateogryOrTagsOrName = async ({
+export const findGamesByCategoryName = async ({
 	serverId,
 	categoryName,
-	tagNames,
-	name,
 }: {
 	serverId: string;
 	categoryName: string;
+}): Promise<any> => {
+	const categoryId = await db.query.categories.findFirst({
+		where: and(
+			eq(categories.serverId, serverId),
+			eq(categories.name, categoryName),
+		),
+	});
+	if (!categoryId) {
+		return [];
+	}
+	return await db.query.games.findMany({
+		where: and(
+			eq(games.serverId, serverId),
+			eq(games.categoryId, categoryId.categoryId),
+		),
+		with: {
+			gamesTags: true,
+			gamesRoles: true,
+		},
+	});
+};
+
+export const findGamesByTags = async ({
+	serverId,
+	tagNames,
+}: {
+	serverId: string;
 	tagNames: string[];
+}): Promise<any> => {
+	const tagIds = await db.query.tags.findMany({
+		where: and(eq(tags.serverId, serverId), inArray(tags.name, tagNames)),
+	});
+	if (!tagIds) {
+		return [];
+	}
+	return await db.query.games.findMany({
+		where: and(
+			eq(games.serverId, serverId),
+			inArray(
+				gamesTags.tagId,
+				tagIds.map((tag) => tag.tagId),
+			),
+		),
+		with: {
+			gamesTags: true,
+			gamesRoles: true,
+		},
+	});
+};
+
+export const findGamesByName = async ({
+	serverId,
+	name,
+}: {
+	serverId: string;
 	name: string;
 }): Promise<any> => {
-	//TODO
+	return await db.query.games.findMany({
+		where: and(eq(games.serverId, serverId), ilike(games.name, name)),
+		with: {
+			gamesTags: true,
+			gamesRoles: true,
+		},
+	});
 };
