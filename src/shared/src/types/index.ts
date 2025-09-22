@@ -35,12 +35,9 @@ export type RoleCategory = {
 };
 
 export type Tag = {
-	id: number;
+	tagId: number;
 	name: string;
-};
-
-export type TagId = {
-	id: number;
+	serverId: string | null;
 };
 
 export type Role = {
@@ -142,4 +139,50 @@ export type CreateGameResponse = {
 	serverId: string;
 	thumbnail: Buffer | null;
 	channels: string[] | null;
+};
+
+export type UpdateGameRequestBody = {
+	gameId: number;
+	serverId: string;
+	name: string;
+	description: string | null;
+	categoryId: number | null;
+	thumbnail: Buffer | null;
+	channels: string[] | null;
+	tagIds: number[] | null;
+	roleIds: string[] | null;
+};
+
+export type DeleteGameRequestBody = {
+	gameId: number;
+	serverId: string;
+};
+
+export type CreateTagRequestBody = {
+	serverId: string;
+	name: string;
+};
+
+export type GetAllTagsInServerRequestBody = {
+	serverId: string;
+};
+
+export type DeleteTagRequestBody = {
+	tagId: number;
+	serverId: string;
+};
+
+export type CreateRoleInDbRequestBody = {
+	serverId: string;
+	roleId: string;
+};
+
+export type CreateCategoryRequestBody = {
+	serverId: string;
+	name: string;
+};
+
+export type CreateRoleCategoryRequestBody = {
+	serverId: string;
+	name: string;
 };
