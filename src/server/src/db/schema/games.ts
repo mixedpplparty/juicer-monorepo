@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-	bigint,
 	check,
 	customType,
 	integer,
@@ -25,7 +24,7 @@ export const games = pgTable(
 	"games",
 	{
 		gameId: serial("game_id").primaryKey(),
-		serverId: bigint("server_id", { mode: "number" })
+		serverId: text("server_id")
 			.notNull()
 			.references(() => servers.serverId, { onDelete: "cascade" }),
 		categoryId: integer("category_id").references(() => categories.categoryId, {

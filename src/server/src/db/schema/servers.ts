@@ -1,6 +1,6 @@
-import { bigint, pgTable, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const servers = pgTable("servers", {
-	serverId: bigint("server_id", { mode: "number" }).notNull().primaryKey(),
+	serverId: text("server_id").notNull().primaryKey(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
