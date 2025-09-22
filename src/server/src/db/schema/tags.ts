@@ -1,9 +1,9 @@
-import { bigint, pgTable, serial, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 import { servers } from "./servers.ts";
 
 export const tags = pgTable("tags", {
 	tagId: serial("tag_id").primaryKey(),
-	serverId: bigint("server_id", { mode: "number" })
+	serverId: text("server_id")
 		.notNull()
 		.references(() => servers.serverId, { onDelete: "cascade" }),
 	name: varchar("name", { length: 50 }).notNull(),

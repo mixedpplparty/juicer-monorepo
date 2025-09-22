@@ -1,13 +1,13 @@
-import { bigint, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import { games } from "./games.ts";
 
 export const gamesChannels = pgTable(
 	"games_channels",
 	{
-		gameId: bigint("game_id", { mode: "number" })
+		gameId: integer("game_id")
 			.notNull()
 			.references(() => games.gameId, { onDelete: "cascade" }),
-		channelId: bigint("channel_id", { mode: "number" }).notNull(),
+		channelId: text("channel_id").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.gameId, table.channelId] })],
 );

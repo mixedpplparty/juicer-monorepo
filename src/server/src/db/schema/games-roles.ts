@@ -1,14 +1,14 @@
-import { bigint, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import { games } from "./games.ts";
 import { roles } from "./roles.ts";
 
 export const gamesRoles = pgTable(
 	"games_roles",
 	{
-		gameId: bigint("game_id", { mode: "number" })
+		gameId: integer("game_id")
 			.notNull()
 			.references(() => games.gameId, { onDelete: "cascade" }),
-		roleId: bigint("role_id", { mode: "number" })
+		roleId: text("role_id")
 			.notNull()
 			.references(() => roles.roleId, { onDelete: "cascade" }),
 	},
