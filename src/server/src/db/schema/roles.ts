@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
-import { integer, pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	integer,
+	pgTable,
+	serial,
+	text,
+	varchar,
+} from "drizzle-orm/pg-core";
 import { gamesRoles } from "./games.ts";
 import { servers } from "./servers.ts";
 
@@ -12,6 +19,7 @@ export const roles = pgTable("roles", {
 		() => roleCategories.roleCategoryId,
 		{ onDelete: "set null" },
 	),
+	selfAssignable: boolean("self_assignable").notNull().default(false),
 });
 
 // Category for roles. One role can have one category.
