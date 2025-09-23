@@ -3,7 +3,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import "dotenv/config";
-import { getCookie, setCookie } from "hono/cookie";
+import { every, except, some } from "hono/combine";
+import { getCookie, getCookie, setCookie } from "hono/cookie";
+import { rateLimiter } from "hono-rate-limiter";
 import { exchangeCode, refreshAuthToken } from "./functions/discord-oauth.ts";
 import authRoutes from "./routes/discord/auth.ts";
 
@@ -41,8 +43,14 @@ const csrfMiddleware = csrf({
 	secFetchSite: "same-site",
 });
 
-app.use("*", corsMiddleware);
-app.use(csrfMiddleware);
+const rateLimiterMiddleware = rateLimiter({
+	windowMs: 60 * 1000, // 1 minute
+	limit: 1, // Limit each IP to 1 requests per `window` (here, per 1 minute).
+	standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+	keyGenerator: (c) => getCookie(c, "discord_access_token") ?? c.req.header("x-forwarded-for") ?? c.req.header("x-real-ip") as string, // get discord_access_token from cookies.
+});
+
+app.use("*", every(corsMiddleware, csrfMiddleware, rateLimiterMiddleware));
 
 app.route("/discord/auth", authRoutes);
 
