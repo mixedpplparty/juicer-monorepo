@@ -4,8 +4,8 @@ import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import "dotenv/config";
 import { getCookie, setCookie } from "hono/cookie";
-import { exchangeCode, refreshAuthToken } from "./api.ts";
-import authRoutes from "./routes/auth.ts";
+import { exchangeCode, refreshAuthToken } from "./functions/discord-oauth.ts";
+import authRoutes from "./routes/discord/auth.ts";
 
 const REDIRECT_AFTER_SIGN_IN_URI = process.env.REDIRECT_AFTER_SIGN_IN_URI;
 const REDIRECT_AFTER_SIGN_IN_FAILED_URI =
