@@ -14,8 +14,8 @@ import type {
 	GetAllTagsInServerRequestBody,
 	Tag,
 	UpdateGameRequestBody,
-} from "../../shared/dist/index.js";
-import { db } from "./db/index.js";
+} from "../../../shared/dist/index.js";
+import { db } from "../db/index.ts";
 import {
 	categories,
 	games,
@@ -25,7 +25,7 @@ import {
 	roles,
 	servers,
 	tags,
-} from "./db/schemas.js";
+} from "../db/schemas.ts";
 
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this
@@ -240,13 +240,25 @@ export const createRoleInDb = async ({
 	}
 };
 
-export const getAllRolesInServer = async ({
+export const getAllRolesInServerInDb = async ({
 	serverId,
 }: {
 	serverId: string;
 }): Promise<any> => {
 	return await db.query.roles.findMany({
 		where: eq(roles.serverId, serverId),
+	});
+};
+
+export const getRoleInServerInDbByRoleId = async ({
+	roleIds,
+	serverId,
+}: {
+	roleIds: string[];
+	serverId: string;
+}): Promise<any> => {
+	return await db.query.roles.findMany({
+		where: and(inArray(roles.roleId, roleIds), eq(roles.serverId, serverId)),
 	});
 };
 

@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { exchangeCode, refreshAuthToken, revokeToken } from "../api.ts";
+import {
+	exchangeCode,
+	refreshAuthToken,
+	revokeToken,
+} from "../../functions/discord-oauth.ts";
 
 const REDIRECT_AFTER_SIGN_IN_URI = process.env.REDIRECT_AFTER_SIGN_IN_URI;
 const REDIRECT_AFTER_SIGN_IN_FAILED_URI =
