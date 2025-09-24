@@ -1,4 +1,11 @@
-import type { Client as DiscordClient, Guild } from "discord.js";
+import type {
+	Collection,
+	Client as DiscordClient,
+	Guild,
+	GuildMember,
+	Role,
+	Snowflake,
+} from "discord.js";
 import {
 	Client,
 	Events,
@@ -6,7 +13,13 @@ import {
 	PermissionFlagsBits,
 } from "discord.js";
 import "dotenv/config";
-import { getRoleInServerInDbByRoleId } from "./db.ts";
+import type { SyncRolesResponse } from "juicer-shared";
+import {
+	createRoleInDb,
+	deleteRoleFromDb,
+	getAllRolesInServerInDb,
+	getRoleInServerInDbByRoleIds,
+} from "./db.ts";
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
@@ -65,7 +78,7 @@ export const assignRolesToUser = async (
 	roleIds: string[],
 ) => {
 	const guild = await discordClient.guilds.fetch(serverId);
-	const roles = await getRoleInServerInDbByRoleId({ serverId, roleIds });
+	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	for (const role of roles) {
 		const roleObj = await guild.roles.fetch(role.roleId);
 		if (roleObj && roleObj.name !== "@everyone") {
@@ -84,7 +97,7 @@ export const unassignRolesFromUser = async (
 	roleIds: string[],
 ) => {
 	const guild = await discordClient.guilds.fetch(serverId);
-	const roles = await getRoleInServerInDbByRoleId({ serverId, roleIds });
+	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	for (const role of roles) {
 		const roleObj = await guild.roles.fetch(role.roleId);
 		if (roleObj && roleObj.name !== "@everyone") {
@@ -93,4 +106,45 @@ export const unassignRolesFromUser = async (
 			});
 		}
 	}
+};
+
+export const syncRolesWithDbAndDiscord = async (
+	serverId: string,
+): Promise<SyncRolesResponse> => {
+	const guild = await discordClient.guilds.fetch(serverId);
+	const roles = await guild.roles.fetch();
+	const dbRoles = await getAllRolesInServerInDb({ serverId });
+	const diff = { roles_created: [], roles_deleted: [] } as SyncRolesResponse;
+	//prioritize discord side
+	roles.forEach(async (role) => {
+		if (dbRoles.find((dbRole) => dbRole.roleId !== role.id)) {
+			await createRoleInDb({ serverId, roleId: role.id });
+			diff.roles_created.push(role.id);
+		}
+	});
+	dbRoles.forEach(async (dbRole) => {
+		if (roles.find((role) => role.id !== dbRole.roleId)) {
+			await deleteRoleFromDb({ serverId, roleId: dbRole.roleId });
+			diff.roles_deleted.push(dbRole.roleId);
+		}
+	});
+	return diff;
+};
+
+export const getAllRolesInServerInDiscordApi = async (
+	serverId: string,
+): Promise<Collection<Snowflake, Role>> => {
+	const guild = await discordClient.guilds.fetch(serverId);
+	const roles = await guild.roles.fetch();
+	return roles;
+};
+
+// MUST authenticate before using
+export const getMyDataInServerInDiscordApi = async (
+	serverId: string,
+	userId: string,
+): Promise<GuildMember> => {
+	const guild = await discordClient.guilds.fetch(serverId);
+	const member = await guild.members.fetch(userId);
+	return member;
 };

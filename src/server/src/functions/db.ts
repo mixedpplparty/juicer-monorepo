@@ -231,7 +231,9 @@ export const deleteTag = async ({
 export const createRoleInDb = async ({
 	serverId,
 	roleId,
-}: CreateRoleInDbRequestBody): Promise<any> => {
+}: CreateRoleInDbRequestBody): Promise<
+	(typeof roles.$inferInsert)[] | unknown
+> => {
 	try {
 		return await db.insert(roles).values({ serverId, roleId }).returning();
 	} catch (error) {
@@ -244,19 +246,19 @@ export const getAllRolesInServerInDb = async ({
 	serverId,
 }: {
 	serverId: string;
-}): Promise<any> => {
+}): Promise<(typeof roles.$inferSelect)[]> => {
 	return await db.query.roles.findMany({
 		where: eq(roles.serverId, serverId),
 	});
 };
 
-export const getRoleInServerInDbByRoleId = async ({
+export const getRoleInServerInDbByRoleIds = async ({
 	roleIds,
 	serverId,
 }: {
 	roleIds: string[];
 	serverId: string;
-}): Promise<any> => {
+}): Promise<(typeof roles.$inferSelect)[]> => {
 	return await db.query.roles.findMany({
 		where: and(inArray(roles.roleId, roleIds), eq(roles.serverId, serverId)),
 	});
@@ -268,7 +270,7 @@ export const deleteRoleFromDb = async ({
 }: {
 	roleId: string;
 	serverId: string;
-}): Promise<any> => {
+}): Promise<boolean> => {
 	// delete from roles table
 	await db
 		.delete(roles)
@@ -282,7 +284,9 @@ export const deleteRoleFromDb = async ({
 export const createCategory = async ({
 	serverId,
 	name,
-}: CreateCategoryRequestBody): Promise<any> => {
+}: CreateCategoryRequestBody): Promise<
+	(typeof categories.$inferInsert)[] | unknown
+> => {
 	try {
 		return await db.insert(categories).values({ serverId, name }).returning();
 	} catch (error) {
@@ -297,7 +301,7 @@ export const deleteCategory = async ({
 }: {
 	categoryId: number;
 	serverId: string;
-}): Promise<any> => {
+}): Promise<(typeof categories.$inferInsert)[] | unknown> => {
 	return await db
 		.delete(categories)
 		.where(
@@ -312,7 +316,9 @@ export const deleteCategory = async ({
 export const createRoleCategory = async ({
 	serverId,
 	name,
-}: CreateRoleCategoryRequestBody): Promise<any> => {
+}: CreateRoleCategoryRequestBody): Promise<
+	(typeof roleCategories.$inferInsert)[]
+> => {
 	return await db.insert(roleCategories).values({ serverId, name }).returning();
 };
 
@@ -322,7 +328,7 @@ export const deleteRoleCategory = async ({
 }: {
 	roleCategoryId: number;
 	serverId: string;
-}): Promise<any> => {
+}): Promise<(typeof roleCategories.$inferInsert)[]> => {
 	return await db
 		.delete(roleCategories)
 		.where(
@@ -342,7 +348,7 @@ export const updateRoleCategoryOfRole = async ({
 	roleId: string;
 	roleCategoryId: number | null;
 	serverId: string;
-}): Promise<any> => {
+}): Promise<(typeof roles.$inferInsert)[]> => {
 	if (roleCategoryId === null) {
 		// unassign the role category from the role
 		return await db
@@ -366,7 +372,7 @@ export const findGamesByCategoryName = async ({
 }: {
 	serverId: string;
 	categoryName: string;
-}): Promise<any> => {
+}): Promise<(typeof games.$inferSelect)[]> => {
 	const categoryId = await db.query.categories.findFirst({
 		where: and(
 			eq(categories.serverId, serverId),
@@ -394,7 +400,7 @@ export const findGamesByTags = async ({
 }: {
 	serverId: string;
 	tagNames: string[];
-}): Promise<any> => {
+}): Promise<(typeof games.$inferSelect)[]> => {
 	const tagIds = await db.query.tags.findMany({
 		where: and(eq(tags.serverId, serverId), inArray(tags.name, tagNames)),
 	});
@@ -422,7 +428,7 @@ export const findGamesByName = async ({
 }: {
 	serverId: string;
 	name: string;
-}): Promise<any> => {
+}): Promise<(typeof games.$inferSelect)[]> => {
 	return await db.query.games.findMany({
 		where: and(eq(games.serverId, serverId), ilike(games.name, name)),
 		with: {
