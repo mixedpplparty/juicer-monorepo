@@ -144,13 +144,13 @@ export type CreateGameResponse = {
 export type UpdateGameRequestBody = {
 	gameId: number;
 	serverId: string;
-	name: string;
-	description: string | null;
-	categoryId: number | null;
-	thumbnail: Buffer | null;
-	channels: string[] | null;
-	tagIds: number[] | null;
-	roleIds: string[] | null;
+	name?: string | null;
+	description?: string | null;
+	categoryId?: number | null;
+	thumbnail?: Buffer | null;
+	channels?: string[] | null;
+	tagIds?: number[] | null;
+	roleIds?: string[] | null;
 };
 
 export type DeleteGameRequestBody = {
