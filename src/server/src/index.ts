@@ -10,11 +10,13 @@ import authRoutes from "./routes/discord/auth.ts";
 import serverRoutes from "./routes/discord/server/index.ts";
 import userRoutes from "./routes/discord/user.ts";
 
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
+
 const app = new Hono();
 
 // CORS Middleware. Allows requests from ALLOWED_ORIGINS in source root's .env
 const corsMiddleware = cors({
-	origin: (process.env.ALLOWED_ORIGINS ?? "").split(","),
+	origin: (ALLOWED_ORIGINS ?? "").split(","),
 	credentials: true,
 	allowMethods: ["GET", "POST", "PUT", "DELETE"],
 	allowHeaders: [
@@ -29,7 +31,7 @@ const corsMiddleware = cors({
 
 // CSRF Middleware. Allows requests from Sec-Fetch-Site: same-site(different subdomains allowed)
 const csrfMiddleware = csrf({
-	origin: (process.env.ALLOWED_ORIGINS ?? "").split(","),
+	origin: (ALLOWED_ORIGINS ?? "").split(","),
 	secFetchSite: "same-site",
 });
 
