@@ -1,4 +1,5 @@
 import type {
+	APIUser,
 	Collection,
 	Client as DiscordClient,
 	Guild,
@@ -20,6 +21,7 @@ import {
 	getAllRolesInServerInDb,
 	getRoleInServerInDbByRoleIds,
 } from "./db.ts";
+import { getDiscordOAuthUserData } from "./discord-oauth.ts";
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
@@ -36,8 +38,13 @@ export const authenticateAndAuthorizeUser = async (
 	serverId: string,
 	accessToken: string,
 	requireManageGuildPermissions: boolean = false,
-) => {
-	const userData = await discordClient.users.fetch(accessToken);
+): Promise<{ userData: APIUser; guild: Guild }> => {
+	let userData: APIUser;
+	try {
+		userData = await getDiscordOAuthUserData(accessToken);
+	} catch (error) {
+		throw new Error("Most likely not authenticated.", { cause: error });
+	}
 	const guild = await discordClient.guilds.fetch(serverId);
 	if (!guild) {
 		throw new Error("Server not found. Bot may not be in that server.");

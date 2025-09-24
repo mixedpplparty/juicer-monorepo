@@ -1,6 +1,6 @@
 import axios from "axios";
+import type { APIUser } from "discord.js";
 import type {
-	APIUser,
 	RESTPostOAuth2AccessTokenResult,
 	RESTPostOAuth2AuthorizationQueryResult,
 	RESTPostOAuth2TokenRevocationQuery,
@@ -12,7 +12,7 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 const DISCORD_CLIENT_ID = process.env.VITE_CLIENT_ID as string;
 const DISCORD_CLIENT_SECRET = process.env.CLIENT_SECRET as string;
 
-export const getDiscordUserData = async (
+export const getDiscordOAuthUserData = async (
 	accessToken: string,
 ): Promise<APIUser> => {
 	const response = await axios.get(`https://discordapp.com/api/users/@me`, {
