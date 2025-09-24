@@ -313,6 +313,22 @@ export const deleteCategory = async ({
 		.returning();
 };
 
+export const mapCategoryToGame = async ({
+	gameId,
+	serverId,
+	categoryId,
+}: {
+	gameId: number;
+	serverId: string;
+	categoryId: number;
+}): Promise<(typeof games.$inferInsert)[]> => {
+	return await db
+		.update(games)
+		.set({ categoryId })
+		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
+		.returning();
+};
+
 export const createRoleCategory = async ({
 	serverId,
 	name,
@@ -436,4 +452,37 @@ export const findGamesByName = async ({
 			gamesRoles: true,
 		},
 	});
+};
+
+export const updateGameThumbnail = async ({
+	gameId,
+	serverId,
+	thumbnail,
+}: {
+	gameId: number;
+	serverId: string;
+	thumbnail: Buffer;
+}): Promise<(typeof games.$inferInsert)[]> => {
+	return await db
+		.update(games)
+		.set({ thumbnail })
+		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
+		.returning();
+};
+
+export const getGameThumbnail = async ({
+	gameId,
+	serverId,
+}: {
+	gameId: number;
+	serverId: string;
+}): Promise<(typeof games.$inferSelect)["thumbnail"] | null> => {
+	return await db.query.games
+		.findFirst({
+			columns: {
+				thumbnail: true,
+			},
+			where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
+		})
+		.then((res) => res?.thumbnail ?? null);
 };
