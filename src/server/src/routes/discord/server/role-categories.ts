@@ -76,4 +76,5 @@ app.post("/:roleCategoryId/assign", async (c) => {
 		403,
 	);
 });
+
 export default app;

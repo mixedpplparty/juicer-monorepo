@@ -10,17 +10,6 @@ import authRoutes from "./routes/discord/auth.ts";
 import serverRoutes from "./routes/discord/server/index.ts";
 import userRoutes from "./routes/discord/user.ts";
 
-const REDIRECT_AFTER_SIGN_IN_URI = process.env.REDIRECT_AFTER_SIGN_IN_URI;
-const REDIRECT_AFTER_SIGN_IN_FAILED_URI =
-	process.env.REDIRECT_AFTER_SIGN_IN_FAILED_URI;
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const DISCORD_API_ENDPOINT = process.env.DISCORD_API_ENDPOINT;
-const DISCORD_USER_AUTH_URI = process.env.DISCORD_USER_AUTH_URI;
-const DISCORD_BOT_INSTALL_URI = process.env.DISCORD_BOT_INSTALL_URI;
-const ENVIRONMENT = process.env.ENVIRONMENT;
-
 const app = new Hono();
 
 // CORS Middleware. Allows requests from ALLOWED_ORIGINS in source root's .env
