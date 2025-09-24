@@ -38,7 +38,11 @@ export const authenticateAndAuthorizeUser = async (
 	serverId: string,
 	accessToken: string,
 	requireManageGuildPermissions: boolean = false,
-): Promise<{ userData: APIUser; guild: Guild }> => {
+): Promise<{
+	member: GuildMember;
+	guild: Guild;
+	manageGuildPermission: boolean;
+}> => {
 	let userData: APIUser;
 	try {
 		userData = await getDiscordOAuthUserData(accessToken);
@@ -49,7 +53,7 @@ export const authenticateAndAuthorizeUser = async (
 	if (!guild) {
 		throw new Error("Server not found. Bot may not be in that server.");
 	}
-	const member = await guild.members.fetch(userData.id);
+	const member: GuildMember = await guild.members.fetch(userData.id);
 	if (!member) {
 		throw new Error("User not in server.");
 	}
@@ -61,7 +65,13 @@ export const authenticateAndAuthorizeUser = async (
 			"User does not have manage server permission in that server.",
 		);
 	}
-	return { userData, guild };
+	return {
+		member,
+		guild,
+		manageGuildPermission: member.permissions.has(
+			PermissionFlagsBits.ManageGuild,
+		),
+	};
 };
 // MUST authenticate before using
 export const getAllServersUserAndBotAreIn = async (userId: string) => {
@@ -78,6 +88,7 @@ export const getAllServersUserAndBotAreIn = async (userId: string) => {
 };
 
 // MUST authenticate before using
+// MUST check if role is self-assignable on the DB side
 // needs to be tested - can we fetch guild only with serverId?
 export const assignRolesToUser = async (
 	serverId: string,
@@ -97,6 +108,7 @@ export const assignRolesToUser = async (
 };
 
 // MUST authenticate before using
+// MUST check if role is self-assignable on the DB side
 // needs to be tested - can we fetch guild only with serverId?
 export const unassignRolesFromUser = async (
 	serverId: string,

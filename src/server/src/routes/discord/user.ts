@@ -1,0 +1,18 @@
+import "dotenv/config";
+import { Hono } from "hono";
+import { getCookie } from "hono/cookie";
+import { getAllServersUserAndBotAreIn } from "../../functions/discord-bot.ts";
+import { getDiscordOAuthUserData } from "../../functions/discord-oauth.ts";
+
+const app = new Hono();
+
+// /discord/user-data is not used anymore as it's duplicate of /discord/user/me
+// user.mutual_guilds doesn't exist in discord.js
+app.get("/me", async (c) => {
+	const accessToken = getCookie(c, "discord_access_token");
+	const userData = await getDiscordOAuthUserData(accessToken as string);
+	const guilds = await getAllServersUserAndBotAreIn(userData.id);
+	return c.json({ userData, guilds });
+});
+
+export default app;

@@ -186,8 +186,3 @@ export type CreateRoleCategoryRequestBody = {
 	serverId: string;
 	name: string;
 };
-
-export type SyncRolesResult = {
-	created: string[];
-	deleted: string[];
-};

@@ -79,6 +79,8 @@ app.post("/revoke", async (c) => {
 		token: refreshToken as string,
 		token_type_hint: "refresh_token",
 	});
+	deleteCookie(c, "discord_access_token");
+	deleteCookie(c, "discord_refresh_token");
 	return c.redirect(REDIRECT_AFTER_SIGN_IN_URI as string);
 });
 
