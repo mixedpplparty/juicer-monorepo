@@ -3,12 +3,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import "dotenv/config";
+import { swaggerUI } from "@hono/swagger-ui";
 import { every } from "hono/combine";
 import { getCookie } from "hono/cookie";
 import { rateLimiter } from "hono-rate-limiter";
 import authRoutes from "./routes/discord/auth.ts";
 import serverRoutes from "./routes/discord/server/index.ts";
 import userRoutes from "./routes/discord/user.ts";
+import swagger from "./routes/swagger.ts";
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 
@@ -48,6 +50,9 @@ const rateLimiterMiddleware = rateLimiter({
 app.route("/discord/auth", authRoutes);
 app.route("/discord/user", userRoutes);
 app.route("/discord/server", serverRoutes);
+app.route("/swagger", swagger);
+
+app.get("/docs", swaggerUI({ url: "/swagger" }));
 
 app.use("*", every(corsMiddleware, csrfMiddleware, rateLimiterMiddleware));
 
