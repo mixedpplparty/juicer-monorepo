@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import {
+	deleteGame,
 	getAllTagsInServer,
 	getGameThumbnail,
 	mapCategoryToGame,
@@ -10,6 +11,58 @@ import {
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.ts";
 
 const app = new Hono();
+
+app.put("/:gameId", async (c) => {
+	const serverId = c.req.param("serverId");
+	const gameId = c.req.param("gameId");
+	const body = await c.req.parseBody();
+	const accessToken = getCookie(c, "discord_access_token");
+	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+		serverId as string,
+		accessToken as string,
+		true,
+	);
+	if (manageGuildPermission) {
+		const game = await updateGame({
+			gameId: gameId as unknown as number,
+			serverId: serverId as string,
+			name: body.name as string,
+			description: body.description as string,
+			categoryId: body.categoryId as unknown as number,
+			thumbnail: body.thumbnail as unknown as Buffer,
+			channels: body.channels as unknown as string[],
+			tagIds: body.tagIds as unknown as number[],
+			roleIds: body.roleIds as unknown as string[],
+		});
+		return c.json(game, 200);
+	}
+	return c.json(
+		{ message: "User does not have manage server permission." },
+		403,
+	);
+});
+
+app.delete("/:gameId", async (c) => {
+	const serverId = c.req.param("serverId");
+	const gameId = c.req.param("gameId");
+	const accessToken = getCookie(c, "discord_access_token");
+	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+		serverId as string,
+		accessToken as string,
+		true,
+	);
+	if (manageGuildPermission) {
+		const game = await deleteGame({
+			gameId: gameId as unknown as number,
+			serverId: serverId as string,
+		});
+		return c.json(game, 200);
+	}
+	return c.json(
+		{ message: "User does not have manage server permission." },
+		403,
+	);
+});
 
 app.post("/:gameId/categories/add", async (c) => {
 	const serverId = c.req.param("serverId");
