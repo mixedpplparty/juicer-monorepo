@@ -1,0 +1,40 @@
+
+
+services:
+  # PostgreSQL Database Service with Custom Migrations
+  db:
+    build:
+      context: ./src/
+      dockerfile: ./db.Dockerfile
+    container_name: juicer_db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persists database data (migrations run only on first creation)
+    # SECURITY: Remove port exposure - database should only be accessible internally
+    expose:
+      - '${POSTGRES_PORT}' # expose port to linked services only
+    command: -p ${POSTGRES_PORT}
+
+  # Backend Service
+  backend:
+    build: 
+      context: ./src/
+      dockerfile: ./server.Dockerfile
+    container_name: juicer_backend
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+
+volumes:
+  postgres_data:
+
