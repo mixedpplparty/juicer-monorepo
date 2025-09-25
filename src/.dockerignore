@@ -4,6 +4,9 @@ node_modules
 client/node_modules
 server/node_modules
 shared/node_modules
+client/dist
+server/dist
+shared/dist
 .vscode
 **/.vscode
 .DS_Store
