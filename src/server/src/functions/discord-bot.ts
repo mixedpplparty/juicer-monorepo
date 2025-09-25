@@ -15,7 +15,7 @@ import {
 } from "discord.js";
 import "dotenv/config";
 import { HTTPException } from "hono/http-exception";
-import type { SyncRolesResponse } from "juicer-shared";
+import type { FilteredGuild, SyncRolesResponse } from "juicer-shared";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,
@@ -79,12 +79,21 @@ export const authenticateAndAuthorizeUser = async (
 // MUST authenticate before using
 export const getAllServersUserAndBotAreIn = async (userId: string) => {
 	const guildsBotIsIn = await discordClient.guilds.fetch();
-	const returnGuilds: Guild[] = [];
+	const returnGuilds: FilteredGuild[] = [];
 	for (const [_, partialGuild] of guildsBotIsIn) {
 		const guild = await partialGuild.fetch();
 		const member = await guild.members.fetch(userId); //userId can be string
+		const owner = await guild.fetchOwner();
 		if (member) {
-			returnGuilds.push(guild);
+			returnGuilds.push({
+				id: guild.id,
+				name: guild.name,
+				icon: guild.iconURL() ?? null,
+				ownerId: guild.ownerId,
+				ownerName: owner.displayName,
+				ownerNick: owner.nickname ?? undefined,
+				memberCount: guild.memberCount,
+			});
 		}
 	}
 	return returnGuilds;

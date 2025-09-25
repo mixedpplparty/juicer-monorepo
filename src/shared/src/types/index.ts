@@ -10,6 +10,17 @@ export type Guild = {
 	member_count: number;
 };
 
+// new type for hono
+export type FilteredGuild = {
+	id: string;
+	name: string;
+	icon: string | null;
+	ownerId: string;
+	ownerName: string;
+	ownerNick?: string;
+	memberCount: number;
+};
+
 export type MyInfo = {
 	me: APIUser;
 	guilds: Guild[];

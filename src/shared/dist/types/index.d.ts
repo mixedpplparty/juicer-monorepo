@@ -8,6 +8,15 @@ export type Guild = {
     owner_nick: string | null;
     member_count: number;
 };
+export type FilteredGuild = {
+    id: string;
+    name: string;
+    icon: string | null;
+    ownerId: string;
+    ownerName: string;
+    ownerNick?: string;
+    memberCount: number;
+};
 export type MyInfo = {
     me: APIUser;
     guilds: Guild[];
