@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import { createServer, getServerDataInDb } from "../../../functions/db.js";
 import {
 	authenticateAndAuthorizeUser,
@@ -58,12 +59,9 @@ app.post("/:serverId/create", async (c) => {
 			500,
 		);
 	}
-	return c.json(
-		{
-			message: "User does not have manage server permission.",
-		},
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 // Get my data in server

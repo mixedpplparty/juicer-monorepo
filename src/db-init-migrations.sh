@@ -11,13 +11,13 @@ db_migration_main() {
     sleep 5
   done
 
-  cd /app/server
+  cd /app/server/dist
 
   echo "Generating database schema..."
-  pnpm run db:generate
+  npx drizzle-kit generate --config=drizzle.config.js
 
   echo "Running database migrations..."
-  pnpm run db:migrate
+  npx drizzle-kit migrate --config=drizzle.config.js
 
   echo "Database setup completed successfully!"
 }

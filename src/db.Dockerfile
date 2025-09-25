@@ -19,6 +19,9 @@ RUN pnpm install
 # Install dependencies for server
 RUN pnpm install --prefix /app/server
 
+RUN pnpm run build:shared
+RUN pnpm run build:server
+
 # give permissions to user postgres to read and write in the server directory
 RUN chmod -R o+rwx /app/server
 

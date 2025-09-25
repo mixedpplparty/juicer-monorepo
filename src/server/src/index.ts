@@ -49,7 +49,7 @@ const rateLimiterMiddleware = rateLimiter({
 
 app.route("/discord/auth", authRoutes);
 app.route("/discord/user", userRoutes);
-app.route("/discord/server", serverRoutes);
+app.route("/discord/servers", serverRoutes);
 app.route("/swagger", swagger);
 
 app.get("/docs", swaggerUI({ url: "/swagger" }));
