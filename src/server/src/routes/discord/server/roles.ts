@@ -22,7 +22,7 @@ app.get("/", async (c) => {
 	return c.json({ serverRoles: guild.roles, myRoles: member.roles });
 });
 
-app.get("/:roleId/assign", async (c) => {
+app.post("/:roleId/assign", async (c) => {
 	const serverId = c.req.param("serverId");
 	const roleId = c.req.param("roleId");
 	const accessToken = getCookie(c, "discord_access_token");
@@ -53,7 +53,7 @@ app.get("/:roleId/assign", async (c) => {
 	return c.json({ message: "Role assigned successfully." }, 200);
 });
 
-app.get("/:roleId/unassign", async (c) => {
+app.post("/:roleId/unassign", async (c) => {
 	const serverId = c.req.param("serverId");
 	const roleId = c.req.param("roleId");
 	const accessToken = getCookie(c, "discord_access_token");
