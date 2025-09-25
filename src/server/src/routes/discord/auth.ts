@@ -5,7 +5,7 @@ import {
 	exchangeCode,
 	refreshAuthToken,
 	revokeToken,
-} from "../../functions/discord-oauth.ts";
+} from "../../functions/discord-oauth.js";
 
 const REDIRECT_AFTER_SIGN_IN_URI = process.env.REDIRECT_AFTER_SIGN_IN_URI;
 const REDIRECT_AFTER_SIGN_IN_FAILED_URI =

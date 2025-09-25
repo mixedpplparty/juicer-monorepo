@@ -4,8 +4,8 @@ import {
 	findGamesByCategoryName,
 	findGamesByName,
 	findGamesByTags,
-} from "../../../functions/db.ts";
-import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.ts";
+} from "../../../functions/db.js";
+import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
 const app = new Hono();
 

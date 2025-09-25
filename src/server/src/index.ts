@@ -7,10 +7,10 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { every } from "hono/combine";
 import { getCookie } from "hono/cookie";
 import { rateLimiter } from "hono-rate-limiter";
-import authRoutes from "./routes/discord/auth.ts";
-import serverRoutes from "./routes/discord/server/index.ts";
-import userRoutes from "./routes/discord/user.ts";
-import swagger from "./routes/swagger.ts";
+import authRoutes from "./routes/discord/auth.js";
+import serverRoutes from "./routes/discord/server/index.js";
+import userRoutes from "./routes/discord/user.js";
+import swagger from "./routes/swagger.js";
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 

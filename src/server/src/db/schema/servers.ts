@@ -1,9 +1,9 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { categories } from "./categories.ts";
-import { games } from "./games.ts";
-import { roleCategories, roles } from "./roles.ts";
-import { tags } from "./tags.ts";
+import { categories } from "./categories.js";
+import { games } from "./games.js";
+import { roleCategories, roles } from "./roles.js";
+import { tags } from "./tags.js";
 
 export const servers = pgTable("servers", {
 	serverId: text("server_id").notNull().primaryKey(),

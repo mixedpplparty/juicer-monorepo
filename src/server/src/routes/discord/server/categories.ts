@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { createCategory, deleteCategory } from "../../../functions/db.ts";
-import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.ts";
+import { createCategory, deleteCategory } from "../../../functions/db.js";
+import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
 const app = new Hono();
 

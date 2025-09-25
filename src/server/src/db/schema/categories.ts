@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
-import { games } from "./games.ts";
-import { servers } from "./servers.ts";
+import { games } from "./games.js";
+import { servers } from "./servers.js";
 
 export const categories = pgTable("categories", {
 	categoryId: serial("category_id").primaryKey(),

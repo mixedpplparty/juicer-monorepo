@@ -9,10 +9,10 @@ import {
 	text,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { categories } from "./categories.ts";
-import { roles } from "./roles.ts";
-import { servers } from "./servers.ts";
-import { tags } from "./tags.ts";
+import { categories } from "./categories.js";
+import { roles } from "./roles.js";
+import { servers } from "./servers.js";
+import { tags } from "./tags.js";
 
 const bytea = customType<{
 	data: Buffer;
