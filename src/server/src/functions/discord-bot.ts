@@ -14,6 +14,7 @@ import {
 	PermissionFlagsBits,
 } from "discord.js";
 import "dotenv/config";
+import { HTTPException } from "hono/http-exception";
 import type { SyncRolesResponse } from "juicer-shared";
 import {
 	createRoleInDb,
@@ -47,23 +48,25 @@ export const authenticateAndAuthorizeUser = async (
 	try {
 		userData = await getDiscordOAuthUserData(accessToken);
 	} catch (error) {
-		throw new Error("Most likely not authenticated.", { cause: error });
+		throw new HTTPException(401, { message: "Most likely not authenticated." });
 	}
 	const guild = await discordClient.guilds.fetch(serverId);
 	if (!guild) {
-		throw new Error("Server not found. Bot may not be in that server.");
+		throw new HTTPException(404, {
+			message: "Server not found. Bot may not be in that server.",
+		});
 	}
 	const member: GuildMember = await guild.members.fetch(userData.id);
 	if (!member) {
-		throw new Error("User not in server.");
+		throw new HTTPException(404, { message: "User not in server." });
 	}
 	if (
 		requireManageGuildPermissions &&
 		!member.permissions.has(PermissionFlagsBits.ManageGuild)
 	) {
-		throw new Error(
-			"User does not have manage server permission in that server.",
-		);
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission in that server.",
+		});
 	}
 	return {
 		member,
