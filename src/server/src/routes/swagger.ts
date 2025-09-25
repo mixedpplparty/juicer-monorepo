@@ -638,7 +638,6 @@ const openApiDoc = {
 							"application/json": {
 								schema: {
 									type: "Tag",
-									},
 								},
 							},
 						},
@@ -648,6 +647,7 @@ const openApiDoc = {
 		},
 	},
 };
+
 app.get("/", (c) => {
 	return c.json(openApiDoc);
 });
