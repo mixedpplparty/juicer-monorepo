@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { getAllServersUserAndBotAreIn } from "../../functions/discord-bot.ts";
-import { getDiscordOAuthUserData } from "../../functions/discord-oauth.ts";
+import { getAllServersUserAndBotAreIn } from "../../functions/discord-bot.js";
+import { getDiscordOAuthUserData } from "../../functions/discord-oauth.js";
 
 const app = new Hono();
 

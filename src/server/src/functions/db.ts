@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { and, eq, ilike, inArray, like } from "drizzle-orm";
+import { and, eq, ilike, inArray } from "drizzle-orm";
 import type {
 	CreateCategoryRequestBody,
 	CreateGameRequestBody,
@@ -15,7 +15,7 @@ import type {
 	Tag,
 	UpdateGameRequestBody,
 } from "../../../shared/dist/index.js";
-import { db } from "../db/index.ts";
+import { db } from "../db/index.js";
 import {
 	categories,
 	games,
@@ -25,7 +25,7 @@ import {
 	roles,
 	servers,
 	tags,
-} from "../db/schemas.ts";
+} from "../db/schemas.js";
 
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this

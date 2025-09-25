@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { getRoleInServerInDbByRoleIds } from "../../../functions/db.ts";
+import { getRoleInServerInDbByRoleIds } from "../../../functions/db.js";
 import {
 	assignRolesToUser,
 	authenticateAndAuthorizeUser,
 	unassignRolesFromUser,
-} from "../../../functions/discord-bot.ts";
+} from "../../../functions/discord-bot.js";
 
 const app = new Hono();
 

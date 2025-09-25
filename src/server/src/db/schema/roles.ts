@@ -7,8 +7,8 @@ import {
 	text,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { gamesRoles } from "./games.ts";
-import { servers } from "./servers.ts";
+import { gamesRoles } from "./games.js";
+import { servers } from "./servers.js";
 
 export const roles = pgTable("roles", {
 	roleId: text("role_id").notNull().primaryKey(),

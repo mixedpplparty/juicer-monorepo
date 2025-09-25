@@ -20,8 +20,8 @@ import {
 	deleteRoleFromDb,
 	getAllRolesInServerInDb,
 	getRoleInServerInDbByRoleIds,
-} from "./db.ts";
-import { getDiscordOAuthUserData } from "./discord-oauth.ts";
+} from "./db.js";
+import { getDiscordOAuthUserData } from "./discord-oauth.js";
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 

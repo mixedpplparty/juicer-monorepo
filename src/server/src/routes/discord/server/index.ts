@@ -1,17 +1,17 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { createServer, getServerDataInDb } from "../../../functions/db.ts";
+import { createServer, getServerDataInDb } from "../../../functions/db.js";
 import {
 	authenticateAndAuthorizeUser,
 	syncRolesWithDbAndDiscord,
-} from "../../../functions/discord-bot.ts";
-import categoriesRoutes from "./categories.ts";
-import gamesRoutes from "./games.ts";
-import roleCategoriesRoutes from "./role-categories.ts";
-import rolesRoutes from "./roles.ts";
-import searchRoutes from "./search.ts";
-import tagsRoutes from "./tags.ts";
+} from "../../../functions/discord-bot.js";
+import categoriesRoutes from "./categories.js";
+import gamesRoutes from "./games.js";
+import roleCategoriesRoutes from "./role-categories.js";
+import rolesRoutes from "./roles.js";
+import searchRoutes from "./search.js";
+import tagsRoutes from "./tags.js";
 
 const app = new Hono();
 
