@@ -27,11 +27,6 @@ services:
       dockerfile: ./server.Dockerfile
     container_name: juicer_backend
     restart: always
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
     env_file:
       - ./.env
     depends_on:

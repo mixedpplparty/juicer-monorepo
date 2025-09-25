@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import * as schema from "./schemas.js";
 
 const pool = new Pool({
-	host: "localhost",
+	host: process.env.POSTGRES_DB, // fix for ECONNREFUSED error
 	port: parseInt(process.env.POSTGRES_PORT as string),
 	user: process.env.POSTGRES_USER,
 	password: process.env.POSTGRES_PASSWORD,
