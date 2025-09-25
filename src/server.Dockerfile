@@ -36,4 +36,4 @@ COPY --from=builder --chown=hono:nodejs /app/shared/package.json /app/shared/pac
 USER hono
 EXPOSE 8000
 
-CMD ["node", "/app/server/dist/index.js"]
+CMD ["node", "/app/server/dist/src/index.js"]

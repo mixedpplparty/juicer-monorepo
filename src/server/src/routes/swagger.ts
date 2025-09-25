@@ -3,7 +3,7 @@ import { Hono } from "hono";
 const app = new Hono();
 
 const openApiDoc = {
-	openapi: "0.0.1",
+	openapi: "3.0.0", //required version field
 	info: {
 		title: "juicer",
 		version: "0.0.1",
