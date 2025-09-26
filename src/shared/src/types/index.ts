@@ -165,8 +165,8 @@ export type CreateGameDBParams = {
 
 export const CreateGameRequestBody = z.object({
 	name: z.string(),
-	description: z.string().nullable(),
-	categoryId: z.number().nullable(),
+	description: z.string().nullable().optional(),
+	categoryId: z.number().nullable().optional(),
 });
 
 export type CreateGameResponse = {
