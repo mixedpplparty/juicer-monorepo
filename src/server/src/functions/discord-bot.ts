@@ -69,7 +69,7 @@ export const authenticateAndAuthorizeUser = async (
 		ownerName: owner.displayName,
 		ownerNick: owner.nickname ?? null,
 		memberCount: guild.memberCount,
-		roles: guild.roles.fetch().then((roles) => {
+		roles: await guild.roles.fetch().then((roles) => {
 			return roles.map((role) => ({
 				id: role.id,
 				name: role.name,

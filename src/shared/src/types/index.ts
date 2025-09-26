@@ -95,7 +95,7 @@ export type FilteredServerDataDiscord = {
 export type ServerDataDiscordRole2 = {
 	id: string;
 	name: string;
-	color: string; // hex color
+	color: `#${string}`; // hex color
 	icon: string | null;
 	managed: boolean;
 	meInRole: boolean;
