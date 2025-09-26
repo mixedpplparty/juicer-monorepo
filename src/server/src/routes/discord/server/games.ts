@@ -18,16 +18,16 @@ app.post("/create", async (c) => {
 	const serverId = c.req.param("serverId");
 	const body = await c.req.parseBody();
 	const accessToken = getCookie(c, "discord_access_token");
+	if (!body.name) {
+		throw new HTTPException(400, {
+			message: "field 'name' is required in body.",
+		});
+	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
 		true,
 	);
-	if (!body.name) {
-		throw new HTTPException(400, {
-			message: "value 'name' is required in body.",
-		});
-	}
 	if (manageGuildPermission) {
 		const game = await createGame({
 			serverId: serverId as string,
@@ -56,13 +56,13 @@ app.put("/:gameId", async (c) => {
 		const game = await updateGame({
 			gameId: gameId as unknown as number,
 			serverId: serverId as string,
-			name: body.name as string,
-			description: body.description as string,
-			categoryId: body.categoryId as unknown as number,
-			thumbnail: body.thumbnail as unknown as Buffer,
-			channels: body.channels as unknown as string[],
-			tagIds: body.tagIds as unknown as number[],
-			roleIds: body.roleIds as unknown as string[],
+			name: body.name as string | null | undefined, // optional(not updated if null or undefined)
+			description: body.description as string | null | undefined, // optional(not updated if null or undefined)
+			categoryId: body.categoryId as unknown as number | null | undefined, // optional(not updated if null or undefined)
+			thumbnail: body.thumbnail as unknown as Buffer | null | undefined, //optional(not updated if null or undefined)
+			channels: body.channels as unknown as string[] | null | undefined, // optional(not updated if null or undefined)
+			tagIds: body.tagIds as unknown as number[] | null | undefined, // optional(not updated if null or undefined)
+			roleIds: body.roleIds as unknown as string[] | null | undefined, // optional(not updated if null or undefined)
 		});
 		return c.json(game, 200);
 	}
@@ -97,6 +97,11 @@ app.post("/:gameId/categories/add", async (c) => {
 	const gameId = c.req.param("gameId");
 	const body = await c.req.parseBody();
 	const accessToken = getCookie(c, "discord_access_token");
+	if (!body.categoryId) {
+		throw new HTTPException(400, {
+			message: "field 'categoryId' is required in body.",
+		});
+	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
@@ -110,10 +115,9 @@ app.post("/:gameId/categories/add", async (c) => {
 		});
 		return c.json(category, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 // add tags to game
@@ -123,6 +127,11 @@ app.post("/:gameId/tags/tag", async (c) => {
 	const gameId = c.req.param("gameId");
 	const body = await c.req.parseBody();
 	const accessToken = getCookie(c, "discord_access_token");
+	if (!body.tagIds) {
+		throw new HTTPException(400, {
+			message: "field 'tagIds'(number[]) is required in body.",
+		});
+	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
@@ -176,10 +185,9 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 		});
 		return c.json(tag, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.put("/:gameId/thumbnail/update", async (c) => {
@@ -187,6 +195,11 @@ app.put("/:gameId/thumbnail/update", async (c) => {
 	const gameId = c.req.param("gameId");
 	const body = await c.req.parseBody();
 	const accessToken = getCookie(c, "discord_access_token");
+	if (!body.file) {
+		throw new HTTPException(400, {
+			message: "field 'file' is required in body.",
+		});
+	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,

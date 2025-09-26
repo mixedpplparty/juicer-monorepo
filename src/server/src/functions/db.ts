@@ -160,6 +160,8 @@ export const updateGame = async ({
 			categoryId,
 			thumbnail,
 			channels,
+			tagIds,
+			roleIds,
 		}).filter(([key, val]) => {
 			if (key === "thumbnail") {
 				return val !== null && val !== undefined && val !== "";

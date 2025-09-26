@@ -10,6 +10,11 @@ app.post("/create", async (c) => {
 	const serverId = c.req.param("serverId");
 	const body = await c.req.parseBody();
 	const accessToken = getCookie(c, "discord_access_token");
+	if (!body.name) {
+		throw new HTTPException(400, {
+			message: "field 'name' is required in body.",
+		});
+	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
