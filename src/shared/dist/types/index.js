@@ -11,13 +11,13 @@ export const CreateGameRequestBody = z.object({
 export const UpdateGameRequestBody = z.object({
     gameId: z.number(),
     serverId: z.string(),
-    name: z.string().nullable(),
-    description: z.string().nullable(),
-    categoryId: z.number().nullable(),
-    thumbnail: z.instanceof(Buffer).nullable(),
-    channels: z.array(z.string()).nullable(),
-    tagIds: z.array(z.number()).nullable(),
-    roleIds: z.array(z.string()).nullable(),
+    name: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    categoryId: z.number().nullable().optional(),
+    thumbnail: z.instanceof(Buffer).nullable().optional(),
+    channels: z.array(z.string()).nullable().optional(),
+    tagIds: z.array(z.number()).nullable().optional(),
+    roleIds: z.array(z.string()).nullable().optional(),
 });
 export const DeleteGameRequestBody = z.object({
     gameId: z.number(),

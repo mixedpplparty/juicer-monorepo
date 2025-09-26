@@ -155,13 +155,13 @@ export type CreateGameResponse = {
 export declare const UpdateGameRequestBody: z.ZodObject<{
     gameId: z.ZodNumber;
     serverId: z.ZodString;
-    name: z.ZodNullable<z.ZodString>;
-    description: z.ZodNullable<z.ZodString>;
-    categoryId: z.ZodNullable<z.ZodNumber>;
-    thumbnail: z.ZodNullable<z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>>;
-    channels: z.ZodNullable<z.ZodArray<z.ZodString>>;
-    tagIds: z.ZodNullable<z.ZodArray<z.ZodNumber>>;
-    roleIds: z.ZodNullable<z.ZodArray<z.ZodString>>;
+    name: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    categoryId: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    thumbnail: z.ZodOptional<z.ZodNullable<z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>>>;
+    channels: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
+    tagIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNumber>>>;
+    roleIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
 }, z.core.$strip>;
 export declare const DeleteGameRequestBody: z.ZodObject<{
     gameId: z.ZodNumber;
