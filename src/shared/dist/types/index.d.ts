@@ -68,6 +68,24 @@ export type ServerDataDiscord = {
     member_count: number;
     roles: ServerDataDiscordRole[] | null;
 };
+export type FilteredServerDataDiscord = {
+    id: string;
+    name: string;
+    icon: string | null;
+    ownerId: string;
+    ownerName: string;
+    ownerNick: string | null;
+    memberCount: number;
+    roles: ServerDataDiscordRole2[] | null;
+};
+export type ServerDataDiscordRole2 = {
+    id: string;
+    name: string;
+    color: string;
+    icon: string | null;
+    managed: boolean;
+    meInRole: boolean;
+};
 export type ServerDataDiscordRole = {
     id: string;
     name: string;

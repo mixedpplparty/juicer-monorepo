@@ -1,6 +1,8 @@
 import "dotenv/config";
 
-import { and, eq, ilike, inArray } from "drizzle-orm";
+import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
+import { DatabaseError } from "pg";
 import type {
 	CreateCategoryRequestBody,
 	CreateGameRequestBody,
@@ -26,7 +28,6 @@ import {
 	servers,
 	tags,
 } from "../db/schemas.js";
-
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this
 export const getServerDataInDb = async (serverId: string): Promise<unknown> => {
@@ -74,7 +75,24 @@ export const getServerDataInDbWithoutGames = async (
 export const createServer = async (
 	serverId: string,
 ): Promise<CreateServerResponse[]> => {
-	return await db.insert(servers).values({ serverId }).returning();
+	try {
+		return await db.insert(servers).values({ serverId }).returning();
+	} catch (error) {
+		console.error("Error while creating server.");
+		console.error(error);
+		if (error instanceof DrizzleQueryError) {
+			if (error.cause instanceof DatabaseError) {
+				if (error.cause.code === "23505") {
+					throw new HTTPException(400, {
+						message: "Server already exists.",
+					});
+				}
+			}
+		}
+		throw new HTTPException(500, {
+			message: "Unknown error while creating server.",
+		});
+	}
 };
 
 export const createGame = async ({
@@ -83,10 +101,27 @@ export const createGame = async ({
 	description,
 	categoryId,
 }: CreateGameRequestBody): Promise<CreateGameResponse[]> => {
-	return await db
-		.insert(games)
-		.values({ serverId, name, description, categoryId })
-		.returning();
+	try {
+		return await db
+			.insert(games)
+			.values({ serverId, name, description, categoryId })
+			.returning();
+	} catch (error) {
+		console.error("Error while creating game.");
+		console.error(error);
+		if (error instanceof DrizzleQueryError) {
+			if (error.cause instanceof DatabaseError) {
+				if (error.cause.code === "23502") {
+					throw new HTTPException(400, {
+						message: "Values violated Not Null constraint.",
+					});
+				}
+			}
+		}
+	}
+	throw new HTTPException(500, {
+		message: "Unknown error while creating game.",
+	});
 };
 
 // TODO more debugging messages to return errors

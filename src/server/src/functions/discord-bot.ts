@@ -15,7 +15,11 @@ import {
 } from "discord.js";
 import "dotenv/config";
 import { HTTPException } from "hono/http-exception";
-import type { FilteredGuild, SyncRolesResponse } from "juicer-shared";
+import type {
+	FilteredGuild,
+	FilteredServerDataDiscord,
+	SyncRolesResponse,
+} from "juicer-shared";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,
@@ -41,7 +45,7 @@ export const authenticateAndAuthorizeUser = async (
 	requireManageGuildPermissions: boolean = false,
 ): Promise<{
 	member: GuildMember;
-	guild: Guild;
+	guild: FilteredServerDataDiscord;
 	manageGuildPermission: boolean;
 }> => {
 	let userData: APIUser;
@@ -56,6 +60,26 @@ export const authenticateAndAuthorizeUser = async (
 			message: "Server not found. Bot may not be in that server.",
 		});
 	}
+	const owner = await guild.fetchOwner();
+	const filteredServerDataDiscord = {
+		id: guild.id,
+		name: guild.name,
+		icon: guild.iconURL() ?? null,
+		ownerId: guild.ownerId,
+		ownerName: owner.displayName,
+		ownerNick: owner.nickname ?? null,
+		memberCount: guild.memberCount,
+		roles: guild.roles.fetch().then((roles) => {
+			return roles.map((role) => ({
+				id: role.id,
+				name: role.name,
+				color: role.hexColor,
+				icon: role.iconURL() ?? null,
+				managed: role.managed,
+				meInRole: role.members.has(userData.id),
+			}));
+		}),
+	};
 	const member: GuildMember = await guild.members.fetch(userData.id);
 	if (!member) {
 		throw new HTTPException(404, { message: "User not in server." });
@@ -70,7 +94,7 @@ export const authenticateAndAuthorizeUser = async (
 	}
 	return {
 		member,
-		guild,
+		guild: filteredServerDataDiscord,
 		manageGuildPermission: member.permissions.has(
 			PermissionFlagsBits.ManageGuild,
 		),
