@@ -19,6 +19,8 @@ services:
     expose:
       - '${POSTGRES_PORT}' # expose port to linked services only
     command: -p ${POSTGRES_PORT}
+    ports:
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
 
   # Backend Service
   backend:

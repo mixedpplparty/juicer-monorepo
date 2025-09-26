@@ -1,6 +1,10 @@
 # Custom PostgreSQL image with Node.js for database migrations
 FROM postgres:17-alpine
 
+# vulnurability mitigations
+RUN apk update
+RUN apk upgrade --no-cache
+
 # Install Node.js and pnpm
 RUN apk add --no-cache acl nodejs npm
 RUN npm install -g pnpm

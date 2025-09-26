@@ -1,6 +1,10 @@
 # ---- Stage 1: Build the application ----
 FROM node:24-alpine AS build
 
+# vulnurability mitigations
+RUN apk update
+RUN apk upgrade --no-cache
+
 # Set working directory
 WORKDIR /app
 
@@ -38,6 +42,10 @@ RUN pnpm run build:client
 
 # ---- Stage 2: Serve the application with Nginx ----
 FROM nginx:alpine
+
+# vulnurability mitigations
+RUN apk update
+RUN apk upgrade --no-cache
 
 # Copy the built static files from the 'build' stage
 COPY --from=build /app/client/dist /usr/share/nginx/html
