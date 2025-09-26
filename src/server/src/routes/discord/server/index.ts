@@ -52,12 +52,9 @@ app.post("/:serverId/create", async (c) => {
 				200,
 			);
 		}
-		return c.json(
-			{
-				message: "Server already exists.",
-			},
-			500,
-		);
+		throw new HTTPException(500, {
+			message: "Server already exists.",
+		});
 	}
 	throw new HTTPException(403, {
 		message: "User does not have manage server permission.",
@@ -89,12 +86,9 @@ app.get("/:serverId/sync-roles", async (c) => {
 		const diff = await syncRolesWithDbAndDiscord(serverId);
 		return c.json(diff);
 	}
-	return c.json(
-		{
-			message: "User does not have manage server permission.",
-		},
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.route("/:serverId/categories", categoriesRoutes);

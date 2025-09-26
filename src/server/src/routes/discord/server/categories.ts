@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import { createCategory, deleteCategory } from "../../../functions/db.js";
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
@@ -21,10 +22,9 @@ app.post("/create", async (c) => {
 		});
 		return c.json(category, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.delete("/:categoryId", async (c) => {
@@ -43,10 +43,9 @@ app.delete("/:categoryId", async (c) => {
 		});
 		return c.json(category, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 export default app;

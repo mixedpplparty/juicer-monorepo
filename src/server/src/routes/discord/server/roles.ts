@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import { getRoleInServerInDbByRoleIds } from "../../../functions/db.js";
 import {
 	assignRolesToUser,
@@ -35,19 +36,15 @@ app.post("/:roleId/assign", async (c) => {
 		serverId: serverId as string,
 	});
 	if (roleInfoInDb.length === 0) {
-		return c.json(
-			{
-				message:
-					"Role not found in DB. If role exists in server, it needs to be synced.",
-			},
-			404,
-		);
+		throw new HTTPException(404, {
+			message:
+				"Role not found in DB. If role exists in server, it needs to be synced.",
+		});
 	}
 	if (!roleInfoInDb[0].selfAssignable) {
-		return c.json(
-			{ message: "Role is marked as not self-assignable in DB." },
-			400,
-		);
+		throw new HTTPException(400, {
+			message: "Role is marked as not self-assignable in DB.",
+		});
 	}
 	await assignRolesToUser(serverId as string, member.id, [roleId]);
 	return c.json({ message: "Role assigned successfully." }, 200);
@@ -66,19 +63,15 @@ app.post("/:roleId/unassign", async (c) => {
 		serverId: serverId as string,
 	});
 	if (roleInfoInDb.length === 0) {
-		return c.json(
-			{
-				message:
-					"Role not found in DB. If role exists in server, it needs to be synced.",
-			},
-			404,
-		);
+		throw new HTTPException(404, {
+			message:
+				"Role not found in DB. If role exists in server, it needs to be synced.",
+		});
 	}
 	if (!roleInfoInDb[0].selfAssignable) {
-		return c.json(
-			{ message: "Role is marked as not self-assignable in DB." },
-			400,
-		);
+		throw new HTTPException(400, {
+			message: "Role is marked as not self-assignable in DB.",
+		});
 	}
 	await unassignRolesFromUser(serverId as string, member.id, [roleId]);
 	return c.json({ message: "Role unassigned successfully." }, 200);

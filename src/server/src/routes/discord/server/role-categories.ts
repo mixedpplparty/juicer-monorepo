@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
@@ -25,10 +26,9 @@ app.post("/create", async (c) => {
 		});
 		return c.json(roleCategory, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.delete("/:roleCategoryId", async (c) => {
@@ -47,10 +47,9 @@ app.delete("/:roleCategoryId", async (c) => {
 		});
 		return c.json(roleCategory, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.post("/:roleCategoryId/assign", async (c) => {
@@ -71,10 +70,9 @@ app.post("/:roleCategoryId/assign", async (c) => {
 		});
 		return c.json(roleCategory, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 export default app;

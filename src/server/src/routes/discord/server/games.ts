@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import {
+	createGame,
 	deleteGame,
 	getAllTagsInServer,
 	getGameThumbnail,
@@ -11,6 +13,34 @@ import {
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
 const app = new Hono();
+
+app.post("/create", async (c) => {
+	const serverId = c.req.param("serverId");
+	const body = await c.req.parseBody();
+	const accessToken = getCookie(c, "discord_access_token");
+	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+		serverId as string,
+		accessToken as string,
+		true,
+	);
+	if (!body.name) {
+		throw new HTTPException(400, {
+			message: "value 'name' is required in body.",
+		});
+	}
+	if (manageGuildPermission) {
+		const game = await createGame({
+			serverId: serverId as string,
+			name: body.name as string,
+			description: body.description as string,
+			categoryId: body.categoryId as unknown as number,
+		});
+		return c.json(game, 200);
+	}
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
+});
 
 app.put("/:gameId", async (c) => {
 	const serverId = c.req.param("serverId");
@@ -36,10 +66,9 @@ app.put("/:gameId", async (c) => {
 		});
 		return c.json(game, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.delete("/:gameId", async (c) => {
@@ -58,10 +87,9 @@ app.delete("/:gameId", async (c) => {
 		});
 		return c.json(game, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.post("/:gameId/categories/add", async (c) => {
@@ -117,10 +145,9 @@ app.post("/:gameId/tags/tag", async (c) => {
 		});
 		return c.json(tag, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.post("/:gameId/tags/:tagId/untag", async (c) => {
@@ -173,10 +200,9 @@ app.put("/:gameId/thumbnail/update", async (c) => {
 		});
 		return c.json(thumbnail, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.get("/:gameId/thumbnail", async (c) => {
@@ -191,6 +217,6 @@ app.get("/:gameId/thumbnail", async (c) => {
 	if (thumbnail) {
 		return c.json(thumbnail, 200);
 	}
-	return c.json({ message: "Thumbnail not found." }, 404);
+	throw new HTTPException(404, { message: "Thumbnail not found." });
 });
 export default app;

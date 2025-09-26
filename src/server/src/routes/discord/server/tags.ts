@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import {
 	createTag,
 	deleteTag,
@@ -39,10 +40,9 @@ app.post("/create", async (c) => {
 		});
 		return c.json(tag, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 app.delete("/:tagId", async (c) => {
@@ -61,10 +61,9 @@ app.delete("/:tagId", async (c) => {
 		});
 		return c.json(tag, 200);
 	}
-	return c.json(
-		{ message: "User does not have manage server permission." },
-		403,
-	);
+	throw new HTTPException(403, {
+		message: "User does not have manage server permission.",
+	});
 });
 
 export default app;
