@@ -1,6 +1,8 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
+import { NameRequiredRequestBody } from "juicer-shared/dist/types/index.js";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
@@ -10,15 +12,10 @@ import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js"
 
 const app = new Hono();
 
-app.post("/create", async (c) => {
+app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.name) {
-		throw new HTTPException(400, {
-			message: "field 'name' is required in body.",
-		});
-	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,

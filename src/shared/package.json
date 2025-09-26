@@ -8,7 +8,8 @@
 		"dev": "tsc --watch"
 	},
 	"dependencies": {
-		"discord-api-types": "^0.38.23"
+		"discord-api-types": "^0.38.23",
+		"zod": "^4.1.11"
 	},
 	"devDependencies": {
 		"@types/node": "^20.19.17",

@@ -1,4 +1,5 @@
 import type { APIUser } from "discord-api-types/v10";
+import * as z from "zod";
 export type Guild = {
     id: string;
     name: string;
@@ -123,20 +124,25 @@ export type ToastObject = {
 export type MessageOnSuccess = {
     detail: string;
 };
-export type SyncRolesResponse = {
-    roles_created: string[];
-    roles_deleted: string[];
-};
+export declare const SyncRolesResponse: z.ZodObject<{
+    roles_created: z.ZodArray<z.ZodString>;
+    roles_deleted: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;
 export type CreateServerResponse = {
     serverId: string;
     createdAt: Date;
 };
-export type CreateGameRequestBody = {
+export type CreateGameDBParams = {
     serverId: string;
     name: string;
     description: string | null;
     categoryId: number | null;
 };
+export declare const CreateGameRequestBody: z.ZodObject<{
+    name: z.ZodString;
+    description: z.ZodNullable<z.ZodString>;
+    categoryId: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
 export type CreateGameResponse = {
     gameId: number;
     name: string;
@@ -146,41 +152,53 @@ export type CreateGameResponse = {
     thumbnail: Buffer | null;
     channels: string[] | null;
 };
-export type UpdateGameRequestBody = {
-    gameId: number;
-    serverId: string;
-    name?: string | null;
-    description?: string | null;
-    categoryId?: number | null;
-    thumbnail?: Buffer | null;
-    channels?: string[] | null;
-    tagIds?: number[] | null;
-    roleIds?: string[] | null;
-};
-export type DeleteGameRequestBody = {
-    gameId: number;
-    serverId: string;
-};
-export type CreateTagRequestBody = {
-    serverId: string;
-    name: string;
-};
-export type GetAllTagsInServerRequestBody = {
-    serverId: string;
-};
-export type DeleteTagRequestBody = {
-    tagId: number;
-    serverId: string;
-};
-export type CreateRoleInDbRequestBody = {
-    serverId: string;
-    roleId: string;
-};
-export type CreateCategoryRequestBody = {
-    serverId: string;
-    name: string;
-};
-export type CreateRoleCategoryRequestBody = {
-    serverId: string;
-    name: string;
-};
+export declare const UpdateGameRequestBody: z.ZodObject<{
+    gameId: z.ZodNumber;
+    serverId: z.ZodString;
+    name: z.ZodNullable<z.ZodString>;
+    description: z.ZodNullable<z.ZodString>;
+    categoryId: z.ZodNullable<z.ZodNumber>;
+    thumbnail: z.ZodNullable<z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>>;
+    channels: z.ZodNullable<z.ZodArray<z.ZodString>>;
+    tagIds: z.ZodNullable<z.ZodArray<z.ZodNumber>>;
+    roleIds: z.ZodNullable<z.ZodArray<z.ZodString>>;
+}, z.core.$strip>;
+export declare const DeleteGameRequestBody: z.ZodObject<{
+    gameId: z.ZodNumber;
+    serverId: z.ZodString;
+}, z.core.$strip>;
+export declare const CreateTagRequestBody: z.ZodObject<{
+    serverId: z.ZodString;
+    name: z.ZodString;
+}, z.core.$strip>;
+export declare const GetAllTagsInServerRequestBody: z.ZodObject<{
+    serverId: z.ZodString;
+}, z.core.$strip>;
+export declare const DeleteTagRequestBody: z.ZodObject<{
+    tagId: z.ZodNumber;
+    serverId: z.ZodString;
+}, z.core.$strip>;
+export declare const CreateRoleInDbRequestBody: z.ZodObject<{
+    serverId: z.ZodString;
+    roleId: z.ZodString;
+}, z.core.$strip>;
+export declare const CreateCategoryRequestBody: z.ZodObject<{
+    serverId: z.ZodString;
+    name: z.ZodString;
+}, z.core.$strip>;
+export declare const CreateRoleCategoryRequestBody: z.ZodObject<{
+    serverId: z.ZodString;
+    name: z.ZodString;
+}, z.core.$strip>;
+export declare const AddCategoryToGameRequestBody: z.ZodObject<{
+    categoryId: z.ZodNumber;
+}, z.core.$strip>;
+export declare const AddTagsToGameRequestBody: z.ZodObject<{
+    tagIds: z.ZodArray<z.ZodNumber>;
+}, z.core.$strip>;
+export declare const UpdateGameThumbnailRequestBody: z.ZodObject<{
+    file: z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>;
+}, z.core.$strip>;
+export declare const NameRequiredRequestBody: z.ZodObject<{
+    name: z.ZodString;
+}, z.core.$strip>;

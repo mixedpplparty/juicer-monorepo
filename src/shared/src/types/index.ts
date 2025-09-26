@@ -1,4 +1,5 @@
 import type { APIUser } from "discord-api-types/v10";
+import * as z from "zod";
 
 export type Guild = {
 	id: string;
@@ -145,22 +146,28 @@ export type MessageOnSuccess = {
 	detail: string;
 };
 
-export type SyncRolesResponse = {
-	roles_created: string[];
-	roles_deleted: string[];
-};
+export const SyncRolesResponse = z.object({
+	roles_created: z.array(z.string()),
+	roles_deleted: z.array(z.string()),
+});
 
 export type CreateServerResponse = {
 	serverId: string;
 	createdAt: Date;
 };
 
-export type CreateGameRequestBody = {
+export type CreateGameDBParams = {
 	serverId: string;
 	name: string;
 	description: string | null;
 	categoryId: number | null;
 };
+
+export const CreateGameRequestBody = z.object({
+	name: z.string(),
+	description: z.string().nullable(),
+	categoryId: z.number().nullable(),
+});
 
 export type CreateGameResponse = {
 	gameId: number;
@@ -172,48 +179,64 @@ export type CreateGameResponse = {
 	channels: string[] | null;
 };
 
-export type UpdateGameRequestBody = {
-	gameId: number;
-	serverId: string;
-	name?: string | null;
-	description?: string | null;
-	categoryId?: number | null;
-	thumbnail?: Buffer | null;
-	channels?: string[] | null;
-	tagIds?: number[] | null;
-	roleIds?: string[] | null;
-};
+export const UpdateGameRequestBody = z.object({
+	gameId: z.number(),
+	serverId: z.string(),
+	name: z.string().nullable(),
+	description: z.string().nullable(),
+	categoryId: z.number().nullable(),
+	thumbnail: z.instanceof(Buffer).nullable(),
+	channels: z.array(z.string()).nullable(),
+	tagIds: z.array(z.number()).nullable(),
+	roleIds: z.array(z.string()).nullable(),
+});
 
-export type DeleteGameRequestBody = {
-	gameId: number;
-	serverId: string;
-};
+export const DeleteGameRequestBody = z.object({
+	gameId: z.number(),
+	serverId: z.string(),
+});
 
-export type CreateTagRequestBody = {
-	serverId: string;
-	name: string;
-};
+export const CreateTagRequestBody = z.object({
+	serverId: z.string(),
+	name: z.string(),
+});
 
-export type GetAllTagsInServerRequestBody = {
-	serverId: string;
-};
+export const GetAllTagsInServerRequestBody = z.object({
+	serverId: z.string(),
+});
 
-export type DeleteTagRequestBody = {
-	tagId: number;
-	serverId: string;
-};
+export const DeleteTagRequestBody = z.object({
+	tagId: z.number(),
+	serverId: z.string(),
+});
 
-export type CreateRoleInDbRequestBody = {
-	serverId: string;
-	roleId: string;
-};
+export const CreateRoleInDbRequestBody = z.object({
+	serverId: z.string(),
+	roleId: z.string(),
+});
 
-export type CreateCategoryRequestBody = {
-	serverId: string;
-	name: string;
-};
+export const CreateCategoryRequestBody = z.object({
+	serverId: z.string(),
+	name: z.string(),
+});
 
-export type CreateRoleCategoryRequestBody = {
-	serverId: string;
-	name: string;
-};
+export const CreateRoleCategoryRequestBody = z.object({
+	serverId: z.string(),
+	name: z.string(),
+});
+
+export const AddCategoryToGameRequestBody = z.object({
+	categoryId: z.number(),
+});
+
+export const AddTagsToGameRequestBody = z.object({
+	tagIds: z.array(z.number()),
+});
+
+export const UpdateGameThumbnailRequestBody = z.object({
+	file: z.instanceof(Buffer),
+});
+
+export const NameRequiredRequestBody = z.object({
+	name: z.string(),
+});

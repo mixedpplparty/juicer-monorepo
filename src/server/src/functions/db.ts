@@ -7,9 +7,10 @@ import {
 import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { DatabaseError } from "pg";
+import type * as z from "zod";
 import type {
 	CreateCategoryRequestBody,
-	CreateGameRequestBody,
+	CreateGameDBParams,
 	CreateGameResponse,
 	CreateRoleCategoryRequestBody,
 	CreateRoleInDbRequestBody,
@@ -104,7 +105,7 @@ export const createGame = async ({
 	name,
 	description,
 	categoryId,
-}: CreateGameRequestBody): Promise<CreateGameResponse[]> => {
+}: CreateGameDBParams): Promise<CreateGameResponse[]> => {
 	try {
 		return await db
 			.insert(games)
@@ -140,7 +141,7 @@ export const updateGame = async ({
 	channels,
 	tagIds,
 	roleIds,
-}: UpdateGameRequestBody): Promise<boolean> => {
+}: z.infer<typeof UpdateGameRequestBody>): Promise<boolean> => {
 	const gameInfo = await db.query.games.findFirst({
 		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 		with: {
@@ -222,7 +223,7 @@ export const updateGame = async ({
 export const deleteGame = async ({
 	gameId,
 	serverId,
-}: DeleteGameRequestBody): Promise<boolean> => {
+}: z.infer<typeof DeleteGameRequestBody>): Promise<boolean> => {
 	const gameInfo = await db.query.games.findFirst({
 		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 	});
@@ -240,7 +241,7 @@ export const deleteGame = async ({
 export const createTag = async ({
 	serverId,
 	name,
-}: CreateTagRequestBody): Promise<Tag[]> => {
+}: z.infer<typeof CreateTagRequestBody>): Promise<Tag[]> => {
 	const tagInfo = await db.query.tags.findFirst({
 		where: and(eq(tags.serverId, serverId), eq(tags.name, name)),
 	});
@@ -253,7 +254,7 @@ export const createTag = async ({
 
 export const getAllTagsInServer = async ({
 	serverId,
-}: GetAllTagsInServerRequestBody): Promise<Tag[]> => {
+}: z.infer<typeof GetAllTagsInServerRequestBody>): Promise<Tag[]> => {
 	return await db.query.tags.findMany({
 		where: eq(tags.serverId, serverId),
 	});
@@ -262,7 +263,7 @@ export const getAllTagsInServer = async ({
 export const deleteTag = async ({
 	tagId,
 	serverId,
-}: DeleteTagRequestBody): Promise<Tag[]> => {
+}: z.infer<typeof DeleteTagRequestBody>): Promise<Tag[]> => {
 	return await db
 		.delete(tags)
 		.where(and(eq(tags.tagId, tagId), eq(tags.serverId, serverId)))
@@ -272,7 +273,7 @@ export const deleteTag = async ({
 export const createRoleInDb = async ({
 	serverId,
 	roleId,
-}: CreateRoleInDbRequestBody): Promise<
+}: z.infer<typeof CreateRoleInDbRequestBody>): Promise<
 	(typeof roles.$inferInsert)[] | unknown
 > => {
 	try {
@@ -325,7 +326,7 @@ export const deleteRoleFromDb = async ({
 export const createCategory = async ({
 	serverId,
 	name,
-}: CreateCategoryRequestBody): Promise<
+}: z.infer<typeof CreateCategoryRequestBody>): Promise<
 	(typeof categories.$inferInsert)[] | unknown
 > => {
 	try {
@@ -373,7 +374,7 @@ export const mapCategoryToGame = async ({
 export const createRoleCategory = async ({
 	serverId,
 	name,
-}: CreateRoleCategoryRequestBody): Promise<
+}: z.infer<typeof CreateRoleCategoryRequestBody>): Promise<
 	(typeof roleCategories.$inferInsert)[]
 > => {
 	return await db.insert(roleCategories).values({ serverId, name }).returning();

@@ -1,6 +1,8 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
+import { NameRequiredRequestBody } from "juicer-shared/dist/types/index.js";
 import {
 	createTag,
 	deleteTag,
@@ -24,15 +26,10 @@ app.get("/", async (c) => {
 	return c.json(tags, 200);
 });
 
-app.post("/create", async (c) => {
+app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.name) {
-		throw new HTTPException(400, {
-			message: "field 'name' is required in body.",
-		});
-	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
@@ -54,11 +51,6 @@ app.delete("/:tagId", async (c) => {
 	const serverId = c.req.param("serverId");
 	const tagId = c.req.param("tagId");
 	const accessToken = getCookie(c, "discord_access_token");
-	if (!tagId || Number.isNaN(tagId)) {
-		throw new HTTPException(400, {
-			message: "field 'tagId'(number) is required in params.",
-		});
-	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,

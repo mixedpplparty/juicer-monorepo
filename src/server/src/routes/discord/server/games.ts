@@ -1,6 +1,14 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
+import {
+	AddCategoryToGameRequestBody,
+	AddTagsToGameRequestBody,
+	CreateGameRequestBody,
+	UpdateGameRequestBody,
+	UpdateGameThumbnailRequestBody,
+} from "juicer-shared/dist/types/index.js";
 import {
 	createGame,
 	deleteGame,
@@ -14,15 +22,10 @@ import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js"
 
 const app = new Hono();
 
-app.post("/create", async (c) => {
+app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.name) {
-		throw new HTTPException(400, {
-			message: "field 'name' is required in body.",
-		});
-	}
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
 		accessToken as string,
@@ -42,7 +45,7 @@ app.post("/create", async (c) => {
 	});
 });
 
-app.put("/:gameId", async (c) => {
+app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
 	const body = await c.req.json();
@@ -92,72 +95,73 @@ app.delete("/:gameId", async (c) => {
 	});
 });
 
-app.post("/:gameId/categories/add", async (c) => {
-	const serverId = c.req.param("serverId");
-	const gameId = c.req.param("gameId");
-	const body = await c.req.json();
-	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.categoryId) {
-		throw new HTTPException(400, {
-			message: "field 'categoryId' is required in body.",
+app.post(
+	"/:gameId/categories/add",
+	zValidator("json", AddCategoryToGameRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const gameId = c.req.param("gameId");
+		const body = await c.req.json();
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId as string,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const category = await mapCategoryToGame({
+				gameId: gameId as unknown as number,
+				serverId: serverId as string,
+				categoryId: body.categoryId as unknown as number,
+			});
+			return c.json(category, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
 		});
-	}
-	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
-		serverId as string,
-		accessToken as string,
-		true,
-	);
-	if (manageGuildPermission) {
-		const category = await mapCategoryToGame({
-			gameId: gameId as unknown as number,
-			serverId: serverId as string,
-			categoryId: body.categoryId as unknown as number,
-		});
-		return c.json(category, 200);
-	}
-	throw new HTTPException(403, {
-		message: "User does not have manage server permission.",
-	});
-});
+	},
+);
 
 // add tags to game
 // changes after migration: tags need to be created first in the tags route
-app.post("/:gameId/tags/tag", async (c) => {
-	const serverId = c.req.param("serverId");
-	const gameId = c.req.param("gameId");
-	const body = await c.req.json();
-	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.tagIds) {
-		throw new HTTPException(400, {
-			message: "field 'tagIds'(number[]) is required in body.",
-		});
-	}
-	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
-		serverId as string,
-		accessToken as string,
-		true,
-	);
-	if (manageGuildPermission) {
-		const existingTags = await getAllTagsInServer({
-			serverId: serverId as string,
-		});
-		const existingTagIds = existingTags.map((tag) => tag.tagId);
-		// merge existingTagIds and body.tagIds
-		const tagIds = [...existingTagIds, ...(body.tagIds as unknown as number[])];
-		// remove duplicates
-		const uniqueTagIds = [...new Set(tagIds)];
+app.post(
+	"/:gameId/tags/tag",
+	zValidator("json", AddTagsToGameRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const gameId = c.req.param("gameId");
+		const body = await c.req.json();
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId as string,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const existingTags = await getAllTagsInServer({
+				serverId: serverId as string,
+			});
+			const existingTagIds = existingTags.map((tag) => tag.tagId);
+			// merge existingTagIds and body.tagIds
+			const tagIds = [
+				...existingTagIds,
+				...(body.tagIds as unknown as number[]),
+			];
+			// remove duplicates
+			const uniqueTagIds = [...new Set(tagIds)];
 
-		const tag = await updateGame({
-			gameId: gameId as unknown as number,
-			serverId: serverId as string,
-			tagIds: uniqueTagIds,
+			const tag = await updateGame({
+				gameId: gameId as unknown as number,
+				serverId: serverId as string,
+				tagIds: uniqueTagIds,
+			});
+			return c.json(tag, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
 		});
-		return c.json(tag, 200);
-	}
-	throw new HTTPException(403, {
-		message: "User does not have manage server permission.",
-	});
-});
+	},
+);
 
 app.post("/:gameId/tags/:tagId/untag", async (c) => {
 	const serverId = c.req.param("serverId");
@@ -190,33 +194,32 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 	});
 });
 
-app.put("/:gameId/thumbnail/update", async (c) => {
-	const serverId = c.req.param("serverId");
-	const gameId = c.req.param("gameId");
-	const body = await c.req.json();
-	const accessToken = getCookie(c, "discord_access_token");
-	if (!body.file) {
-		throw new HTTPException(400, {
-			message: "field 'file' is required in body.",
+app.put(
+	"/:gameId/thumbnail/update",
+	zValidator("json", UpdateGameThumbnailRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const gameId = c.req.param("gameId");
+		const body = await c.req.json();
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId as string,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const thumbnail = await updateGameThumbnail({
+				gameId: gameId as unknown as number,
+				serverId: serverId as string,
+				thumbnail: body.file as unknown as Buffer,
+			});
+			return c.json(thumbnail, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
 		});
-	}
-	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
-		serverId as string,
-		accessToken as string,
-		true,
-	);
-	if (manageGuildPermission) {
-		const thumbnail = await updateGameThumbnail({
-			gameId: gameId as unknown as number,
-			serverId: serverId as string,
-			thumbnail: body.file as unknown as Buffer,
-		});
-		return c.json(thumbnail, 200);
-	}
-	throw new HTTPException(403, {
-		message: "User does not have manage server permission.",
-	});
-});
+	},
+);
 
 app.get("/:gameId/thumbnail", async (c) => {
 	const serverId = c.req.param("serverId");
