@@ -12,7 +12,7 @@ const app = new Hono();
 
 app.post("/create", async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.name) {
 		throw new HTTPException(400, {
@@ -60,7 +60,7 @@ app.delete("/:roleCategoryId", async (c) => {
 app.post("/:roleCategoryId/assign", async (c) => {
 	const serverId = c.req.param("serverId");
 	const roleCategoryId = c.req.param("roleCategoryId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,

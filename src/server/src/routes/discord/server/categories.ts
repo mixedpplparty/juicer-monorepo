@@ -8,7 +8,7 @@ const app = new Hono();
 
 app.post("/create", async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.name) {
 		throw new HTTPException(400, {

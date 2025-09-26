@@ -16,7 +16,7 @@ const app = new Hono();
 
 app.post("/create", async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.name) {
 		throw new HTTPException(400, {
@@ -45,7 +45,7 @@ app.post("/create", async (c) => {
 app.put("/:gameId", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -95,7 +95,7 @@ app.delete("/:gameId", async (c) => {
 app.post("/:gameId/categories/add", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.categoryId) {
 		throw new HTTPException(400, {
@@ -125,7 +125,7 @@ app.post("/:gameId/categories/add", async (c) => {
 app.post("/:gameId/tags/tag", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.tagIds) {
 		throw new HTTPException(400, {
@@ -162,7 +162,7 @@ app.post("/:gameId/tags/tag", async (c) => {
 app.post("/:gameId/tags/:tagId/untag", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -193,7 +193,7 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 app.put("/:gameId/thumbnail/update", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.parseBody();
+	const body = await c.req.json();
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!body.file) {
 		throw new HTTPException(400, {
