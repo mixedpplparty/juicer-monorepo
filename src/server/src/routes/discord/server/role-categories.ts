@@ -14,7 +14,7 @@ const app = new Hono();
 
 app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -57,7 +57,7 @@ app.delete("/:roleCategoryId", async (c) => {
 app.post("/:roleCategoryId/assign", async (c) => {
 	const serverId = c.req.param("serverId");
 	const roleCategoryId = c.req.param("roleCategoryId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,

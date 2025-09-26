@@ -24,7 +24,7 @@ const app = new Hono();
 
 app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -48,7 +48,7 @@ app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -101,7 +101,7 @@ app.post(
 	async (c) => {
 		const serverId = c.req.param("serverId");
 		const gameId = c.req.param("gameId");
-		const body = await c.req.json();
+		const body = await c.req.valid("json");
 		const accessToken = getCookie(c, "discord_access_token");
 		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 			serverId as string,
@@ -130,7 +130,7 @@ app.post(
 	async (c) => {
 		const serverId = c.req.param("serverId");
 		const gameId = c.req.param("gameId");
-		const body = await c.req.json();
+		const body = await c.req.valid("json");
 		const accessToken = getCookie(c, "discord_access_token");
 		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 			serverId as string,
@@ -166,7 +166,7 @@ app.post(
 app.post("/:gameId/tags/:tagId/untag", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -200,7 +200,7 @@ app.put(
 	async (c) => {
 		const serverId = c.req.param("serverId");
 		const gameId = c.req.param("gameId");
-		const body = await c.req.json();
+		const body = await c.req.valid("json");
 		const accessToken = getCookie(c, "discord_access_token");
 		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 			serverId as string,

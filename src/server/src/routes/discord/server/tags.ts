@@ -28,7 +28,7 @@ app.get("/", async (c) => {
 
 app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
-	const body = await c.req.json();
+	const body = await c.req.valid("json");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
