@@ -4,8 +4,8 @@ import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import {
 	AddCategoryToGameRequestBody,
-	AddTagsToGameRequestBody,
 	CreateGameRequestBody,
+	ModifyTagsOfGameRequestBody,
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
 } from "juicer-shared/dist/types/index.js";
@@ -14,6 +14,7 @@ import {
 	deleteGame,
 	getAllTagsInServer,
 	getGameThumbnail,
+	getServerDataInDb,
 	mapCategoryToGame,
 	updateGame,
 	updateGameThumbnail,
@@ -126,7 +127,7 @@ app.post(
 // changes after migration: tags need to be created first in the tags route
 app.post(
 	"/:gameId/tags/tag",
-	zValidator("json", AddTagsToGameRequestBody),
+	zValidator("json", ModifyTagsOfGameRequestBody),
 	async (c) => {
 		const serverId = c.req.param("serverId");
 		const gameId = c.req.param("gameId");
@@ -138,10 +139,11 @@ app.post(
 			true,
 		);
 		if (manageGuildPermission) {
-			const existingTags = await getAllTagsInServer({
-				serverId: serverId as string,
-			});
-			const existingTagIds = existingTags.map((tag) => tag.tagId);
+			const serverDataInDb = await getServerDataInDb(serverId as string);
+			const existingTagIds: number[] =
+				serverDataInDb?.games
+					?.find((game) => game.gameId === (gameId as unknown as number))
+					?.gamesTags?.map((tag) => tag.tagId) ?? [];
 			// merge existingTagIds and body.tagIds
 			const tagIds = [
 				...existingTagIds,
@@ -149,7 +151,7 @@ app.post(
 			];
 			// remove duplicates
 			const uniqueTagIds = [...new Set(tagIds)];
-
+			console.log("DEBUG: uniqueTagIds", uniqueTagIds);
 			const tag = await updateGame({
 				gameId: gameId as unknown as number,
 				serverId: serverId as string,
@@ -166,7 +168,7 @@ app.post(
 app.post("/:gameId/tags/:tagId/untag", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
-	const body = await c.req.valid("json");
+	const tagId = c.req.param("tagId");
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -178,9 +180,9 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 			serverId: serverId as string,
 		});
 		const existingTagIds = existingTags.map((tag) => tag.tagId);
-		// remove body.tagId from existingTagIds
+		// remove tagId from existingTagIds
 		const newTagIds = existingTagIds.filter(
-			(tagId) => tagId !== (body.tagId as unknown as number),
+			(existingTagId) => existingTagId !== (tagId as unknown as number),
 		);
 		const tag = await updateGame({
 			gameId: gameId as unknown as number,

@@ -2,7 +2,10 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { NameRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import {
+	AssignRoleCategoryToRoleRequestBody,
+	NameRequiredRequestBody,
+} from "juicer-shared/dist/types/index.js";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
@@ -54,27 +57,31 @@ app.delete("/:roleCategoryId", async (c) => {
 	});
 });
 
-app.post("/:roleCategoryId/assign", async (c) => {
-	const serverId = c.req.param("serverId");
-	const roleCategoryId = c.req.param("roleCategoryId");
-	const body = await c.req.valid("json");
-	const accessToken = getCookie(c, "discord_access_token");
-	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
-		serverId as string,
-		accessToken as string,
-		true,
-	);
-	if (manageGuildPermission) {
-		const roleCategory = await updateRoleCategoryOfRole({
-			roleId: body.roleId as string,
-			roleCategoryId: roleCategoryId as unknown as number,
-			serverId: serverId as string,
+app.post(
+	"/:roleCategoryId/assign",
+	zValidator("json", AssignRoleCategoryToRoleRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const roleCategoryId = c.req.param("roleCategoryId");
+		const body = await c.req.valid("json");
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId as string,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const roleCategory = await updateRoleCategoryOfRole({
+				roleId: body.roleId as string,
+				roleCategoryId: roleCategoryId as unknown as number,
+				serverId: serverId as string,
+			});
+			return c.json(roleCategory, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
 		});
-		return c.json(roleCategory, 200);
-	}
-	throw new HTTPException(403, {
-		message: "User does not have manage server permission.",
-	});
-});
+	},
+);
 
 export default app;

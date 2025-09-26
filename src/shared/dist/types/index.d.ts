@@ -19,16 +19,17 @@ export type FilteredGuild = {
     memberCount: number;
 };
 export type MyInfo = {
-    me: APIUser;
+    userData: APIUser;
     guilds: Guild[];
 };
 export type ServerDataDb = {
-    server_id: string;
+    serverId: string;
+    createdAt: Date;
+    games: Game[] | null;
     roles: Role[] | null;
     categories: Category[] | null;
-    role_categories: RoleCategory[] | null;
+    roleCategories: RoleCategory[] | null;
     tags: Tag[] | null;
-    games: Game[] | null;
 };
 export type Category = {
     id: number;
@@ -51,23 +52,14 @@ export type Channel = {
     id: string;
 };
 export type Game = {
-    id: number;
+    gameId: number;
+    serverId: string;
     name: string;
-    description: string | null;
-    category: Category | null;
-    tags: Tag[] | null;
-    roles_to_add: Role[] | null;
-    channels: Channel[] | null;
-};
-export type ServerDataDiscord = {
-    id: string;
-    name: string;
-    icon: string | null;
-    owner_id: string;
-    owner_name: string;
-    owner_nick: string | null;
-    member_count: number;
-    roles: ServerDataDiscordRole[] | null;
+    description?: string | null;
+    categoryId?: number | null;
+    gamesTags: Tag[] | null;
+    gamesRoles: Role[] | null;
+    channels: string[] | null;
 };
 export type FilteredServerDataDiscord = {
     id: string;
@@ -99,7 +91,7 @@ export type ServerDataDiscordRole = {
 export type ServerData = {
     admin: boolean;
     server_data_db: ServerDataDb;
-    server_data_discord: ServerDataDiscord;
+    server_data_discord: FilteredServerDataDiscord;
 };
 export type MyDataInServer = {
     id: string;
@@ -124,10 +116,10 @@ export type ToastObject = {
 export type MessageOnSuccess = {
     detail: string;
 };
-export declare const SyncRolesResponse: z.ZodObject<{
-    roles_created: z.ZodArray<z.ZodString>;
-    roles_deleted: z.ZodArray<z.ZodString>;
-}, z.core.$strip>;
+export type SyncRolesResponse = {
+    roles_created: string[];
+    roles_deleted: string[];
+};
 export type CreateServerResponse = {
     serverId: string;
     createdAt: Date;
@@ -140,8 +132,8 @@ export type CreateGameDBParams = {
 };
 export declare const CreateGameRequestBody: z.ZodObject<{
     name: z.ZodString;
-    description: z.ZodNullable<z.ZodString>;
-    categoryId: z.ZodNullable<z.ZodNumber>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    categoryId: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
 }, z.core.$strip>;
 export type CreateGameResponse = {
     gameId: number;
@@ -193,7 +185,7 @@ export declare const CreateRoleCategoryRequestBody: z.ZodObject<{
 export declare const AddCategoryToGameRequestBody: z.ZodObject<{
     categoryId: z.ZodNumber;
 }, z.core.$strip>;
-export declare const AddTagsToGameRequestBody: z.ZodObject<{
+export declare const ModifyTagsOfGameRequestBody: z.ZodObject<{
     tagIds: z.ZodArray<z.ZodNumber>;
 }, z.core.$strip>;
 export declare const UpdateGameThumbnailRequestBody: z.ZodObject<{
@@ -201,4 +193,7 @@ export declare const UpdateGameThumbnailRequestBody: z.ZodObject<{
 }, z.core.$strip>;
 export declare const NameRequiredRequestBody: z.ZodObject<{
     name: z.ZodString;
+}, z.core.$strip>;
+export declare const AssignRoleCategoryToRoleRequestBody: z.ZodObject<{
+    roleId: z.ZodString;
 }, z.core.$strip>;

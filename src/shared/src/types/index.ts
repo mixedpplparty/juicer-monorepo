@@ -23,17 +23,18 @@ export type FilteredGuild = {
 };
 
 export type MyInfo = {
-	me: APIUser;
+	userData: APIUser;
 	guilds: Guild[];
 };
 
 export type ServerDataDb = {
-	server_id: string;
+	serverId: string;
+	createdAt: Date;
+	games: Game[] | null;
 	roles: Role[] | null;
 	categories: Category[] | null;
-	role_categories: RoleCategory[] | null;
+	roleCategories: RoleCategory[] | null;
 	tags: Tag[] | null;
-	games: Game[] | null;
 };
 
 export type Category = {
@@ -61,26 +62,30 @@ export type Channel = {
 	id: string;
 };
 
+// updated id to gameId
+// updated category to categoryId
 export type Game = {
-	id: number;
+	gameId: number;
+	serverId: string;
 	name: string;
-	description: string | null;
-	category: Category | null;
-	tags: Tag[] | null;
-	roles_to_add: Role[] | null;
-	channels: Channel[] | null;
+	description?: string | null;
+	categoryId?: number | null;
+	gamesTags: Tag[] | null;
+	gamesRoles: Role[] | null;
+	channels: string[] | null;
 };
 
-export type ServerDataDiscord = {
-	id: string;
-	name: string;
-	icon: string | null;
-	owner_id: string;
-	owner_name: string;
-	owner_nick: string | null;
-	member_count: number;
-	roles: ServerDataDiscordRole[] | null;
-};
+// // deprecated
+// export type ServerDataDiscord = {
+// 	id: string;
+// 	name: string;
+// 	icon: string | null;
+// 	owner_id: string;
+// 	owner_name: string;
+// 	owner_nick: string | null;
+// 	member_count: number;
+// 	roles: ServerDataDiscordRole[] | null;
+// };
 
 export type FilteredServerDataDiscord = {
 	id: string;
@@ -115,7 +120,7 @@ export type ServerDataDiscordRole = {
 export type ServerData = {
 	admin: boolean;
 	server_data_db: ServerDataDb;
-	server_data_discord: ServerDataDiscord;
+	server_data_discord: FilteredServerDataDiscord;
 };
 
 export type MyDataInServer = {
@@ -146,10 +151,10 @@ export type MessageOnSuccess = {
 	detail: string;
 };
 
-export const SyncRolesResponse = z.object({
-	roles_created: z.array(z.string()),
-	roles_deleted: z.array(z.string()),
-});
+export type SyncRolesResponse = {
+	roles_created: string[];
+	roles_deleted: string[];
+};
 
 export type CreateServerResponse = {
 	serverId: string;
@@ -229,7 +234,7 @@ export const AddCategoryToGameRequestBody = z.object({
 	categoryId: z.number(),
 });
 
-export const AddTagsToGameRequestBody = z.object({
+export const ModifyTagsOfGameRequestBody = z.object({
 	tagIds: z.array(z.number()),
 });
 
@@ -239,4 +244,8 @@ export const UpdateGameThumbnailRequestBody = z.object({
 
 export const NameRequiredRequestBody = z.object({
 	name: z.string(),
+});
+
+export const AssignRoleCategoryToRoleRequestBody = z.object({
+	roleId: z.string(),
 });

@@ -1,8 +1,10 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { HTTPException } from "hono/http-exception";
 import {
 	exchangeCode,
+	getDiscordOAuthUserData,
 	refreshAuthToken,
 	revokeToken,
 } from "../../functions/discord-oauth.js";
@@ -13,6 +15,18 @@ const REDIRECT_AFTER_SIGN_IN_FAILED_URI =
 const ENVIRONMENT = process.env.ENVIRONMENT;
 
 const app = new Hono();
+
+// only userData
+app.get("/me", async (c) => {
+	const accessToken = getCookie(c, "discord_access_token");
+	if (!accessToken) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+	const userData = await getDiscordOAuthUserData(accessToken as string);
+	return c.json({ userData });
+});
 
 app.get("/callback", async (c) => {
 	const code = c.req.query("code");

@@ -1,6 +1,6 @@
 import axios from "axios";
+import type { APIUser } from "discord-api-types/v10";
 import type {
-	AuthData,
 	Game,
 	MessageOnSuccess,
 	MyDataInServer,
@@ -11,7 +11,7 @@ import type {
 
 axios.defaults.withCredentials = true;
 
-export const _fetchMyTokens = async (): Promise<AuthData> => {
+export const _fetchMyTokens = async (): Promise<APIUser> => {
 	const _res = await axios.get(_fetchMyTokens.apiPath(), {
 		withCredentials: true,
 	});

@@ -19,6 +19,8 @@ import type {
 	DeleteGameRequestBody,
 	DeleteTagRequestBody,
 	GetAllTagsInServerRequestBody,
+	ServerData,
+	ServerDataDb,
 	Tag,
 	UpdateGameRequestBody,
 } from "../../../shared/dist/index.js";
@@ -35,7 +37,9 @@ import {
 } from "../db/schemas.js";
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this
-export const getServerDataInDb = async (serverId: string): Promise<unknown> => {
+export const getServerDataInDb = async (
+	serverId: string,
+): Promise<ServerDataDb | null> => {
 	const serverInfo = await db.query.servers.findFirst({
 		where: eq(servers.serverId, serverId),
 		with: {
@@ -54,14 +58,14 @@ export const getServerDataInDb = async (serverId: string): Promise<unknown> => {
 	if (!serverInfo) {
 		return null;
 	}
-	return serverInfo;
+	return serverInfo as unknown as ServerDataDb; // TODO fix typing
 };
 
 //TODO return typing
 // get_game_roles merged to this
 export const getServerDataInDbWithoutGames = async (
 	serverId: string,
-): Promise<unknown> => {
+): Promise<typeof servers.$inferSelect | null> => {
 	const serverInfo = await db.query.servers.findFirst({
 		where: eq(servers.serverId, serverId),
 		with: {
@@ -488,7 +492,7 @@ export const findGamesByName = async ({
 	name: string;
 }): Promise<(typeof games.$inferSelect)[]> => {
 	return await db.query.games.findMany({
-		where: and(eq(games.serverId, serverId), ilike(games.name, name)),
+		where: and(eq(games.serverId, serverId), ilike(games.name, `%${name}%`)),
 		with: {
 			gamesTags: true,
 			gamesRoles: true,

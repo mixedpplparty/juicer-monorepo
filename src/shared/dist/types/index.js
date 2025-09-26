@@ -1,12 +1,8 @@
 import * as z from "zod";
-export const SyncRolesResponse = z.object({
-    roles_created: z.array(z.string()),
-    roles_deleted: z.array(z.string()),
-});
 export const CreateGameRequestBody = z.object({
     name: z.string(),
-    description: z.string().nullable(),
-    categoryId: z.number().nullable(),
+    description: z.string().nullable().optional(),
+    categoryId: z.number().nullable().optional(),
 });
 export const UpdateGameRequestBody = z.object({
     gameId: z.number(),
@@ -49,7 +45,7 @@ export const CreateRoleCategoryRequestBody = z.object({
 export const AddCategoryToGameRequestBody = z.object({
     categoryId: z.number(),
 });
-export const AddTagsToGameRequestBody = z.object({
+export const ModifyTagsOfGameRequestBody = z.object({
     tagIds: z.array(z.number()),
 });
 export const UpdateGameThumbnailRequestBody = z.object({
@@ -57,4 +53,7 @@ export const UpdateGameThumbnailRequestBody = z.object({
 });
 export const NameRequiredRequestBody = z.object({
     name: z.string(),
+});
+export const AssignRoleCategoryToRoleRequestBody = z.object({
+    roleId: z.string(),
 });

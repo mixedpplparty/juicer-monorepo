@@ -17,8 +17,7 @@ const App = () => {
 		return <Loading message="Authenticating..." />;
 	} // can't use suspense here
 
-	const isAuthenticated =
-		_authQuery.data?.discord_access_token && !_authQuery.isError;
+	const isAuthenticated = _authQuery.data?.id && !_authQuery.isError;
 
 	const router = createBrowserRouter([
 		...(isAuthenticated

@@ -12,7 +12,7 @@ const app = new Hono();
 
 app.get("/all", async (c) => {
 	const serverId = c.req.param("serverId");
-	const query = c.req.param("query");
+	const query = c.req.query("query");
 	const accessToken = getCookie(c, "discord_access_token");
 	if (!query) {
 		throw new HTTPException(400, {
