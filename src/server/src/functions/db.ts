@@ -1,5 +1,9 @@
 import "dotenv/config";
 
+import {
+	PG_NOT_NULL_VIOLATION,
+	PG_UNIQUE_VIOLATION,
+} from "@drdgvhbh/postgres-error-codes";
 import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { DatabaseError } from "pg";
@@ -82,7 +86,7 @@ export const createServer = async (
 		console.error(error);
 		if (error instanceof DrizzleQueryError) {
 			if (error.cause instanceof DatabaseError) {
-				if (error.cause.code === "23505") {
+				if (error.cause.code === PG_UNIQUE_VIOLATION) {
 					throw new HTTPException(400, {
 						message: "Server already exists.",
 					});
@@ -111,7 +115,7 @@ export const createGame = async ({
 		console.error(error);
 		if (error instanceof DrizzleQueryError) {
 			if (error.cause instanceof DatabaseError) {
-				if (error.cause.code === "23502") {
+				if (error.cause.code === PG_NOT_NULL_VIOLATION) {
 					throw new HTTPException(400, {
 						message: "Values violated Not Null constraint.",
 					});

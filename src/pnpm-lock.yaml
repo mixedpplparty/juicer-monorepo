@@ -100,6 +100,9 @@ importers:
 
   server:
     dependencies:
+      '@drdgvhbh/postgres-error-codes':
+        specifier: ^0.0.6
+        version: 0.0.6
       '@hono/node-server':
         specifier: ^1.19.3
         version: 1.19.3(hono@4.9.8)
@@ -332,6 +335,9 @@ packages:
   '@discordjs/ws@1.2.3':
     resolution: {integrity: sha512-wPlQDxEmlDg5IxhJPuxXr3Vy9AjYq5xCvFWGJyD7w7Np8ZGu+Mc+97LCoEc/+AYCo2IDpKioiH0/c/mj5ZR9Uw==}
     engines: {node: '>=16.11.0'}
+
+  '@drdgvhbh/postgres-error-codes@0.0.6':
+    resolution: {integrity: sha512-tAz0Xp+qhq90x0r/3VW96iRdHFw72cYQqXa65u0eFVhSMC27bc2gZ8Ky5WXEmshrl/bCe7QTYBNEF0U5zeSQjw==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -2469,6 +2475,8 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@drdgvhbh/postgres-error-codes@0.0.6': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 
