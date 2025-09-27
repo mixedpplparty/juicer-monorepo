@@ -19,6 +19,7 @@ import type {
 	DeleteGameRequestBody,
 	DeleteTagRequestBody,
 	Game,
+	GameWithoutRelations,
 	GetAllTagsInServerRequestBody,
 	RoleRelationToGame,
 	ServerDataDb,
@@ -61,7 +62,7 @@ export const getServerDataInDb = async (
 	if (!serverInfo) {
 		return null;
 	}
-	return serverInfo as unknown as ServerDataDb; // TODO fix typing
+	return serverInfo;
 };
 
 //TODO return typing
@@ -197,7 +198,7 @@ export const updateGame = async ({
 			.set(updateFields)
 			.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
 			.returning();
-		res.updatedGame = updatedGame[0] as unknown as Game;
+		res.updatedGame = updatedGame[0];
 	} else {
 		console.log("DEBUG: no fields to update");
 	}
@@ -215,14 +216,14 @@ export const updateGame = async ({
 			.insert(gamesTags)
 			.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
 			.returning();
-		res.tags.added = addedTags as unknown as TagRelationToGame[];
+		res.tags.added = addedTags;
 	}
 	if (tagsToRemove && tagsToRemove.length > 0) {
 		const removedTags = await db
 			.delete(gamesTags)
 			.where(inArray(gamesTags.tagId, tagsToRemove))
 			.returning();
-		res.tags.removed = removedTags as unknown as TagRelationToGame[];
+		res.tags.removed = removedTags;
 	}
 
 	// update roles table
@@ -240,14 +241,14 @@ export const updateGame = async ({
 			.insert(gamesRoles)
 			.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
 			.returning();
-		res.roles.added = addedRoles as unknown as RoleRelationToGame[];
+		res.roles.added = addedRoles;
 	}
 	if (rolesToRemove && rolesToRemove.length > 0) {
 		const removedRoles = await db
 			.delete(gamesRoles)
 			.where(inArray(gamesRoles.roleId, rolesToRemove))
 			.returning();
-		res.roles.removed = removedRoles as unknown as RoleRelationToGame[];
+		res.roles.removed = removedRoles;
 	}
 	return res;
 };
@@ -255,7 +256,7 @@ export const updateGame = async ({
 export const deleteGame = async ({
 	gameId,
 	serverId,
-}: z.infer<typeof DeleteGameRequestBody>): Promise<Game> => {
+}: z.infer<typeof DeleteGameRequestBody>): Promise<GameWithoutRelations> => {
 	const gameInfo = await db.query.games.findFirst({
 		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 	});
@@ -269,7 +270,7 @@ export const deleteGame = async ({
 		.delete(games)
 		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
 		.returning();
-	return deletedGame[0] as unknown as Game;
+	return deletedGame[0];
 };
 
 export const createTag = async ({

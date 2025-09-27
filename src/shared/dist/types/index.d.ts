@@ -32,11 +32,13 @@ export type ServerDataDb = {
     tags: Tag[] | null;
 };
 export type Category = {
-    id: number;
+    categoryId: number;
+    serverId: string;
     name: string;
 };
 export type RoleCategory = {
-    id: number;
+    roleCategoryId: number;
+    serverId: string;
     name: string;
 };
 export type Tag = {
@@ -49,8 +51,10 @@ export type TagRelationToGame = {
     tagId: number;
 };
 export type Role = {
-    id: string;
-    role_category_id: number | null;
+    serverId: string;
+    roleId: string;
+    roleCategoryId: number | null;
+    selfAssignable: boolean;
 };
 export type RoleRelationToGame = {
     gameId: number;
@@ -65,8 +69,18 @@ export type Game = {
     name: string;
     description?: string | null;
     categoryId?: number | null;
-    gamesTags: Tag[] | null;
-    gamesRoles: Role[] | null;
+    thumbnail: Buffer | null;
+    gamesTags: TagRelationToGame[] | null;
+    gamesRoles: RoleRelationToGame[] | null;
+    channels: string[] | null;
+};
+export type GameWithoutRelations = {
+    gameId: number;
+    serverId: string;
+    name: string;
+    description?: string | null;
+    categoryId?: number | null;
+    thumbnail: Buffer | null;
     channels: string[] | null;
 };
 export type FilteredServerDataDiscord = {
@@ -164,7 +178,7 @@ export declare const UpdateGameRequestBody: z.ZodObject<{
     roleIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
 }, z.core.$strip>;
 export type UpdateGameResponse = {
-    updatedGame: Game | null;
+    updatedGame: GameWithoutRelations | null;
     tags: {
         added: TagRelationToGame[] | null;
         removed: TagRelationToGame[] | null;
