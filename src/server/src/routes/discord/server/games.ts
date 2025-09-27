@@ -37,7 +37,7 @@ app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 			serverId: serverId as string,
 			name: body.name as string,
 			description: body.description as string,
-			categoryId: body.categoryId as unknown as number,
+			categoryId: Number(body.categoryId),
 		});
 		return c.json(game, 200);
 	}
@@ -58,15 +58,15 @@ app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 	);
 	if (manageGuildPermission) {
 		const game = await updateGame({
-			gameId: gameId as unknown as number,
+			gameId: Number(gameId),
 			serverId: serverId as string,
 			name: body.name as string | null | undefined, // optional(not updated if null or undefined)
 			description: body.description as string | null | undefined, // optional(not updated if null or undefined)
-			categoryId: body.categoryId as unknown as number | null | undefined, // optional(not updated if null or undefined)
-			thumbnail: body.thumbnail as unknown as Buffer | null | undefined, //optional(not updated if null or undefined)
-			channels: body.channels as unknown as string[] | null | undefined, // optional(not updated if null or undefined)
-			tagIds: body.tagIds as unknown as number[] | null | undefined, // optional(not updated if null or undefined)
-			roleIds: body.roleIds as unknown as string[] | null | undefined, // optional(not updated if null or undefined)
+			categoryId: Number(body.categoryId), // optional(not updated if null or undefined)
+			thumbnail: body.thumbnail as Buffer | null | undefined, //optional(not updated if null or undefined)
+			channels: body.channels as string[] | null | undefined, // optional(not updated if null or undefined)
+			tagIds: body.tagIds as number[] | null | undefined, // optional(not updated if null or undefined)
+			roleIds: body.roleIds as string[] | null | undefined, // optional(not updated if null or undefined)
 		});
 		return c.json(game, 200);
 	}
@@ -86,7 +86,7 @@ app.delete("/:gameId", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const game = await deleteGame({
-			gameId: gameId as unknown as number,
+			gameId: Number(gameId),
 			serverId: serverId as string,
 		});
 		return c.json(game, 200);
@@ -111,9 +111,9 @@ app.post(
 		);
 		if (manageGuildPermission) {
 			const category = await mapCategoryToGame({
-				gameId: gameId as unknown as number,
+				gameId: Number(gameId),
 				serverId: serverId as string,
-				categoryId: body.categoryId as unknown as number,
+				categoryId: Number(body.categoryId),
 			});
 			return c.json(category, 200);
 		}
@@ -142,18 +142,15 @@ app.post(
 			const serverDataInDb = await getServerDataInDb(serverId as string);
 			const existingTagIds: number[] =
 				serverDataInDb?.games
-					?.find((game) => game.gameId === (gameId as unknown as number))
+					?.find((game) => game.gameId === Number(gameId))
 					?.gamesTags?.map((tag) => tag.tagId) ?? [];
 			// merge existingTagIds and body.tagIds
-			const tagIds = [
-				...existingTagIds,
-				...(body.tagIds as unknown as number[]),
-			];
+			const tagIds = [...existingTagIds, ...body.tagIds];
 			// remove duplicates
 			const uniqueTagIds = [...new Set(tagIds)];
 			console.log("DEBUG: uniqueTagIds", uniqueTagIds);
 			const tag = await updateGame({
-				gameId: gameId as unknown as number,
+				gameId: Number(gameId),
 				serverId: serverId as string,
 				tagIds: uniqueTagIds,
 			});
@@ -176,16 +173,28 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 		true,
 	);
 	if (manageGuildPermission) {
-		const existingTags = await getAllTagsInServer({
-			serverId: serverId as string,
-		});
-		const existingTagIds = existingTags.map((tag) => tag.tagId);
-		// remove tagId from existingTagIds
-		const newTagIds = existingTagIds.filter(
-			(existingTagId) => existingTagId !== (tagId as unknown as number),
+		const serverDataInDb = await getServerDataInDb(serverId as string);
+		const existingGameTags = serverDataInDb?.games?.find(
+			(game) => game.gameId === Number(gameId),
+		)?.gamesTags;
+		console.log("DEBUG: existingGameTags", existingGameTags);
+		const existingGameTagIds: number[] =
+			existingGameTags?.map((tag) => tag.tagId) ?? [];
+
+		// check if the tag is actually assigned to this game
+		if (!existingGameTagIds.includes(Number(tagId))) {
+			throw new HTTPException(404, {
+				message: "Tag is not assigned to this game.",
+			});
+		}
+
+		// remove tagId from the game's current tags
+		const newTagIds = existingGameTagIds.filter(
+			(existingTagId) => existingTagId !== Number(tagId),
 		);
+		console.log("DEBUG: newTagIds", newTagIds);
 		const tag = await updateGame({
-			gameId: gameId as unknown as number,
+			gameId: Number(gameId),
 			serverId: serverId as string,
 			tagIds: newTagIds,
 		});
@@ -211,7 +220,7 @@ app.put(
 		);
 		if (manageGuildPermission) {
 			const thumbnail = await updateGameThumbnail({
-				gameId: gameId as unknown as number,
+				gameId: Number(gameId),
 				serverId: serverId as string,
 				thumbnail: body.file as unknown as Buffer,
 			});
@@ -229,7 +238,7 @@ app.get("/:gameId/thumbnail", async (c) => {
 	const accessToken = getCookie(c, "discord_access_token");
 	await authenticateAndAuthorizeUser(serverId as string, accessToken as string);
 	const thumbnail = await getGameThumbnail({
-		gameId: gameId as unknown as number,
+		gameId: Number(gameId),
 		serverId: serverId as string,
 	});
 	if (thumbnail) {

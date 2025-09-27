@@ -210,16 +210,18 @@ export const updateGame = async ({
 	const tagsToRemove = existingTagIds.filter(
 		(tagId) => !tagIds?.includes(tagId),
 	);
-	if (tagsToAdd) {
+	if (tagsToAdd && tagsToAdd.length > 0) {
 		const addedTags = await db
 			.insert(gamesTags)
-			.values(tagsToAdd.map((tagId) => ({ gameId, tagId })));
+			.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
+			.returning();
 		res.tags.added = addedTags as unknown as TagRelationToGame[];
 	}
-	if (tagsToRemove) {
+	if (tagsToRemove && tagsToRemove.length > 0) {
 		const removedTags = await db
 			.delete(gamesTags)
-			.where(inArray(gamesTags.tagId, tagsToRemove));
+			.where(inArray(gamesTags.tagId, tagsToRemove))
+			.returning();
 		res.tags.removed = removedTags as unknown as TagRelationToGame[];
 	}
 
@@ -233,16 +235,18 @@ export const updateGame = async ({
 	const rolesToRemove = existingRoleIds.filter(
 		(roleId) => !roleIds?.includes(roleId),
 	);
-	if (rolesToAdd) {
+	if (rolesToAdd && rolesToAdd.length > 0) {
 		const addedRoles = await db
 			.insert(gamesRoles)
-			.values(rolesToAdd.map((roleId) => ({ gameId, roleId })));
+			.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
+			.returning();
 		res.roles.added = addedRoles as unknown as RoleRelationToGame[];
 	}
-	if (rolesToRemove) {
+	if (rolesToRemove && rolesToRemove.length > 0) {
 		const removedRoles = await db
 			.delete(gamesRoles)
-			.where(inArray(gamesRoles.roleId, rolesToRemove));
+			.where(inArray(gamesRoles.roleId, rolesToRemove))
+			.returning();
 		res.roles.removed = removedRoles as unknown as RoleRelationToGame[];
 	}
 	return res;
@@ -251,19 +255,21 @@ export const updateGame = async ({
 export const deleteGame = async ({
 	gameId,
 	serverId,
-}: z.infer<typeof DeleteGameRequestBody>): Promise<boolean> => {
+}: z.infer<typeof DeleteGameRequestBody>): Promise<Game> => {
 	const gameInfo = await db.query.games.findFirst({
 		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 	});
 	if (!gameInfo) {
-		// TODO throw an error if game not found
-		return false;
+		throw new HTTPException(404, {
+			message: "Game not found.",
+		});
 	}
 	// delete the game
-	await db
+	const deletedGame = await db
 		.delete(games)
-		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)));
-	return true;
+		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
+		.returning();
+	return deletedGame[0] as unknown as Game;
 };
 
 export const createTag = async ({
