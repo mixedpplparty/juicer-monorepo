@@ -30,7 +30,6 @@ export const getDiscordOAuthUserData = async (
 
 export const exchangeCode = async ({
 	code,
-	state,
 }: RESTPostOAuth2AuthorizationQueryResult): Promise<RESTPostOAuth2AccessTokenResult> => {
 	try {
 		const response = await axios.post(

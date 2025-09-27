@@ -20,6 +20,7 @@ import type {
 	FilteredServerDataDiscord,
 	SyncRolesResponse,
 } from "juicer-shared";
+import { throwAxiosError } from "./axios-error-handler.js";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,
@@ -52,7 +53,7 @@ export const authenticateAndAuthorizeUser = async (
 	try {
 		userData = await getDiscordOAuthUserData(accessToken);
 	} catch (error) {
-		throw new HTTPException(401, { message: "Most likely not authenticated." });
+		throwAxiosError(error);
 	}
 	const guild = await discordClient.guilds.fetch(serverId);
 	if (!guild) {

@@ -12,7 +12,6 @@ import {
 import {
 	createGame,
 	deleteGame,
-	getAllTagsInServer,
 	getGameThumbnail,
 	getServerDataInDb,
 	mapCategoryToGame,

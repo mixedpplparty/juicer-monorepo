@@ -18,13 +18,10 @@ import type {
 	CreateTagRequestBody,
 	DeleteGameRequestBody,
 	DeleteTagRequestBody,
-	Game,
 	GameWithoutRelations,
 	GetAllTagsInServerRequestBody,
-	RoleRelationToGame,
 	ServerDataDb,
 	Tag,
-	TagRelationToGame,
 	UpdateGameRequestBody,
 	UpdateGameResponse,
 } from "../../../shared/dist/index.js";
