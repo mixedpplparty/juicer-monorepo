@@ -44,9 +44,17 @@ export type Tag = {
     name: string;
     serverId: string | null;
 };
+export type TagRelationToGame = {
+    gameId: number;
+    tagId: number;
+};
 export type Role = {
     id: string;
     role_category_id: number | null;
+};
+export type RoleRelationToGame = {
+    gameId: number;
+    roleId: string;
 };
 export type Channel = {
     id: string;
@@ -155,6 +163,17 @@ export declare const UpdateGameRequestBody: z.ZodObject<{
     tagIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNumber>>>;
     roleIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
 }, z.core.$strip>;
+export type UpdateGameResponse = {
+    updatedGame: Game | null;
+    tags: {
+        added: TagRelationToGame[] | null;
+        removed: TagRelationToGame[] | null;
+    };
+    roles: {
+        added: RoleRelationToGame[] | null;
+        removed: RoleRelationToGame[] | null;
+    };
+};
 export declare const DeleteGameRequestBody: z.ZodObject<{
     gameId: z.ZodNumber;
     serverId: z.ZodString;

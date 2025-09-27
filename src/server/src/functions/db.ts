@@ -18,11 +18,14 @@ import type {
 	CreateTagRequestBody,
 	DeleteGameRequestBody,
 	DeleteTagRequestBody,
+	Game,
 	GetAllTagsInServerRequestBody,
-	ServerData,
+	RoleRelationToGame,
 	ServerDataDb,
 	Tag,
+	TagRelationToGame,
 	UpdateGameRequestBody,
+	UpdateGameResponse,
 } from "../../../shared/dist/index.js";
 import { db } from "../db/index.js";
 import {
@@ -145,7 +148,18 @@ export const updateGame = async ({
 	channels,
 	tagIds,
 	roleIds,
-}: z.infer<typeof UpdateGameRequestBody>): Promise<boolean> => {
+}: z.infer<typeof UpdateGameRequestBody>): Promise<UpdateGameResponse> => {
+	const res: UpdateGameResponse = {
+		updatedGame: null,
+		tags: {
+			added: null,
+			removed: null,
+		},
+		roles: {
+			added: null,
+			removed: null,
+		},
+	};
 	const gameInfo = await db.query.games.findFirst({
 		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 		with: {
@@ -154,8 +168,9 @@ export const updateGame = async ({
 		},
 	});
 	if (!gameInfo) {
-		// TODO throw an error if game not found
-		return false;
+		throw new HTTPException(404, {
+			message: "Game not found.",
+		});
 	}
 	// only update fields that are not null/undefined
 	const updateFields = Object.fromEntries(
@@ -165,8 +180,6 @@ export const updateGame = async ({
 			categoryId,
 			thumbnail,
 			channels,
-			tagIds,
-			roleIds,
 		}).filter(([key, val]) => {
 			if (key === "thumbnail") {
 				return val !== null && val !== undefined && val !== "";
@@ -178,11 +191,16 @@ export const updateGame = async ({
 		}),
 	) as Partial<typeof games.$inferInsert>;
 
-	await db
-		.update(games)
-		.set(updateFields)
-		.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
-		.returning();
+	if (Object.keys(updateFields).length > 0) {
+		const updatedGame = await db
+			.update(games)
+			.set(updateFields)
+			.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
+			.returning();
+		res.updatedGame = updatedGame[0] as unknown as Game;
+	} else {
+		console.log("DEBUG: no fields to update");
+	}
 
 	// update tags table
 	const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
@@ -193,12 +211,16 @@ export const updateGame = async ({
 		(tagId) => !tagIds?.includes(tagId),
 	);
 	if (tagsToAdd) {
-		await db
+		const addedTags = await db
 			.insert(gamesTags)
 			.values(tagsToAdd.map((tagId) => ({ gameId, tagId })));
+		res.tags.added = addedTags as unknown as TagRelationToGame[];
 	}
 	if (tagsToRemove) {
-		await db.delete(gamesTags).where(inArray(gamesTags.tagId, tagsToRemove));
+		const removedTags = await db
+			.delete(gamesTags)
+			.where(inArray(gamesTags.tagId, tagsToRemove));
+		res.tags.removed = removedTags as unknown as TagRelationToGame[];
 	}
 
 	// update roles table
@@ -212,16 +234,18 @@ export const updateGame = async ({
 		(roleId) => !roleIds?.includes(roleId),
 	);
 	if (rolesToAdd) {
-		await db
+		const addedRoles = await db
 			.insert(gamesRoles)
 			.values(rolesToAdd.map((roleId) => ({ gameId, roleId })));
+		res.roles.added = addedRoles as unknown as RoleRelationToGame[];
 	}
 	if (rolesToRemove) {
-		await db
+		const removedRoles = await db
 			.delete(gamesRoles)
 			.where(inArray(gamesRoles.roleId, rolesToRemove));
+		res.roles.removed = removedRoles as unknown as RoleRelationToGame[];
 	}
-	return true;
+	return res;
 };
 
 export const deleteGame = async ({

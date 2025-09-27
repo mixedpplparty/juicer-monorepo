@@ -53,9 +53,19 @@ export type Tag = {
 	serverId: string | null;
 };
 
+export type TagRelationToGame = {
+	gameId: number;
+	tagId: number;
+};
+
 export type Role = {
 	id: string;
 	role_category_id: number | null;
+};
+
+export type RoleRelationToGame = {
+	gameId: number;
+	roleId: string;
 };
 
 export type Channel = {
@@ -195,6 +205,18 @@ export const UpdateGameRequestBody = z.object({
 	tagIds: z.array(z.number()).nullable().optional(),
 	roleIds: z.array(z.string()).nullable().optional(),
 });
+
+export type UpdateGameResponse = {
+	updatedGame: Game | null;
+	tags: {
+		added: TagRelationToGame[] | null;
+		removed: TagRelationToGame[] | null;
+	};
+	roles: {
+		added: RoleRelationToGame[] | null;
+		removed: RoleRelationToGame[] | null;
+	};
+};
 
 export const DeleteGameRequestBody = z.object({
 	gameId: z.number(),
