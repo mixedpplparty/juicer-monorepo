@@ -58,7 +58,7 @@ app.delete("/:tagId", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const tag = await deleteTag({
-			tagId: tagId as unknown as number,
+			tagId: Number(tagId),
 			serverId: serverId as string,
 		});
 		return c.json(tag, 200);

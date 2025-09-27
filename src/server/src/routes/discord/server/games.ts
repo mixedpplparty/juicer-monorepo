@@ -222,7 +222,7 @@ app.put(
 			const thumbnail = await updateGameThumbnail({
 				gameId: Number(gameId),
 				serverId: serverId as string,
-				thumbnail: body.file as unknown as Buffer,
+				thumbnail: body.file as Buffer,
 			});
 			return c.json(thumbnail, 200);
 		}

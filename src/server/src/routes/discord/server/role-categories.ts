@@ -47,7 +47,7 @@ app.delete("/:roleCategoryId", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const roleCategory = await deleteRoleCategory({
-			roleCategoryId: roleCategoryId as unknown as number,
+			roleCategoryId: Number(roleCategoryId),
 			serverId: serverId as string,
 		});
 		return c.json(roleCategory, 200);
@@ -73,7 +73,7 @@ app.post(
 		if (manageGuildPermission) {
 			const roleCategory = await updateRoleCategoryOfRole({
 				roleId: body.roleId as string,
-				roleCategoryId: roleCategoryId as unknown as number,
+				roleCategoryId: Number(roleCategoryId),
 				serverId: serverId as string,
 			});
 			return c.json(roleCategory, 200);

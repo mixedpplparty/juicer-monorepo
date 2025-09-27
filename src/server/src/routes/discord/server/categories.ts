@@ -40,7 +40,7 @@ app.delete("/:categoryId", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const category = await deleteCategory({
-			categoryId: categoryId as unknown as number,
+			categoryId: Number(categoryId),
 			serverId: serverId as string,
 		});
 		return c.json(category, 200);
