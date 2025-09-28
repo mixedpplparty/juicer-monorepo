@@ -20,7 +20,7 @@ export type FilteredGuild = {
 };
 export type MyInfo = {
     userData: APIUser;
-    guilds: Guild[];
+    guilds: FilteredGuild[];
 };
 export type ServerDataDb = {
     serverId: string;
@@ -112,8 +112,8 @@ export type ServerDataDiscordRole = {
 };
 export type ServerData = {
     admin: boolean;
-    server_data_db: ServerDataDb;
-    server_data_discord: FilteredServerDataDiscord;
+    serverDataDb: ServerDataDb;
+    serverDataDiscord: FilteredServerDataDiscord;
 };
 export type MyDataInServer = {
     id: string;

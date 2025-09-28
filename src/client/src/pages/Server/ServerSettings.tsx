@@ -158,7 +158,7 @@ export const ServerSettings = () => {
 							css={{ display: "flex", flexDirection: "column", width: "100%" }}
 						>
 							<h1 css={{ margin: 0 }}>서버 설정</h1>
-							<div>{_serverData.server_data_discord.name}</div>
+							<div>{_serverData.serverDataDiscord.name}</div>
 						</div>
 					</div>
 					<div
@@ -185,12 +185,12 @@ export const ServerSettings = () => {
 							>
 								<h2 css={{ margin: 0, flex: 1 }}>분류 없는 역할</h2>
 							</div>
-							{!!_serverData.server_data_discord.roles?.length || (
+							{!!_serverData.serverDataDiscord.roles?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 역할이 없습니다.
 								</div>
 							)}
-							{!!_serverData.server_data_discord.roles?.length && (
+							{!!_serverData.serverDataDiscord.roles?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -202,7 +202,7 @@ export const ServerSettings = () => {
 									{(
 										filterOutEveryoneRole(
 											_serverData,
-											_serverData.server_data_db.roles || [],
+											_serverData.serverDataDb.roles || [],
 										) as Role[]
 									)
 										.filter((role: Role) => role.roleCategoryId === null)
@@ -253,12 +253,12 @@ export const ServerSettings = () => {
 									역할 분류 추가
 								</Button>
 							</div>
-							{!!_serverData.server_data_db.roleCategories?.length || (
+							{!!_serverData.serverDataDb.roleCategories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 역할 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.server_data_db.roleCategories?.length && (
+							{!!_serverData.serverDataDb.roleCategories?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -267,7 +267,7 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{_serverData.server_data_db.roleCategories?.map(
+									{_serverData.serverDataDb.roleCategories?.map(
 										(roleCategory: RoleCategory) => (
 											<div
 												key={roleCategory.roleCategoryId}
@@ -342,12 +342,12 @@ export const ServerSettings = () => {
 									주제 분류 추가
 								</Button>
 							</div>
-							{!!_serverData.server_data_db.categories?.length || (
+							{!!_serverData.serverDataDb.categories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 주제 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.server_data_db.categories?.length && (
+							{!!_serverData.serverDataDb.categories?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -356,7 +356,7 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{_serverData.server_data_db.categories?.map(
+									{_serverData.serverDataDb.categories?.map(
 										(category: Category) => (
 											<Chip
 												key={category.categoryId}
@@ -424,12 +424,12 @@ export const ServerSettings = () => {
 									gap: "6px",
 								}}
 							>
-								{!!_serverData.server_data_db.tags?.length || (
+								{!!_serverData.serverDataDb.tags?.length || (
 									<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 										서버에 태그가 없습니다.
 									</div>
 								)}
-								{!!_serverData.server_data_db.tags?.length && (
+								{!!_serverData.serverDataDb.tags?.length && (
 									<div
 										css={{
 											display: "flex",
@@ -438,7 +438,7 @@ export const ServerSettings = () => {
 											flexWrap: "wrap",
 										}}
 									>
-										{_serverData.server_data_db.tags?.map((tag: Tag) => (
+										{_serverData.serverDataDb.tags?.map((tag: Tag) => (
 											<Chip
 												key={tag.tagId}
 												css={{

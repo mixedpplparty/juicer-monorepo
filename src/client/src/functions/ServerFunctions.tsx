@@ -12,7 +12,7 @@ export const _findRoleById = (
 	_serverData: ServerData,
 	roleId: string,
 ): ServerDataDiscordRole2 | undefined => {
-	return _serverData.server_data_discord.roles?.find(
+	return _serverData.serverDataDiscord.roles?.find(
 		(r: ServerDataDiscordRole2) => r.id === roleId,
 	);
 };
@@ -21,7 +21,7 @@ export const _findGameById = (
 	_serverData: ServerData,
 	gameId: string,
 ): Game | undefined => {
-	return _serverData.server_data_db.games?.find(
+	return _serverData.serverDataDb.games?.find(
 		(g: Game) => g.gameId === Number(gameId),
 	);
 };
@@ -30,7 +30,7 @@ export const _findCategoryById = (
 	_serverData: ServerData,
 	categoryId: number,
 ): Category | undefined => {
-	return _serverData.server_data_db.categories?.find(
+	return _serverData.serverDataDb.categories?.find(
 		(c: Category) => c.categoryId === Number(categoryId),
 	);
 };
@@ -39,7 +39,7 @@ export const _findTagById = (
 	_serverData: ServerData,
 	tagId: number,
 ): Tag | undefined => {
-	return _serverData.server_data_db.tags?.find(
+	return _serverData.serverDataDb.tags?.find(
 		(t: Tag) => t.tagId === Number(tagId),
 	);
 };

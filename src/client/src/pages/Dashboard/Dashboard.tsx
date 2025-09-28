@@ -1,6 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import type { Guild } from "juicer-shared";
+import type { FilteredGuild, Guild } from "juicer-shared";
 import { Suspense } from "react";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";
@@ -51,7 +51,7 @@ export const Dashboard = () => {
 							maxHeight: "100%",
 						}}
 					>
-						{_myInfo.guilds.map((guild: Guild) => (
+						{_myInfo.guilds.map((guild: FilteredGuild) => (
 							<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
 								<Card
 									css={{
@@ -70,7 +70,7 @@ export const Dashboard = () => {
 									<div css={{ display: "flex", flexDirection: "column" }}>
 										<h2 css={{ margin: 0 }}>{guild.name}</h2>
 										<p css={{ margin: 0 }}>
-											by {guild.owner_name}, {guild.member_count}명
+											by {guild.ownerName}, {guild.memberCount}명
 										</p>
 									</div>
 								</Card>

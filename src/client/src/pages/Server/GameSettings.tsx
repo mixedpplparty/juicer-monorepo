@@ -47,12 +47,12 @@ export const GameSettings = () => {
 	);
 	const _serverData = _serverDataQuery.data;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
-		_serverData.server_data_db.games
+		_serverData.serverDataDb.games
 			?.find((game: Game) => game.gameId === Number(gameId as string))
 			?.gamesTags?.map((tag: TagRelationToGame) => tag.tagId) || [],
 	);
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
-		_serverData.server_data_db.games
+		_serverData.serverDataDb.games
 			?.find((game: Game) => game.gameId === Number(gameId as string))
 			?.gamesRoles?.map((role: RoleRelationToGame) => role.roleId) || [],
 	);
@@ -228,7 +228,7 @@ export const GameSettings = () => {
 							}
 						>
 							<Option value="">카테고리 선택</Option>
-							{_serverData.server_data_db.categories?.map(
+							{_serverData.serverDataDb.categories?.map(
 								(category: Category) => (
 									<Option key={category.categoryId} value={category.categoryId}>
 										{category.name}
@@ -245,7 +245,7 @@ export const GameSettings = () => {
 								flexWrap: "wrap",
 							}}
 						>
-							{_serverData.server_data_db.tags?.map((tag: Tag) => (
+							{_serverData.serverDataDb.tags?.map((tag: Tag) => (
 								<CheckableChip
 									key={tag.tagId}
 									value={tag.tagId}
@@ -264,7 +264,7 @@ export const GameSettings = () => {
 								</CheckableChip>
 							))}
 						</div>
-						{_serverData.server_data_db.tags?.length === 0 && (
+						{_serverData.serverDataDb.tags?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 태그가 없습니다.
 							</div>
@@ -280,7 +280,7 @@ export const GameSettings = () => {
 						>
 							{filterOutEveryoneRole(
 								_serverData,
-								_serverData.server_data_db.roles || [],
+								_serverData.serverDataDb.roles || [],
 							).map((role: Role | RoleRelationToGame) => (
 								<CheckableChip
 									key={role.roleId}
@@ -307,7 +307,7 @@ export const GameSettings = () => {
 								</CheckableChip>
 							))}
 						</div>
-						{_serverData.server_data_db.roles?.length === 0 && (
+						{_serverData.serverDataDb.roles?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 역할이 없습니다.
 							</div>

@@ -189,24 +189,20 @@ export const Server = () => {
 							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
 						</Button>
 						<img
-							src={
-								_serverData.server_data_discord.icon || serverPlaceholderIcon
-							}
-							alt={_serverData.server_data_discord.name}
+							src={_serverData.serverDataDiscord.icon || serverPlaceholderIcon}
+							alt={_serverData.serverDataDiscord.name}
 							css={{ width: "48px", height: "48px", borderRadius: "50%" }}
 						/>
 						<div
 							css={{ display: "flex", flexDirection: "column", width: "100%" }}
 						>
-							<h1 css={{ margin: 0 }}>
-								{_serverData.server_data_discord.name}
-							</h1>
+							<h1 css={{ margin: 0 }}>{_serverData.serverDataDiscord.name}</h1>
 							<div>
-								by {_serverData.server_data_discord.ownerName},{" "}
-								{_serverData.server_data_discord.memberCount}명
+								by {_serverData.serverDataDiscord.ownerName},{" "}
+								{_serverData.serverDataDiscord.memberCount}명
 							</div>
 						</div>
-						{_serverData.server_data_db && (
+						{_serverData.serverDataDb && (
 							<div
 								css={{
 									display: "flex",
@@ -526,7 +522,7 @@ export const Server = () => {
 								)}
 							</div>
 						)}
-					{_serverData.server_data_db && _serverData.admin && (
+					{_serverData.serverDataDb && _serverData.admin && (
 						<Card
 							css={{
 								border: "1px solid rgba(255, 255, 255, 0.66)",
@@ -542,7 +538,7 @@ export const Server = () => {
 						</Card>
 					)}
 
-					{!_serverData.server_data_db && (
+					{!_serverData.serverDataDb && (
 						<div
 							css={{
 								display: "flex",
@@ -585,7 +581,7 @@ export const Server = () => {
 							<label htmlFor="game-category">카테고리 (선택)</label>
 							<Select id="game-category" name="game-category" defaultValue="">
 								<Option value="">카테고리 선택</Option>
-								{_serverData.server_data_db.categories?.map(
+								{_serverData.serverDataDb.categories?.map(
 									(category: Category) => (
 										<Option
 											key={category.categoryId}
