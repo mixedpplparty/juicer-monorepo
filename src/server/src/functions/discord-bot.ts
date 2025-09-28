@@ -161,19 +161,20 @@ export const syncRolesWithDbAndDiscord = async (
 ): Promise<SyncRolesResponse> => {
 	const guild = await discordClient.guilds.fetch(serverId);
 	const roles = await guild.roles.fetch();
+	console.log("Roles fetched from Discord:", roles);
 	const dbRoles = await getAllRolesInServerInDb({ serverId });
 	const diff = { roles_created: [], roles_deleted: [] } as SyncRolesResponse;
 	//prioritize discord side
 	roles.forEach(async (role) => {
-		if (dbRoles.find((dbRole) => dbRole.roleId !== role.id)) {
+		if (!dbRoles.find((dbRole) => dbRole.roleId === role.id)) {
 			await createRoleInDb({ serverId, roleId: role.id });
-			diff.roles_created.push(role.id);
+			diff.roles_created.push(role.id as string);
 		}
 	});
 	dbRoles.forEach(async (dbRole) => {
-		if (roles.find((role) => role.id !== dbRole.roleId)) {
+		if (!roles.find((role) => role.id === dbRole.roleId)) {
 			await deleteRoleFromDb({ serverId, roleId: dbRole.roleId });
-			diff.roles_deleted.push(dbRole.roleId);
+			diff.roles_deleted.push(dbRole.roleId as string);
 		}
 	});
 	return diff;

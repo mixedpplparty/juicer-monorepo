@@ -279,6 +279,11 @@ export const Server = () => {
 										}}
 									>
 										{_myDataInServer.roles.map((role: string) => {
+											if (
+												_findRoleById(_serverData, role)?.name === "@everyone"
+											) {
+												return null;
+											}
 											return (
 												<RoleChip
 													key={role}

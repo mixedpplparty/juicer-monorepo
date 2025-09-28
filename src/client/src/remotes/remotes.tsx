@@ -306,7 +306,7 @@ export const _createRoleCategory = async (
 	roleCategoryName: string,
 ): Promise<number> => {
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/role-categories/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/role-categories/create`,
 		{ name: roleCategoryName },
 	);
 	return _res.data;
@@ -317,7 +317,7 @@ export const _deleteRoleCategory = async (
 	roleCategoryId: number,
 ): Promise<boolean> => {
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/role-categories/${roleCategoryId}`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/role-categories/${roleCategoryId}`,
 	);
 	return _res.data;
 };

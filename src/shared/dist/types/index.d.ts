@@ -1,7 +1,7 @@
 import type { GuildMember as DiscordJSGuildMember } from "discord.js";
 import type { APIUser } from "discord-api-types/v10";
 import * as z from "zod";
-export declare const Image: z.ZodFile;
+export declare const ThumbnailImage: z.ZodNullable<z.ZodOptional<z.ZodFile>>;
 export type Guild = {
     id: string;
     name: string;
@@ -172,7 +172,7 @@ export declare const UpdateGameRequestBody: z.ZodObject<{
     name: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     categoryId: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
-    thumbnail: z.ZodFile;
+    thumbnail: z.ZodNullable<z.ZodOptional<z.ZodFile>>;
     channels: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
     tagIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodNumber>>>;
     roleIds: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString>>>;
@@ -231,7 +231,7 @@ export declare const ModifyTagsOfGameRequestBody: z.ZodObject<{
     tagIds: z.ZodArray<z.ZodNumber>;
 }, z.core.$strip>;
 export declare const UpdateGameThumbnailRequestBody: z.ZodObject<{
-    file: z.ZodFile;
+    file: z.ZodNullable<z.ZodOptional<z.ZodFile>>;
 }, z.core.$strip>;
 export declare const NameRequiredRequestBody: z.ZodObject<{
     name: z.ZodString;

@@ -6,10 +6,10 @@ import {
 	AddCategoryToGameRequestBody,
 	CreateGameRequestBody,
 	ModifyTagsOfGameRequestBody,
+	ThumbnailImage,
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
 } from "juicer-shared/dist/types/index.js";
-import type * as z from "zod";
 import {
 	createGame,
 	deleteGame,
@@ -50,6 +50,7 @@ app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
 	const body = await c.req.valid("json");
+	const filteredThumbnail = ThumbnailImage.parse(body.thumbnail); //somehow zValidator doesn't work on thumbnail
 	const accessToken = getCookie(c, "discord_access_token");
 	const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 		serverId as string,
@@ -64,8 +65,8 @@ app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 			description: body.description as string | null | undefined, // optional(not updated if null or undefined)
 			categoryId: body.categoryId as number | null | undefined, // optional(not updated if null or undefined)
 			thumbnail:
-				body.thumbnail !== null && body.thumbnail !== undefined
-					? Buffer.from(await body.thumbnail.arrayBuffer())
+				filteredThumbnail !== null && filteredThumbnail !== undefined
+					? Buffer.from(await filteredThumbnail.arrayBuffer())
 					: null, //optional(not updated if null or undefined)
 			channels: body.channels as string[] | null | undefined, // optional(not updated if null or undefined)
 			tagIds: body.tagIds as number[] | null | undefined, // optional(not updated if null or undefined)
@@ -221,11 +222,12 @@ app.put(
 			accessToken as string,
 			true,
 		);
-		if (manageGuildPermission) {
+		const filteredThumbnail = ThumbnailImage.parse(body.file); //somehow zValidator doesn't work on thumbnail
+		if (manageGuildPermission && filteredThumbnail) {
 			const thumbnail = await updateGameThumbnail({
 				gameId: Number(gameId),
 				serverId: serverId as string,
-				thumbnail: Buffer.from(await body.file.arrayBuffer()),
+				thumbnail: Buffer.from(await filteredThumbnail.arrayBuffer()),
 			});
 			return c.json(thumbnail, 200);
 		}
