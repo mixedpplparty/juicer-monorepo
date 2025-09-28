@@ -3,13 +3,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type {
-	Category,
-	Role,
-	RoleCategory,
-	ServerDataDiscordRole,
-	Tag,
-} from "juicer-shared";
+import type { Category, Role, RoleCategory, Tag } from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -30,7 +24,6 @@ import {
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
-import { _8pxCircle } from "../../ui/components/Circle";
 import { DragDropZone } from "../../ui/components/DragDropZone";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
@@ -206,21 +199,24 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{filterOutEveryoneRole(
-										_serverData,
-										_serverData.server_data_db.roles || [],
+									{(
+										filterOutEveryoneRole(
+											_serverData,
+											_serverData.server_data_db.roles || [],
+										) as Role[]
 									)
-										.filter((role: Role) => role.role_category_id === null)
+										.filter((role: Role) => role.roleCategoryId === null)
 										.map((role: Role) => {
 											return (
 												<RoleChip
-													key={role.id}
-													id={role.id}
-													name={_findRoleById(_serverData, role.id)?.name || ""}
+													key={role.roleId}
+													id={role.roleId}
+													name={
+														_findRoleById(_serverData, role.roleId)?.name || ""
+													}
 													color={
-														_findRoleById(_serverData, role.id)?.color || [
-															255, 255, 255,
-														]
+														_findRoleById(_serverData, role.roleId)?.color ||
+														"#ffffff"
 													}
 													draggable={true}
 												/>
@@ -257,12 +253,12 @@ export const ServerSettings = () => {
 									역할 분류 추가
 								</Button>
 							</div>
-							{!!_serverData.server_data_db.role_categories?.length || (
+							{!!_serverData.server_data_db.roleCategories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 역할 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.server_data_db.role_categories?.length && (
+							{!!_serverData.server_data_db.roleCategories?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -271,10 +267,10 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{_serverData.server_data_db.role_categories?.map(
+									{_serverData.server_data_db.roleCategories?.map(
 										(roleCategory: RoleCategory) => (
 											<div
-												key={roleCategory.id}
+												key={roleCategory.roleCategoryId}
 												css={{
 													display: "flex",
 													flexDirection: "column",
@@ -295,7 +291,9 @@ export const ServerSettings = () => {
 															alignItems: "center",
 															justifyContent: "center",
 														}}
-														onClick={deleteRoleCategoryAction(roleCategory.id)}
+														onClick={deleteRoleCategoryAction(
+															roleCategory.roleCategoryId,
+														)}
 													>
 														<DeleteIcon
 															css={{
@@ -307,7 +305,7 @@ export const ServerSettings = () => {
 													</InlineButton>
 													<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
 												</div>
-												<DragDropZone id={roleCategory.id}>
+												<DragDropZone id={roleCategory.roleCategoryId}>
 													Drag here
 												</DragDropZone>
 											</div>
@@ -361,7 +359,7 @@ export const ServerSettings = () => {
 									{_serverData.server_data_db.categories?.map(
 										(category: Category) => (
 											<Chip
-												key={category.id}
+												key={category.categoryId}
 												css={{
 													display: "flex",
 													flexDirection: "row",
@@ -374,7 +372,7 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
-													onClick={deleteCategoryAction(category.id)}
+													onClick={deleteCategoryAction(category.categoryId)}
 												>
 													<DeleteIcon
 														css={{
@@ -442,7 +440,7 @@ export const ServerSettings = () => {
 									>
 										{_serverData.server_data_db.tags?.map((tag: Tag) => (
 											<Chip
-												key={tag.id}
+												key={tag.tagId}
 												css={{
 													display: "flex",
 													flexDirection: "row",
@@ -455,7 +453,7 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
-													onClick={deleteTagAction(tag.id)}
+													onClick={deleteTagAction(tag.tagId)}
 												>
 													<DeleteIcon
 														css={{

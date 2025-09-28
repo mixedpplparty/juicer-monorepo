@@ -4,7 +4,13 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, Game, Role, Tag } from "juicer-shared";
+import type {
+	Category,
+	Game,
+	Role,
+	RoleRelationToGame,
+	TagRelationToGame,
+} from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
@@ -70,8 +76,9 @@ export const Server = () => {
 	const _gameThumbnailQueries = useQueries({
 		queries: _fetchThumbnailsInGame.queries(
 			serverId as string,
-			_searchGamesInServerQuery.data?.map((game: Game) => game.id.toString()) ||
-				[],
+			_searchGamesInServerQuery.data?.map((game: Game) =>
+				game.gameId.toString(),
+			) || [],
 		),
 	});
 
@@ -193,8 +200,8 @@ export const Server = () => {
 								{_serverData.server_data_discord.name}
 							</h1>
 							<div>
-								by {_serverData.server_data_discord.owner_name},{" "}
-								{_serverData.server_data_discord.member_count}명
+								by {_serverData.server_data_discord.ownerName},{" "}
+								{_serverData.server_data_discord.memberCount}명
 							</div>
 						</div>
 						{_serverData.server_data_db && (
@@ -277,15 +284,16 @@ export const Server = () => {
 										{filterOutEveryoneRole(
 											_serverData,
 											_myDataInServer.roles || [],
-										).map((role: Role) => {
+										).map((role: Role | RoleRelationToGame) => {
 											return (
 												<RoleChip
-													key={role.id}
-													name={_findRoleById(_serverData, role.id)?.name || ""}
+													key={role.roleId}
+													name={
+														_findRoleById(_serverData, role.roleId)?.name || ""
+													}
 													color={
-														_findRoleById(_serverData, role.id)?.color || [
-															255, 255, 255,
-														]
+														_findRoleById(_serverData, role.roleId)?.color ||
+														"#ffffff"
 													}
 												/>
 											);
@@ -348,7 +356,7 @@ export const Server = () => {
 													display: "flex",
 													flexDirection: "row",
 												}}
-												key={game.id}
+												key={game.gameId}
 											>
 												{_gameThumbnailQueries[idx].isLoading ? (
 													<Skeleton css={{ width: "64px", height: "64px" }} />
@@ -402,8 +410,8 @@ export const Server = () => {
 																	alignItems: "center",
 																}}
 															>
-																{game.category
-																	? game.category.name
+																{game.categoryId
+																	? "카테고리 이름 있음(TODO ADD)"
 																	: "카테고리 없음"}
 															</div>
 														</div>
@@ -415,23 +423,25 @@ export const Server = () => {
 																flexWrap: "wrap",
 															}}
 														>
-															{game.tags &&
-																game.tags.length > 0 &&
-																game.tags?.map((tag: Tag) => (
-																	<div
-																		key={tag.id}
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																			border: "none",
-																			background: "none",
-																		}}
-																	>
-																		#{tag.name}
-																	</div>
-																))}
+															{game.gamesTags &&
+																game.gamesTags.length > 0 &&
+																game.gamesTags?.map(
+																	(tag: TagRelationToGame) => (
+																		<div
+																			key={tag.tagId}
+																			css={{
+																				display: "flex",
+																				flexDirection: "row",
+																				gap: "4px",
+																				alignItems: "center",
+																				border: "none",
+																				background: "none",
+																			}}
+																		>
+																			#{tag.tagId}
+																		</div>
+																	),
+																)}
 														</div>
 														<div
 															css={{
@@ -441,39 +451,47 @@ export const Server = () => {
 																flexWrap: "wrap",
 															}}
 														>
-															{game.roles_to_add &&
-																game.roles_to_add.length > 0 &&
+															{game.gamesRoles &&
+																game.gamesRoles.length > 0 &&
 																filterOutEveryoneRole(
 																	_serverData,
-																	game.roles_to_add,
-																)?.map((role: Role) => (
+																	game.gamesRoles,
+																)?.map((role: Role | RoleRelationToGame) => (
 																	<Chip
-																		key={role.id}
+																		key={role.roleId}
 																		css={{
 																			display: "flex",
 																			flexDirection: "row",
 																			gap: "4px",
 																			alignItems: "center",
 																			cursor: "pointer",
-																			...(_iHaveRole(_serverData, role.id) && {
+																			...(_iHaveRole(
+																				_serverData,
+																				role.roleId,
+																			) && {
 																				border: "1px solid black",
 																				background: "rgba(255, 255, 255, 1)",
 																				color: "rgba(0, 0, 0, 1)",
 																			}),
 																		}}
-																		onClick={() => toggleRoleAssign(role.id)}
+																		onClick={() =>
+																			toggleRoleAssign(role.roleId)
+																		}
 																	>
 																		<_8pxCircle
 																			css={{
 																				backgroundColor: `rgb(${
 																					_findRoleById(
 																						_serverData,
-																						role.id,
-																					)?.color.join(",") || "255, 255, 255"
+																						role.roleId,
+																					)?.color || "#ffffff"
 																				})`,
 																			}}
 																		/>
-																		{_findRoleById(_serverData, role.id)?.name}
+																		{
+																			_findRoleById(_serverData, role.roleId)
+																				?.name
+																		}
 																	</Chip>
 																))}
 														</div>
@@ -481,7 +499,7 @@ export const Server = () => {
 													{_serverData.admin && (
 														<div css={{ alignSelf: "stretch" }}>
 															<LinkNoStyle
-																to={`/server/game?gameId=${game.id}&serverId=${serverId}`}
+																to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
 																css={{ cursor: "pointer" }}
 															>
 																<InlineButton
@@ -562,7 +580,10 @@ export const Server = () => {
 								<Option value="">카테고리 선택</Option>
 								{_serverData.server_data_db.categories?.map(
 									(category: Category) => (
-										<Option key={category.id} value={category.id}>
+										<Option
+											key={category.categoryId}
+											value={category.categoryId}
+										>
 											{category.name}
 										</Option>
 									),

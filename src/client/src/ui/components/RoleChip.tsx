@@ -10,7 +10,7 @@ export const RoleChip = ({
 	id,
 }: {
 	name: string;
-	color: number[];
+	color: `#${string}`;
 	draggable?: boolean;
 	onDragStart?: () => void;
 	onDragEnd?: () => void;
@@ -31,7 +31,7 @@ export const RoleChip = ({
 		>
 			<_8pxCircle
 				css={{
-					backgroundColor: `rgb(${color.join(",") || "255, 255, 255"})`,
+					backgroundColor: color,
 				}}
 			/>
 			{name}

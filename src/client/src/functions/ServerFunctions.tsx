@@ -1,5 +1,6 @@
 import type {
 	Game,
+	Role,
 	RoleRelationToGame,
 	ServerData,
 	ServerDataDiscordRole2,
@@ -32,7 +33,7 @@ export const _iHaveAllRolesInTheGame = (
 	const filteredRoles = filterOutEveryoneRole(_serverData, game.gamesRoles);
 	return (
 		filteredRoles?.every(
-			(role: RoleRelationToGame) =>
+			(role: Role | RoleRelationToGame) =>
 				_findRoleById(_serverData, role.roleId)?.meInRole,
 		) || false
 	);
@@ -41,11 +42,11 @@ export const _iHaveAllRolesInTheGame = (
 // filter out @everyone role
 export const filterOutEveryoneRole = (
 	_serverData: ServerData,
-	roles: RoleRelationToGame[],
-): RoleRelationToGame[] => {
+	roles: Role[] | RoleRelationToGame[],
+): (Role | RoleRelationToGame)[] => {
 	return (
 		roles.filter(
-			(role: RoleRelationToGame) =>
+			(role: Role | RoleRelationToGame) =>
 				_findRoleById(_serverData, role.roleId)?.name !== "@everyone",
 		) || []
 	);

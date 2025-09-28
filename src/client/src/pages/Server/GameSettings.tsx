@@ -1,8 +1,15 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, Game, Role, Tag } from "juicer-shared";
+import type {
+	Category,
+	Game,
+	Role,
+	RoleRelationToGame,
+	Tag,
+	TagRelationToGame,
+} from "juicer-shared";
 import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -16,13 +23,13 @@ import {
 	_deleteGame,
 	_deleteThumbnailFromGame,
 	_fetchServerData,
-	_fetchThumbnailsInGame,
 	_updateGameWithTagsAndRoles,
 	_uploadThumbnailToGame,
 } from "../../remotes/remotes";
+import { AnchorNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
-import { CheckableChip, Chip } from "../../ui/components/Chip";
+import { CheckableChip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
@@ -41,13 +48,13 @@ export const GameSettings = () => {
 	const _serverData = _serverDataQuery.data;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
 		_serverData.server_data_db.games
-			?.find((game: Game) => game.id === parseInt(gameId as string))
-			?.tags?.map((tag: Tag) => tag.id) || [],
+			?.find((game: Game) => game.gameId === parseInt(gameId as string))
+			?.gamesTags?.map((tag: TagRelationToGame) => tag.tagId) || [],
 	);
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
 		_serverData.server_data_db.games
-			?.find((game: Game) => game.id === parseInt(gameId as string))
-			?.roles_to_add?.map((role: Role) => role.id) || [],
+			?.find((game: Game) => game.gameId === parseInt(gameId as string))
+			?.gamesRoles?.map((role: RoleRelationToGame) => role.roleId) || [],
 	);
 	const navigate = useNavigate();
 
@@ -191,12 +198,12 @@ export const GameSettings = () => {
 							<label htmlFor="game-thumbnail" css={{ flex: 1 }}>
 								썸네일(미선택 시 현행 유지)
 							</label>
-							<span
+							<AnchorNoStyle
 								css={{ cursor: "pointer", color: "#ed5555" }}
 								onClick={onDeleteThumbnailAction}
 							>
 								썸네일 삭제
-							</span>
+							</AnchorNoStyle>
 						</div>
 						<Input
 							id="game-thumbnail"
@@ -217,13 +224,13 @@ export const GameSettings = () => {
 							id="game-category"
 							name="game-category"
 							defaultValue={
-								_findGameById(_serverData, gameId as string)?.category?.id || ""
+								_findGameById(_serverData, gameId as string)?.categoryId || ""
 							}
 						>
 							<Option value="">카테고리 선택</Option>
 							{_serverData.server_data_db.categories?.map(
 								(category: Category) => (
-									<Option key={category.id} value={category.id}>
+									<Option key={category.categoryId} value={category.categoryId}>
 										{category.name}
 									</Option>
 								),
@@ -240,15 +247,15 @@ export const GameSettings = () => {
 						>
 							{_serverData.server_data_db.tags?.map((tag: Tag) => (
 								<CheckableChip
-									key={tag.id}
-									value={tag.id}
-									checked={selectedTags.includes(tag.id)}
+									key={tag.tagId}
+									value={tag.tagId}
+									checked={selectedTags.includes(tag.tagId)}
 									onChange={(checked) => {
 										if (checked) {
-											setSelectedTags([...selectedTags, tag.id]);
+											setSelectedTags([...selectedTags, tag.tagId]);
 										} else {
 											setSelectedTags(
-												selectedTags.filter((id) => id !== tag.id),
+												selectedTags.filter((id) => id !== tag.tagId),
 											);
 										}
 									}}
@@ -274,27 +281,29 @@ export const GameSettings = () => {
 							{filterOutEveryoneRole(
 								_serverData,
 								_serverData.server_data_db.roles || [],
-							).map((role: Role) => (
+							).map((role: Role | RoleRelationToGame) => (
 								<CheckableChip
-									key={role.id}
-									value={role.id}
-									checked={selectedRoles.includes(role.id)}
+									key={role.roleId}
+									value={role.roleId}
+									checked={selectedRoles.includes(role.roleId)}
 									onChange={(checked) => {
 										if (checked) {
-											setSelectedRoles([...selectedRoles, role.id]);
+											setSelectedRoles([...selectedRoles, role.roleId]);
 										} else {
 											setSelectedRoles(
-												selectedRoles.filter((id) => id !== role.id),
+												selectedRoles.filter((id) => id !== role.roleId),
 											);
 										}
 									}}
 								>
 									<_8pxCircle
 										css={{
-											backgroundColor: `rgb(${_findRoleById(_serverData, role.id)?.color.join(",") || "255, 255, 255"})`,
+											backgroundColor:
+												_findRoleById(_serverData, role.roleId)?.color ||
+												"#ffffff",
 										}}
 									/>
-									{_findRoleById(_serverData, role.id)?.name}
+									{_findRoleById(_serverData, role.roleId)?.name}
 								</CheckableChip>
 							))}
 						</div>
