@@ -1,10 +1,35 @@
 import * as z from "zod";
+export const Image = z.file();
+Image.min(100);
+Image.max(2000000); //2MB
+Image.mime([
+    "image/png",
+    "image/jpeg",
+    "image/apng",
+    "image/avif",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+    "image/svg+xml",
+    "image/tiff",
+]);
+Image.optional();
+Image.nullable();
 export const CreateGameRequestBody = z.object({
     name: z.string(),
     description: z.string().nullable().optional(),
     categoryId: z.number().nullable().optional(),
 });
 export const UpdateGameRequestBody = z.object({
+    name: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    categoryId: z.number().nullable().optional(),
+    thumbnail: Image,
+    channels: z.array(z.string()).nullable().optional(),
+    tagIds: z.array(z.number()).nullable().optional(),
+    roleIds: z.array(z.string()).nullable().optional(),
+});
+export const UpdateGameRequestBodyWithImageAsBuffer = z.object({
     name: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     categoryId: z.number().nullable().optional(),
@@ -47,7 +72,7 @@ export const ModifyTagsOfGameRequestBody = z.object({
     tagIds: z.array(z.number()),
 });
 export const UpdateGameThumbnailRequestBody = z.object({
-    file: z.instanceof(Buffer),
+    file: Image,
 });
 export const NameRequiredRequestBody = z.object({
     name: z.string(),

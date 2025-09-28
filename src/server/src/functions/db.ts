@@ -22,7 +22,7 @@ import type {
 	GetAllTagsInServerRequestBody,
 	ServerDataDb,
 	Tag,
-	UpdateGameRequestBody,
+	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
 } from "../../../shared/dist/index.js";
 import { db } from "../db/index.js";
@@ -146,9 +146,10 @@ export const updateGame = async ({
 	channels,
 	tagIds,
 	roleIds,
-}: z.infer<typeof UpdateGameRequestBody> & {
+}: z.infer<typeof UpdateGameRequestBodyWithImageAsBuffer> & {
 	gameId: number;
 	serverId: string;
+	thumbnail?: Buffer | null | undefined;
 }): Promise<UpdateGameResponse> => {
 	const res: UpdateGameResponse = {
 		updatedGame: null,

@@ -9,6 +9,7 @@ import {
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
 } from "juicer-shared/dist/types/index.js";
+import type * as z from "zod";
 import {
 	createGame,
 	deleteGame,
@@ -62,7 +63,10 @@ app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 			name: body.name as string | null | undefined, // optional(not updated if null or undefined)
 			description: body.description as string | null | undefined, // optional(not updated if null or undefined)
 			categoryId: body.categoryId as number | null | undefined, // optional(not updated if null or undefined)
-			thumbnail: body.thumbnail as Buffer | null | undefined, //optional(not updated if null or undefined)
+			thumbnail:
+				body.thumbnail !== null && body.thumbnail !== undefined
+					? Buffer.from(await body.thumbnail.arrayBuffer())
+					: null, //optional(not updated if null or undefined)
 			channels: body.channels as string[] | null | undefined, // optional(not updated if null or undefined)
 			tagIds: body.tagIds as number[] | null | undefined, // optional(not updated if null or undefined)
 			roleIds: body.roleIds as string[] | null | undefined, // optional(not updated if null or undefined)
@@ -206,11 +210,11 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 
 app.put(
 	"/:gameId/thumbnail/update",
-	zValidator("json", UpdateGameThumbnailRequestBody),
+	zValidator("form", UpdateGameThumbnailRequestBody),
 	async (c) => {
 		const serverId = c.req.param("serverId");
 		const gameId = c.req.param("gameId");
-		const body = await c.req.valid("json");
+		const body = await c.req.valid("form");
 		const accessToken = getCookie(c, "discord_access_token");
 		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
 			serverId as string,
@@ -221,7 +225,7 @@ app.put(
 			const thumbnail = await updateGameThumbnail({
 				gameId: Number(gameId),
 				serverId: serverId as string,
-				thumbnail: body.file as Buffer,
+				thumbnail: Buffer.from(await body.file.arrayBuffer()),
 			});
 			return c.json(thumbnail, 200);
 		}
@@ -241,7 +245,7 @@ app.get("/:gameId/thumbnail", async (c) => {
 		serverId: serverId as string,
 	});
 	if (thumbnail) {
-		return c.json(thumbnail, 200);
+		return c.body(Buffer.from(thumbnail), 200);
 	}
 	throw new HTTPException(404, { message: "Thumbnail not found." });
 });

@@ -2,6 +2,24 @@ import type { GuildMember as DiscordJSGuildMember } from "discord.js";
 import type { APIUser, Snowflake } from "discord-api-types/v10";
 import * as z from "zod";
 
+export const Image = z.file();
+
+Image.min(100);
+Image.max(1048576); //1MB-ish
+Image.mime([
+	"image/png",
+	"image/jpeg",
+	"image/apng",
+	"image/avif",
+	"image/gif",
+	"image/webp",
+	"image/bmp",
+	"image/svg+xml",
+	"image/tiff",
+]);
+Image.optional();
+Image.nullable();
+
 export type Guild = {
 	id: string;
 	name: string;
@@ -212,6 +230,16 @@ export const UpdateGameRequestBody = z.object({
 	name: z.string().nullable().optional(),
 	description: z.string().nullable().optional(),
 	categoryId: z.number().nullable().optional(),
+	thumbnail: Image,
+	channels: z.array(z.string()).nullable().optional(),
+	tagIds: z.array(z.number()).nullable().optional(),
+	roleIds: z.array(z.string()).nullable().optional(),
+});
+
+export const UpdateGameRequestBodyWithImageAsBuffer = z.object({
+	name: z.string().nullable().optional(),
+	description: z.string().nullable().optional(),
+	categoryId: z.number().nullable().optional(),
 	thumbnail: z.instanceof(Buffer).nullable().optional(),
 	channels: z.array(z.string()).nullable().optional(),
 	tagIds: z.array(z.number()).nullable().optional(),
@@ -273,7 +301,7 @@ export const ModifyTagsOfGameRequestBody = z.object({
 });
 
 export const UpdateGameThumbnailRequestBody = z.object({
-	file: z.instanceof(Buffer),
+	file: Image,
 });
 
 export const NameRequiredRequestBody = z.object({
