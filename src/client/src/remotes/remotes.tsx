@@ -11,7 +11,7 @@ import type {
 
 axios.defaults.withCredentials = true;
 
-export const _fetchMyTokens = async (): Promise<APIUser> => {
+export const _fetchMyTokens = async (): Promise<{ userData: APIUser }> => {
 	const _res = await axios.get(_fetchMyTokens.apiPath(), {
 		withCredentials: true,
 	});
@@ -58,7 +58,7 @@ export const _fetchServerData = async (
 };
 
 _fetchServerData.apiPath = (serverId: string): string => {
-	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}`;
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}`;
 };
 
 _fetchServerData.query = (serverId: string) => {
@@ -80,7 +80,7 @@ export const _fetchSearchGamesInServer = async (
 };
 
 _fetchSearchGamesInServer.apiPath = (serverId: string) => {
-	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/search/all`;
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/search/all`;
 };
 
 _fetchSearchGamesInServer.query = (serverId: string, query: string | null) => {
@@ -106,7 +106,7 @@ export const _fetchThumbnailsInGame = async (
 };
 
 _fetchThumbnailsInGame.apiPath = (serverId: string, gameId: string) => {
-	return `${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail`;
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/${gameId}/thumbnail`;
 };
 
 _fetchThumbnailsInGame.queries = (serverId: string, gameIds: string[]) => {
@@ -128,7 +128,7 @@ export const _uploadThumbnailToGame = async (
 	formData.append("file", thumbnail, thumbnail.name);
 
 	const _res = await axios.put(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail/upload`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/${gameId}/thumbnail/update`,
 		formData,
 		{
 			withCredentials: true,
@@ -143,7 +143,7 @@ export const _deleteThumbnailFromGame = async (
 	gameId: string,
 ): Promise<boolean> => {
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/thumbnail`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/${gameId}/thumbnail`,
 	);
 	return _res.data;
 };
@@ -152,7 +152,7 @@ export const _fetchMyDataInServer = async (
 	serverId: string | null,
 ): Promise<MyDataInServer> => {
 	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/me`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/me`,
 		{ withCredentials: true },
 	);
 	return _res.data;
@@ -162,7 +162,7 @@ export const _createServer = async (
 	serverId: string | null,
 ): Promise<MessageOnSuccess> => {
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/create`,
 		{ withCredentials: true },
 	);
 	return _res.data;
@@ -184,7 +184,7 @@ export const _createGame = async (
 ): Promise<number> => {
 	//game ID(number) returned on success
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/create`,
 		{ name: gameName, description: gameDescription, category_id: gameCategory },
 		{ withCredentials: true },
 	);
@@ -202,7 +202,7 @@ export const _updateGameWithTagsAndRoles = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.put(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/${gameId}`,
 		{
 			name: gameName,
 			description: gameDescription,
@@ -220,7 +220,7 @@ export const _createCategory = async (
 ): Promise<number> => {
 	//category ID(number) returned on success
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/categories/create`,
 		{ name: categoryName },
 	);
 	return _res.data;
@@ -232,7 +232,7 @@ export const _createTag = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/tags/create`,
 		{ name: tagName },
 	);
 	return _res.data;
@@ -243,7 +243,7 @@ export const _deleteCategory = async (
 	categoryId: number,
 ): Promise<MessageOnSuccess> => {
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/categories/${categoryId}`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/categories/${categoryId}`,
 	);
 	return _res.data;
 };
@@ -254,7 +254,7 @@ export const _deleteTag = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/tags/${tagId}`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/tags/${tagId}`,
 	);
 	return _res.data;
 };
@@ -265,29 +265,7 @@ export const _deleteGame = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}`,
-	);
-	return _res.data;
-};
-
-export const _assignRolesToUser = async (
-	serverId: string,
-	gameId: number,
-): Promise<boolean> => {
-	//true on success
-	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/assign`,
-	);
-	return _res.data;
-};
-
-export const _unassignRolesFromUser = async (
-	serverId: string,
-	gameId: number,
-): Promise<boolean> => {
-	//true on success
-	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/games/${gameId}/roles/unassign`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/${gameId}`,
 	);
 	return _res.data;
 };
@@ -298,7 +276,7 @@ export const _assignRoleByIdToUser = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/${roleId}/assign`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/assign`,
 	);
 	return _res.data;
 };
@@ -309,7 +287,7 @@ export const _unassignRoleByIdFromUser = async (
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/${roleId}/unassign`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/unassign`,
 	);
 	return _res.data;
 };
@@ -318,7 +296,7 @@ export const _syncServerData = async (
 	serverId: string,
 ): Promise<SyncRolesResponse> => {
 	const _res = await axios.get(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/sync-roles`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/sync-roles`,
 	);
 	return _res.data;
 };
@@ -328,7 +306,7 @@ export const _createRoleCategory = async (
 	roleCategoryName: string,
 ): Promise<number> => {
 	const _res = await axios.post(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/role-categories/create`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/role-categories/create`,
 		{ name: roleCategoryName },
 	);
 	return _res.data;
@@ -339,7 +317,7 @@ export const _deleteRoleCategory = async (
 	roleCategoryId: number,
 ): Promise<boolean> => {
 	const _res = await axios.delete(
-		`${import.meta.env.VITE_BACKEND_URI}/discord/server/${serverId}/roles/role-categories/${roleCategoryId}`,
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/role-categories/${roleCategoryId}`,
 	);
 	return _res.data;
 };

@@ -6,6 +6,7 @@ import "dotenv/config";
 import { swaggerUI } from "@hono/swagger-ui";
 import { every } from "hono/combine";
 import { getCookie } from "hono/cookie";
+import { logger } from "hono/logger";
 import { rateLimiter } from "hono-rate-limiter";
 import authRoutes from "./routes/discord/auth.js";
 import serverRoutes from "./routes/discord/server/index.js";
@@ -14,6 +15,7 @@ import swagger from "./routes/swagger.js";
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 
+console.log("Allowed Origins:", ALLOWED_ORIGINS);
 const app = new Hono();
 
 // CORS Middleware. Allows requests from ALLOWED_ORIGINS in source root's .env
@@ -47,14 +49,17 @@ const rateLimiterMiddleware = rateLimiter({
 		(c.req.header("x-real-ip") as string), // get discord_access_token from cookies.
 });
 
+app.use(
+	"*",
+	every(corsMiddleware, csrfMiddleware, rateLimiterMiddleware, logger()),
+);
+
 app.route("/discord/auth", authRoutes);
 app.route("/discord/user", userRoutes);
 app.route("/discord/servers", serverRoutes);
 app.route("/swagger", swagger);
 
 app.get("/docs", swaggerUI({ url: "/swagger" }));
-
-app.use("*", every(corsMiddleware, csrfMiddleware, rateLimiterMiddleware));
 
 serve(
 	{
