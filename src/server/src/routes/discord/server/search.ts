@@ -5,6 +5,7 @@ import {
 	findGamesByCategoryName,
 	findGamesByName,
 	findGamesByTags,
+	getAllGamesInServer,
 } from "../../../functions/db.js";
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
@@ -14,12 +15,14 @@ app.get("/all", async (c) => {
 	const serverId = c.req.param("serverId");
 	const query = c.req.query("query");
 	const accessToken = getCookie(c, "discord_access_token");
-	if (!query) {
-		throw new HTTPException(400, {
-			message: "field 'query' is required in params.",
-		});
-	}
 	await authenticateAndAuthorizeUser(serverId as string, accessToken as string);
+	if (!query) {
+		// all games
+		const games = await getAllGamesInServer({
+			serverId: serverId as string,
+		});
+		return c.json(games, 200);
+	}
 	const gamesByName = await findGamesByName({
 		serverId: serverId as string,
 		name: query as string,

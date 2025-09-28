@@ -528,6 +528,20 @@ export const findGamesByName = async ({
 	});
 };
 
+export const getAllGamesInServer = async ({
+	serverId,
+}: {
+	serverId: string;
+}): Promise<(typeof games.$inferSelect)[]> => {
+	return await db.query.games.findMany({
+		where: eq(games.serverId, serverId),
+		with: {
+			gamesTags: true,
+			gamesRoles: true,
+		},
+	});
+};
+
 export const updateGameThumbnail = async ({
 	gameId,
 	serverId,
