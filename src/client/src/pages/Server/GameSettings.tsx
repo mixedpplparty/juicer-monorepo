@@ -48,12 +48,12 @@ export const GameSettings = () => {
 	const _serverData = _serverDataQuery.data;
 	const [selectedTags, setSelectedTags] = useState<number[]>(
 		_serverData.server_data_db.games
-			?.find((game: Game) => game.gameId === parseInt(gameId as string))
+			?.find((game: Game) => game.gameId === Number(gameId as string))
 			?.gamesTags?.map((tag: TagRelationToGame) => tag.tagId) || [],
 	);
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
 		_serverData.server_data_db.games
-			?.find((game: Game) => game.gameId === parseInt(gameId as string))
+			?.find((game: Game) => game.gameId === Number(gameId as string))
 			?.gamesRoles?.map((role: RoleRelationToGame) => role.roleId) || [],
 	);
 	const navigate = useNavigate();
@@ -124,7 +124,7 @@ export const GameSettings = () => {
 		// TODO do whatever when loading
 		try {
 			await startTransition(
-				_deleteGame(serverId as string, parseInt(gameId as string)),
+				_deleteGame(serverId as string, Number(gameId as string)),
 			);
 			showToast("Game deleted", "success");
 		} catch (error: unknown) {

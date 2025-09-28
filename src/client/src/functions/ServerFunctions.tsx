@@ -1,9 +1,11 @@
 import type {
+	Category,
 	Game,
 	Role,
 	RoleRelationToGame,
 	ServerData,
 	ServerDataDiscordRole2,
+	Tag,
 } from "juicer-shared";
 
 export const _findRoleById = (
@@ -20,7 +22,25 @@ export const _findGameById = (
 	gameId: string,
 ): Game | undefined => {
 	return _serverData.server_data_db.games?.find(
-		(g: Game) => g.gameId === parseInt(gameId),
+		(g: Game) => g.gameId === Number(gameId),
+	);
+};
+
+export const _findCategoryById = (
+	_serverData: ServerData,
+	categoryId: number,
+): Category | undefined => {
+	return _serverData.server_data_db.categories?.find(
+		(c: Category) => c.categoryId === Number(categoryId),
+	);
+};
+
+export const _findTagById = (
+	_serverData: ServerData,
+	tagId: number,
+): Tag | undefined => {
+	return _serverData.server_data_db.tags?.find(
+		(t: Tag) => t.tagId === Number(tagId),
 	);
 };
 

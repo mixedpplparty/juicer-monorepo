@@ -15,7 +15,9 @@ import { Suspense, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
+	_findCategoryById,
 	_findRoleById,
+	_findTagById,
 	_iHaveRole,
 	filterOutEveryoneRole,
 } from "../../functions/ServerFunctions";
@@ -411,7 +413,10 @@ export const Server = () => {
 																}}
 															>
 																{game.categoryId
-																	? "카테고리 이름 있음(TODO ADD)"
+																	? _findCategoryById(
+																			_serverData,
+																			game.categoryId,
+																		)?.name || "카테고리 이름 없음"
 																	: "카테고리 없음"}
 															</div>
 														</div>
@@ -438,7 +443,9 @@ export const Server = () => {
 																				background: "none",
 																			}}
 																		>
-																			#{tag.tagId}
+																			#
+																			{_findTagById(_serverData, tag.tagId)
+																				?.name || "태그 이름 없음"}
 																		</div>
 																	),
 																)}
