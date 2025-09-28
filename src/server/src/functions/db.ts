@@ -146,7 +146,10 @@ export const updateGame = async ({
 	channels,
 	tagIds,
 	roleIds,
-}: z.infer<typeof UpdateGameRequestBody>): Promise<UpdateGameResponse> => {
+}: z.infer<typeof UpdateGameRequestBody> & {
+	gameId: number;
+	serverId: string;
+}): Promise<UpdateGameResponse> => {
 	const res: UpdateGameResponse = {
 		updatedGame: null,
 		tags: {
@@ -181,9 +184,6 @@ export const updateGame = async ({
 		}).filter(([key, val]) => {
 			if (key === "thumbnail") {
 				return val !== null && val !== undefined && val !== "";
-			} else if (key === "categoryId" && categoryId === -1) {
-				//set categoryId to null
-				return null;
 			}
 			return val !== null && val !== undefined;
 		}),

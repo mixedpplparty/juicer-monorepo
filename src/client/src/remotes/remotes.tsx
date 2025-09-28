@@ -2,8 +2,8 @@ import axios from "axios";
 import type { APIUser } from "discord-api-types/v10";
 import type {
 	Game,
+	GuildMember,
 	MessageOnSuccess,
-	MyDataInServer,
 	MyInfo,
 	ServerData,
 	SyncRolesResponse,
@@ -150,7 +150,7 @@ export const _deleteThumbnailFromGame = async (
 
 export const _fetchMyDataInServer = async (
 	serverId: string | null,
-): Promise<MyDataInServer> => {
+): Promise<GuildMember> => {
 	const _res = await axios.get(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/me`,
 		{ withCredentials: true },
@@ -206,9 +206,9 @@ export const _updateGameWithTagsAndRoles = async (
 		{
 			name: gameName,
 			description: gameDescription,
-			category_id: gameCategory,
-			tag_ids: gameTags,
-			role_ids: gameRoles,
+			categoryId: gameCategory === "" ? undefined : Number(gameCategory),
+			tagIds: gameTags,
+			roleIds: gameRoles,
 		},
 	);
 	return _res.data;

@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { HTTPException } from "hono/http-exception";
 import {
 	findGamesByCategoryName,
 	findGamesByName,

@@ -1,8 +1,6 @@
 import type {
-	APIUser,
 	Collection,
 	Client as DiscordClient,
-	Guild,
 	GuildMember,
 	Role,
 	Snowflake,
@@ -20,7 +18,6 @@ import type {
 	FilteredServerDataDiscord,
 	SyncRolesResponse,
 } from "juicer-shared";
-import { throwAxiosError } from "./axios-error-handler.js";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,

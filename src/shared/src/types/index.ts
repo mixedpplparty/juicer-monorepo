@@ -1,4 +1,5 @@
-import type { APIUser } from "discord-api-types/v10";
+import type { GuildMember as DiscordJSGuildMember } from "discord.js";
+import type { APIUser, Snowflake } from "discord-api-types/v10";
 import * as z from "zod";
 
 export type Guild = {
@@ -208,8 +209,6 @@ export type CreateGameResponse = {
 };
 
 export const UpdateGameRequestBody = z.object({
-	gameId: z.number(),
-	serverId: z.string(),
 	name: z.string().nullable().optional(),
 	description: z.string().nullable().optional(),
 	categoryId: z.number().nullable().optional(),
@@ -284,3 +283,12 @@ export const NameRequiredRequestBody = z.object({
 export const AssignRoleCategoryToRoleRequestBody = z.object({
 	roleId: z.string(),
 });
+
+export type GuildMember = DiscordJSGuildMember & {
+	avatarURL: string | null;
+	bannerURL: string | null;
+	displayAvatarURL: string | null;
+	displayBannerURL: string | null;
+	avatarDecorationURL: string | null;
+	roles: string[];
+};

@@ -4,6 +4,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import type { Role as DiscordJSRole } from "discord.js";
 import type {
 	Category,
 	Game,
@@ -255,8 +256,10 @@ export const Server = () => {
 								}}
 							>
 								<img
-									src={_myDataInServer.avatar || serverPlaceholderIcon}
-									alt={_myDataInServer.name}
+									src={
+										_myDataInServer.displayAvatarURL || serverPlaceholderIcon
+									}
+									alt={_myDataInServer.displayName}
 									css={{ width: "48px", height: "48px", borderRadius: "50%" }}
 								/>
 								<div
@@ -265,11 +268,7 @@ export const Server = () => {
 									<div
 										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
 									>
-										<h2 css={{ margin: 0 }}>
-											{_myDataInServer.nick
-												? _myDataInServer.nick
-												: _myDataInServer.name}
-										</h2>
+										<h2 css={{ margin: 0 }}>{_myDataInServer.displayName}</h2>
 									</div>
 									<div
 										css={{
@@ -279,19 +278,13 @@ export const Server = () => {
 											flexWrap: "wrap",
 										}}
 									>
-										{filterOutEveryoneRole(
-											_serverData,
-											_myDataInServer.roles || [],
-										).map((role: Role | RoleRelationToGame) => {
+										{_myDataInServer.roles.map((role: string) => {
 											return (
 												<RoleChip
-													key={role.roleId}
-													name={
-														_findRoleById(_serverData, role.roleId)?.name || ""
-													}
+													key={role}
+													name={_findRoleById(_serverData, role)?.name || ""}
 													color={
-														_findRoleById(_serverData, role.roleId)?.color ||
-														"#ffffff"
+														_findRoleById(_serverData, role)?.color || "#ffffff"
 													}
 												/>
 											);

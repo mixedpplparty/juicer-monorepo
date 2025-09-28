@@ -9,6 +9,7 @@
 	},
 	"dependencies": {
 		"discord-api-types": "^0.38.23",
+		"discord.js": "^14.22.1",
 		"zod": "^4.1.11"
 	},
 	"devDependencies": {

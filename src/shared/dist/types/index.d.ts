@@ -1,3 +1,4 @@
+import type { GuildMember as DiscordJSGuildMember } from "discord.js";
 import type { APIUser } from "discord-api-types/v10";
 import * as z from "zod";
 export type Guild = {
@@ -167,8 +168,6 @@ export type CreateGameResponse = {
     channels: string[] | null;
 };
 export declare const UpdateGameRequestBody: z.ZodObject<{
-    gameId: z.ZodNumber;
-    serverId: z.ZodString;
     name: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     categoryId: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
@@ -230,3 +229,11 @@ export declare const NameRequiredRequestBody: z.ZodObject<{
 export declare const AssignRoleCategoryToRoleRequestBody: z.ZodObject<{
     roleId: z.ZodString;
 }, z.core.$strip>;
+export type GuildMember = DiscordJSGuildMember & {
+    avatarURL: string | null;
+    bannerURL: string | null;
+    displayAvatarURL: string | null;
+    displayBannerURL: string | null;
+    avatarDecorationURL: string | null;
+    roles: string[];
+};

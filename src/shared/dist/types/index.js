@@ -5,8 +5,6 @@ export const CreateGameRequestBody = z.object({
     categoryId: z.number().nullable().optional(),
 });
 export const UpdateGameRequestBody = z.object({
-    gameId: z.number(),
-    serverId: z.string(),
     name: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     categoryId: z.number().nullable().optional(),

@@ -42,6 +42,9 @@ importers:
       discord-api-types:
         specifier: ^0.38.26
         version: 0.38.26
+      discord.js:
+        specifier: ^14.22.1
+        version: 14.22.1
       es-hangul:
         specifier: ^2.3.5
         version: 2.3.6
@@ -167,6 +170,9 @@ importers:
       discord-api-types:
         specifier: ^0.38.23
         version: 0.38.26
+      discord.js:
+        specifier: ^14.22.1
+        version: 14.22.1
       zod:
         specifier: ^4.1.11
         version: 4.1.11

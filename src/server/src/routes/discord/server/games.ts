@@ -61,7 +61,7 @@ app.put("/:gameId", zValidator("json", UpdateGameRequestBody), async (c) => {
 			serverId: serverId as string,
 			name: body.name as string | null | undefined, // optional(not updated if null or undefined)
 			description: body.description as string | null | undefined, // optional(not updated if null or undefined)
-			categoryId: Number(body.categoryId), // optional(not updated if null or undefined)
+			categoryId: body.categoryId as number | null | undefined, // optional(not updated if null or undefined)
 			thumbnail: body.thumbnail as Buffer | null | undefined, //optional(not updated if null or undefined)
 			channels: body.channels as string[] | null | undefined, // optional(not updated if null or undefined)
 			tagIds: body.tagIds as number[] | null | undefined, // optional(not updated if null or undefined)
