@@ -49,12 +49,7 @@ export const authenticateAndAuthorizeUser = async (
 	guild: FilteredServerDataDiscord;
 	manageGuildPermission: boolean;
 }> => {
-	let userData: APIUser;
-	try {
-		userData = await getDiscordOAuthUserData(accessToken);
-	} catch (error) {
-		throwAxiosError(error);
-	}
+	const userData = await getDiscordOAuthUserData(accessToken);
 	const guild = await discordClient.guilds.fetch(serverId);
 	if (!guild) {
 		throw new HTTPException(404, {
