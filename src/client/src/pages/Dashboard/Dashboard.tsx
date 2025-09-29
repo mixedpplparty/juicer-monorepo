@@ -1,6 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import type { FilteredGuild, Guild } from "juicer-shared";
+import type { FilteredGuild } from "juicer-shared";
 import { Suspense } from "react";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { useLoading } from "../../hooks/useLoading";

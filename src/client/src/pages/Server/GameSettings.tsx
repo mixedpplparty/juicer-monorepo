@@ -60,6 +60,11 @@ export const GameSettings = () => {
 			})
 			.filter((role) => role.name !== "@everyone"); // without @everyone
 
+		// const mergedRolesObj: Record<string, (typeof mergedRoles)[number]> = {};
+		// mergedRoles.forEach((role) => {
+		// 	mergedRolesObj[role.roleId] = role;
+		// });
+
 		return mergedRoles;
 	}, [_serverData]);
 	const [selectedTags, setSelectedTags] = useState<number[]>(
@@ -314,12 +319,11 @@ export const GameSettings = () => {
 										<_8pxCircle
 											css={{
 												backgroundColor: role.selfAssignable
-													? _findRoleById(_serverData, role.roleId)?.color ||
-														"#ffffff"
+													? role.color || "#ffffff"
 													: "#999999",
 											}}
 										/>
-										{_findRoleById(_serverData, role.roleId)?.name}
+										{role.name}
 									</CheckableChip>
 								);
 							})}

@@ -4,12 +4,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type { Category, Role, RoleCategory, Tag } from "juicer-shared";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import {
-	_findRoleById,
-	filterOutEveryoneRole,
-} from "../../functions/ServerFunctions";
+import { filterOutEveryoneRole } from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -51,6 +48,33 @@ export const ServerSettings = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+
+	const rolesCombined = useMemo(() => {
+		const dbRoles = _serverData.serverDataDb.roles || [];
+		const discordRoles = _serverData.serverDataDiscord.roles || [];
+
+		// Role with roleCategory and selfAssignable
+		const mergedRoles = dbRoles
+			.map((dbRole) => {
+				const discordRole = discordRoles.find(
+					(discordRole) => discordRole.id === dbRole.roleId,
+				);
+				return {
+					...dbRole,
+					...discordRole,
+					roleCategoryId: dbRole.roleCategoryId,
+					selfAssignable: dbRole.selfAssignable,
+				};
+			})
+			.filter((role) => role.name !== "@everyone"); // without @everyone
+
+		const mergedRolesObj: Record<string, (typeof mergedRoles)[number]> = {};
+		mergedRoles.forEach((role) => {
+			mergedRolesObj[role.roleId] = role;
+		});
+
+		return mergedRolesObj;
+	}, [_serverData]);
 
 	const createCategoryFormAction = async (
 		formData: FormData,
@@ -211,13 +235,8 @@ export const ServerSettings = () => {
 												<RoleChip
 													key={role.roleId}
 													id={role.roleId}
-													name={
-														_findRoleById(_serverData, role.roleId)?.name || ""
-													}
-													color={
-														_findRoleById(_serverData, role.roleId)?.color ||
-														"#ffffff"
-													}
+													name={rolesCombined[role.roleId]?.name || ""}
+													color={rolesCombined[role.roleId]?.color || "#ffffff"}
 													draggable={true}
 												/>
 											);

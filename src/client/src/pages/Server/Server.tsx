@@ -4,23 +4,14 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Role as DiscordJSRole } from "discord.js";
-import type {
-	Category,
-	Game,
-	Role,
-	RoleRelationToGame,
-	TagRelationToGame,
-} from "juicer-shared";
-import { Suspense, useState } from "react";
+import type { Category, Game, TagRelationToGame } from "juicer-shared";
+import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import {
 	_findCategoryById,
-	_findRoleById,
 	_findTagById,
 	_iHaveRole,
-	filterOutEveryoneRole,
 } from "../../functions/ServerFunctions";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useLoading } from "../../hooks/useLoading";
@@ -75,6 +66,33 @@ export const Server = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+
+	const rolesCombined = useMemo(() => {
+		const dbRoles = _serverData.serverDataDb.roles || [];
+		const discordRoles = _serverData.serverDataDiscord.roles || [];
+
+		// Role with roleCategory and selfAssignable
+		const mergedRoles = dbRoles
+			.map((dbRole) => {
+				const discordRole = discordRoles.find(
+					(discordRole) => discordRole.id === dbRole.roleId,
+				);
+				return {
+					...dbRole,
+					...discordRole,
+					roleCategoryId: dbRole.roleCategoryId,
+					selfAssignable: dbRole.selfAssignable,
+				};
+			})
+			.filter((role) => role.name !== "@everyone"); // without @everyone
+
+		const mergedRolesObj: Record<string, (typeof mergedRoles)[number]> = {};
+		mergedRoles.forEach((role) => {
+			mergedRolesObj[role.roleId] = role;
+		});
+
+		return mergedRolesObj;
+	}, [_serverData]);
 
 	const _gameThumbnailQueries = useQueries({
 		queries: _fetchThumbnailsInGame.queries(
@@ -279,18 +297,14 @@ export const Server = () => {
 										}}
 									>
 										{_myDataInServer.roles.map((role: string) => {
-											if (
-												_findRoleById(_serverData, role)?.name === "@everyone"
-											) {
+											if (rolesCombined[role]?.name === "@everyone") {
 												return null;
 											}
 											return (
 												<RoleChip
 													key={role}
-													name={_findRoleById(_serverData, role)?.name || ""}
-													color={
-														_findRoleById(_serverData, role)?.color || "#ffffff"
-													}
+													name={rolesCombined[role]?.name || ""}
+													color={rolesCombined[role]?.color || "#ffffff"}
 												/>
 											);
 										})}
@@ -454,10 +468,7 @@ export const Server = () => {
 														>
 															{game.gamesRoles &&
 																game.gamesRoles.length > 0 &&
-																filterOutEveryoneRole(
-																	_serverData,
-																	game.gamesRoles,
-																)?.map((role: Role | RoleRelationToGame) => (
+																Object.values(rolesCombined).map((role) => (
 																	<Chip
 																		key={role.roleId}
 																		css={{
@@ -482,17 +493,11 @@ export const Server = () => {
 																		<_8pxCircle
 																			css={{
 																				backgroundColor: `${
-																					_findRoleById(
-																						_serverData,
-																						role.roleId,
-																					)?.color || "#ffffff"
+																					role.color || "#ffffff"
 																				}`,
 																			}}
 																		/>
-																		{
-																			_findRoleById(_serverData, role.roleId)
-																				?.name
-																		}
+																		{role.name}
 																	</Chip>
 																))}
 														</div>
