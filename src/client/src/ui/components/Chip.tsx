@@ -10,11 +10,15 @@ export const Chip = styled.div({
 //create checkableChip
 export const CheckableChipBase = styled(Chip, {
 	shouldForwardProp: (prop) => prop !== "checked",
-})<{ checked?: boolean }>((props) => ({
+})<{ checked?: boolean; disabled?: boolean }>((props) => ({
 	background: props.checked
 		? "rgba(255, 255, 255, 1)"
 		: "rgba(255, 255, 255, 0.1)",
-	color: props.checked ? "rgba(0, 0, 0, 1)" : "rgba(255, 255, 255, 1)",
+	color: props.disabled
+		? "#999999"
+		: props.checked
+			? "rgba(0, 0, 0, 1)"
+			: "rgba(255, 255, 255, 1)",
 	display: "flex",
 	flexDirection: "row",
 	gap: "4px",
@@ -78,7 +82,11 @@ export const CheckableChip: React.FC<CheckableChipProps> = ({
 				}}
 				{...rest}
 			/>
-			<CheckableChipBase checked={effectiveChecked} aria-hidden>
+			<CheckableChipBase
+				checked={effectiveChecked}
+				disabled={disabled}
+				aria-hidden
+			>
 				{children}
 			</CheckableChipBase>
 		</label>

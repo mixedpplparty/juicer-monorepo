@@ -275,7 +275,7 @@ export const _assignRoleByIdToUser = async (
 	roleId: string,
 ): Promise<boolean> => {
 	//true on success
-	const _res = await axios.get(
+	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/assign`,
 	);
 	return _res.data;
@@ -286,7 +286,7 @@ export const _unassignRoleByIdFromUser = async (
 	roleId: string,
 ): Promise<boolean> => {
 	//true on success
-	const _res = await axios.get(
+	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/unassign`,
 	);
 	return _res.data;

@@ -481,12 +481,12 @@ export const Server = () => {
 																	>
 																		<_8pxCircle
 																			css={{
-																				backgroundColor: `rgb(${
+																				backgroundColor: `${
 																					_findRoleById(
 																						_serverData,
 																						role.roleId,
 																					)?.color || "#ffffff"
-																				})`,
+																				}`,
 																			}}
 																		/>
 																		{

@@ -5,18 +5,13 @@ import { isAxiosError } from "axios";
 import type {
 	Category,
 	Game,
-	Role,
 	RoleRelationToGame,
 	Tag,
 	TagRelationToGame,
 } from "juicer-shared";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import {
-	_findGameById,
-	_findRoleById,
-	filterOutEveryoneRole,
-} from "../../functions/ServerFunctions";
+import { _findGameById, _findRoleById } from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -46,6 +41,27 @@ export const GameSettings = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+	const rolesCombined = useMemo(() => {
+		const dbRoles = _serverData.serverDataDb.roles || [];
+		const discordRoles = _serverData.serverDataDiscord.roles || [];
+
+		// Role with roleCategory and selfAssignable
+		const mergedRoles = dbRoles
+			.map((dbRole) => {
+				const discordRole = discordRoles.find(
+					(discordRole) => discordRole.id === dbRole.roleId,
+				);
+				return {
+					...dbRole,
+					...discordRole,
+					roleCategoryId: dbRole.roleCategoryId,
+					selfAssignable: dbRole.selfAssignable,
+				};
+			})
+			.filter((role) => role.name !== "@everyone"); // without @everyone
+
+		return mergedRoles;
+	}, [_serverData]);
 	const [selectedTags, setSelectedTags] = useState<number[]>(
 		_serverData.serverDataDb.games
 			?.find((game: Game) => game.gameId === Number(gameId as string))
@@ -278,34 +294,35 @@ export const GameSettings = () => {
 								flexWrap: "wrap",
 							}}
 						>
-							{filterOutEveryoneRole(
-								_serverData,
-								_serverData.serverDataDb.roles || [],
-							).map((role: Role | RoleRelationToGame) => (
-								<CheckableChip
-									key={role.roleId}
-									value={role.roleId}
-									checked={selectedRoles.includes(role.roleId)}
-									onChange={(checked) => {
-										if (checked) {
-											setSelectedRoles([...selectedRoles, role.roleId]);
-										} else {
-											setSelectedRoles(
-												selectedRoles.filter((id) => id !== role.roleId),
-											);
-										}
-									}}
-								>
-									<_8pxCircle
-										css={{
-											backgroundColor:
-												_findRoleById(_serverData, role.roleId)?.color ||
-												"#ffffff",
+							{rolesCombined.map((role) => {
+								return (
+									<CheckableChip
+										key={role.roleId}
+										value={role.roleId}
+										checked={selectedRoles.includes(role.roleId)}
+										onChange={(checked) => {
+											if (checked) {
+												setSelectedRoles([...selectedRoles, role.roleId]);
+											} else {
+												setSelectedRoles(
+													selectedRoles.filter((id) => id !== role.roleId),
+												);
+											}
 										}}
-									/>
-									{_findRoleById(_serverData, role.roleId)?.name}
-								</CheckableChip>
-							))}
+										disabled={!role.selfAssignable}
+									>
+										<_8pxCircle
+											css={{
+												backgroundColor: role.selfAssignable
+													? _findRoleById(_serverData, role.roleId)?.color ||
+														"#ffffff"
+													: "#999999",
+											}}
+										/>
+										{_findRoleById(_serverData, role.roleId)?.name}
+									</CheckableChip>
+								);
+							})}
 						</div>
 						{_serverData.serverDataDb.roles?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
