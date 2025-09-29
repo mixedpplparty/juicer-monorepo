@@ -3,10 +3,9 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, Role, RoleCategory, Tag } from "juicer-shared";
+import type { Category, RoleCategory, Tag } from "juicer-shared";
 import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { filterOutEveryoneRole } from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -223,20 +222,15 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{(
-										filterOutEveryoneRole(
-											_serverData,
-											_serverData.serverDataDb.roles || [],
-										) as Role[]
-									)
-										.filter((role: Role) => role.roleCategoryId === null)
-										.map((role: Role) => {
+									{Object.values(rolesCombined)
+										.filter((role) => role.roleCategoryId === null)
+										.map((role) => {
 											return (
 												<RoleChip
 													key={role.roleId}
 													id={role.roleId}
-													name={rolesCombined[role.roleId]?.name || ""}
-													color={rolesCombined[role.roleId]?.color || "#ffffff"}
+													name={role.name || ""}
+													color={role.color || "#ffffff"}
 													draggable={true}
 												/>
 											);

@@ -60,11 +60,6 @@ export const GameSettings = () => {
 			})
 			.filter((role) => role.name !== "@everyone"); // without @everyone
 
-		// const mergedRolesObj: Record<string, (typeof mergedRoles)[number]> = {};
-		// mergedRoles.forEach((role) => {
-		// 	mergedRolesObj[role.roleId] = role;
-		// });
-
 		return mergedRoles;
 	}, [_serverData]);
 	const [selectedTags, setSelectedTags] = useState<number[]>(
