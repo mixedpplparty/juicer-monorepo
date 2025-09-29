@@ -1,11 +1,9 @@
 import type {
-	Category,
 	Game,
 	Role,
 	RoleRelationToGame,
 	ServerData,
 	ServerDataDiscordRole2,
-	Tag,
 } from "juicer-shared";
 
 export const _findRoleById = (
@@ -14,33 +12,6 @@ export const _findRoleById = (
 ): ServerDataDiscordRole2 | undefined => {
 	return _serverData.serverDataDiscord.roles?.find(
 		(r: ServerDataDiscordRole2) => r.id === roleId,
-	);
-};
-
-export const _findGameById = (
-	_serverData: ServerData,
-	gameId: string,
-): Game | undefined => {
-	return _serverData.serverDataDb.games?.find(
-		(g: Game) => g.gameId === Number(gameId),
-	);
-};
-
-export const _findCategoryById = (
-	_serverData: ServerData,
-	categoryId: number,
-): Category | undefined => {
-	return _serverData.serverDataDb.categories?.find(
-		(c: Category) => c.categoryId === Number(categoryId),
-	);
-};
-
-export const _findTagById = (
-	_serverData: ServerData,
-	tagId: number,
-): Tag | undefined => {
-	return _serverData.serverDataDb.tags?.find(
-		(t: Tag) => t.tagId === Number(tagId),
 	);
 };
 

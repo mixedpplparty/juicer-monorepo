@@ -4,15 +4,11 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, Game, TagRelationToGame } from "juicer-shared";
+import type { Category, Game, Tag, TagRelationToGame } from "juicer-shared";
 import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
-import {
-	_findCategoryById,
-	_findTagById,
-	_iHaveRole,
-} from "../../functions/ServerFunctions";
+import { _findTagById, _iHaveRole } from "../../functions/ServerFunctions";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
@@ -92,6 +88,26 @@ export const Server = () => {
 		});
 
 		return mergedRolesObj;
+	}, [_serverData]);
+
+	const categoriesObj = useMemo(() => {
+		return _serverData.serverDataDb.categories?.reduce(
+			(obj, category: Category) => {
+				obj[category.categoryId] = category;
+				return obj;
+			},
+			{} as Record<number, Category>,
+		);
+	}, [_serverData]);
+
+	const tagsObj = useMemo(() => {
+		return _serverData.serverDataDb.tags?.reduce(
+			(obj, tag: Tag) => {
+				obj[tag.tagId] = tag;
+				return obj;
+			},
+			{} as Record<number, Tag>,
+		);
 	}, [_serverData]);
 
 	const _gameThumbnailQueries = useQueries({
@@ -421,10 +437,8 @@ export const Server = () => {
 																}}
 															>
 																{game.categoryId
-																	? _findCategoryById(
-																			_serverData,
-																			game.categoryId,
-																		)?.name || "카테고리 이름 없음"
+																	? categoriesObj?.[game.categoryId]?.name ||
+																		"카테고리 이름 없음"
 																	: "카테고리 없음"}
 															</div>
 														</div>
@@ -452,8 +466,8 @@ export const Server = () => {
 																			}}
 																		>
 																			#
-																			{_findTagById(_serverData, tag.tagId)
-																				?.name || "태그 이름 없음"}
+																			{tagsObj?.[tag.tagId]?.name ||
+																				"태그 이름 없음"}
 																		</div>
 																	),
 																)}

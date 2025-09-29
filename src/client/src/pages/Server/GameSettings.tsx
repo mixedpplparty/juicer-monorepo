@@ -11,7 +11,6 @@ import type {
 } from "juicer-shared";
 import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { _findGameById, _findRoleById } from "../../functions/ServerFunctions";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -62,15 +61,24 @@ export const GameSettings = () => {
 
 		return mergedRoles;
 	}, [_serverData]);
+	const gamesObj = useMemo(() => {
+		return _serverData.serverDataDb.games?.reduce(
+			(obj, game) => {
+				obj[game.gameId] = game;
+				return obj;
+			},
+			{} as Record<number, Game>,
+		);
+	}, [_serverData]);
 	const [selectedTags, setSelectedTags] = useState<number[]>(
-		_serverData.serverDataDb.games
-			?.find((game: Game) => game.gameId === Number(gameId as string))
-			?.gamesTags?.map((tag: TagRelationToGame) => tag.tagId) || [],
+		gamesObj?.[Number(gameId as string)]?.gamesTags?.map(
+			(tag: TagRelationToGame) => tag.tagId,
+		) || [],
 	);
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
-		_serverData.serverDataDb.games
-			?.find((game: Game) => game.gameId === Number(gameId as string))
-			?.gamesRoles?.map((role: RoleRelationToGame) => role.roleId) || [],
+		gamesObj?.[Number(gameId as string)]?.gamesRoles?.map(
+			(role: RoleRelationToGame) => role.roleId,
+		) || [],
 	);
 	const navigate = useNavigate();
 
@@ -179,7 +187,7 @@ export const GameSettings = () => {
 							}}
 						>
 							<h1 css={{ margin: 0 }}>
-								{_findGameById(_serverData, gameId as string)?.name}
+								{gamesObj?.[Number(gameId as string)]?.name}
 							</h1>
 							<div>주제 설정</div>
 						</div>
@@ -206,9 +214,7 @@ export const GameSettings = () => {
 							name="game-name"
 							aria-required
 							required
-							defaultValue={
-								_findGameById(_serverData, gameId as string)?.name || ""
-							}
+							defaultValue={gamesObj?.[Number(gameId as string)]?.name || ""}
 						/>
 						<div css={{ display: "flex", flexDirection: "row", gap: "12px" }}>
 							<label htmlFor="game-thumbnail" css={{ flex: 1 }}>
@@ -232,7 +238,7 @@ export const GameSettings = () => {
 							id="game-description"
 							name="game-description"
 							defaultValue={
-								_findGameById(_serverData, gameId as string)?.description || ""
+								gamesObj?.[Number(gameId as string)]?.description || ""
 							}
 						/>
 						<label htmlFor="game-category">카테고리 (선택)</label>
@@ -240,7 +246,7 @@ export const GameSettings = () => {
 							id="game-category"
 							name="game-category"
 							defaultValue={
-								_findGameById(_serverData, gameId as string)?.categoryId || ""
+								gamesObj?.[Number(gameId as string)]?.categoryId || ""
 							}
 						>
 							<Option value="">카테고리 선택</Option>
