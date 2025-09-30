@@ -5,6 +5,7 @@ import type {
 	GuildMember,
 	MessageOnSuccess,
 	MyInfo,
+	Role,
 	RoleCategory,
 	ServerData,
 	SyncRolesResponse,
@@ -331,6 +332,18 @@ export const _assignRoleCategoryToRole = async (
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/role-categories/assign`,
 		{ roleCategoryId, roleId },
+	);
+	return _res.data;
+};
+
+export const _setRoleSelfAssignable = async (
+	serverId: string,
+	roleId: string,
+	selfAssignable: boolean | null,
+): Promise<Role> => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/update`,
+		{ selfAssignable },
 	);
 	return _res.data;
 };

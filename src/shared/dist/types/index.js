@@ -82,3 +82,6 @@ export const AssignRoleCategoryToRoleRequestBody = z.object({
     roleCategoryId: z.number().nullable(),
     roleId: z.string(),
 });
+export const SetRoleSelfAssignableRequestBody = z.object({
+    selfAssignable: z.boolean().optional().nullable(),
+});

@@ -240,6 +240,9 @@ export declare const AssignRoleCategoryToRoleRequestBody: z.ZodObject<{
     roleCategoryId: z.ZodNullable<z.ZodNumber>;
     roleId: z.ZodString;
 }, z.core.$strip>;
+export declare const SetRoleSelfAssignableRequestBody: z.ZodObject<{
+    selfAssignable: z.ZodNullable<z.ZodOptional<z.ZodBoolean>>;
+}, z.core.$strip>;
 export type GuildMember = DiscordJSGuildMember & {
     avatarURL: string | null;
     bannerURL: string | null;

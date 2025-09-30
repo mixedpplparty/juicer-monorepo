@@ -328,7 +328,7 @@ export const Server = () => {
 														key={roleId}
 														name={
 															rolesCombined[roleId]?.name ||
-															`이름없음(ID ${roleId})`
+															`이름없음 (ID ${roleId})`
 														}
 														color={rolesCombined[roleId]?.color || "#ffffff"}
 													/>

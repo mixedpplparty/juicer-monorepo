@@ -1,7 +1,12 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { getRoleInServerInDbByRoleIds } from "../../../functions/db.js";
+import { SetRoleSelfAssignableRequestBody } from "juicer-shared";
+import {
+	getRoleInServerInDbByRoleIds,
+	setRoleSelfAssignable,
+} from "../../../functions/db.js";
 import {
 	assignRolesToUser,
 	authenticateAndAuthorizeUser,
@@ -76,5 +81,32 @@ app.post("/:roleId/unassign", async (c) => {
 	await unassignRolesFromUser(serverId as string, member.id, [roleId]);
 	return c.json({ message: "Role unassigned successfully." }, 200);
 });
+
+app.post(
+	"/:roleId/update",
+	zValidator("json", SetRoleSelfAssignableRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const roleId = c.req.param("roleId");
+		const body = await c.req.valid("json");
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId as string,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const role = await setRoleSelfAssignable({
+				roleId: roleId as string,
+				serverId: serverId as string,
+				selfAssignable: body.selfAssignable as boolean | null,
+			});
+			return c.json(role, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
+		});
+	},
+);
 
 export default app;

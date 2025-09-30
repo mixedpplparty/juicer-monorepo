@@ -17,16 +17,19 @@ import {
 	_deleteRoleCategory,
 	_deleteTag,
 	_fetchServerData,
+	_setRoleSelfAssignable,
 } from "../../remotes/remotes";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
+import { _8pxCircle } from "../../ui/components/Circle";
 import { DragDropZone } from "../../ui/components/DragDropZone";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { RoleChip } from "../../ui/components/RoleChip";
+import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
@@ -41,6 +44,16 @@ export const ServerSettings = () => {
 		useState<boolean>(false);
 	const [isCreateRoleCategoryModalOpen, setIsCreateRoleCategoryModalOpen] =
 		useState<boolean>(false);
+	const [isRoleSettingsModalOpen, setIsRoleSettingsModalOpen] =
+		useState<boolean>(false);
+	const [roleSettingsModalRole, setRoleSettingsModalRole] = useState<{
+		roleId: string | null;
+		name?: string | undefined;
+		color?: string | undefined;
+		roleCategoryId: number | null;
+		roleCategoryName?: string | undefined | null;
+		selfAssignable: boolean;
+	} | null>(null);
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const { showToast } = useToast();
@@ -51,6 +64,16 @@ export const ServerSettings = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+
+	const roleCategoriesObj = useMemo(() => {
+		return _serverData.serverDataDb.roleCategories?.reduce(
+			(obj, roleCategory) => {
+				obj[roleCategory.roleCategoryId] = roleCategory;
+				return obj;
+			},
+			{} as Record<number, RoleCategory>,
+		);
+	}, [_serverData]);
 
 	const rolesCombined = useMemo(() => {
 		const dbRoles = _serverData.serverDataDb.roles || [];
@@ -66,6 +89,9 @@ export const ServerSettings = () => {
 					...dbRole,
 					...discordRole,
 					roleCategoryId: dbRole.roleCategoryId,
+					roleCategoryName: dbRole.roleCategoryId
+						? roleCategoriesObj?.[dbRole.roleCategoryId]?.name
+						: null,
 					selfAssignable: dbRole.selfAssignable,
 				};
 			})
@@ -77,7 +103,7 @@ export const ServerSettings = () => {
 		});
 
 		return mergedRolesObj;
-	}, [_serverData]);
+	}, [_serverData, roleCategoriesObj]);
 
 	const createCategoryFormAction = async (
 		formData: FormData,
@@ -164,6 +190,55 @@ export const ServerSettings = () => {
 		await _serverDataQuery.refetch();
 	};
 
+	const handleRoleSettingsModalOpen =
+		(role: {
+			roleId: string | null;
+			name?: string | undefined;
+			color?: string | undefined;
+			roleCategoryId: number | null;
+			roleCategoryName?: string | undefined | null;
+			selfAssignable: boolean;
+		}) =>
+		() => {
+			setRoleSettingsModalRole(role);
+			setIsRoleSettingsModalOpen(true);
+		};
+
+	const handleRoleSettingsModalClose = () => {
+		setRoleSettingsModalRole(null);
+		setIsRoleSettingsModalOpen(false);
+	};
+
+	const updateRoleFormAction = async (formData: FormData) => {
+		const roleCategoryId =
+			formData.get("role-category-id") === ""
+				? null
+				: Number(formData.get("role-category-id"));
+		const selfAssignable = formData.get("self-assignable") === "on";
+		try {
+			await startTransition(
+				_assignRoleCategoryToRole(
+					serverId as string,
+					roleCategoryId,
+					roleSettingsModalRole?.roleId as string,
+				),
+			);
+			await startTransition(
+				_setRoleSelfAssignable(
+					serverId as string,
+					roleSettingsModalRole?.roleId as string,
+					selfAssignable,
+				),
+			);
+			showToast("Role updated", "success");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
+		}
+		await _serverDataQuery.refetch();
+		handleRoleSettingsModalClose();
+	};
 	const handleOnDragStart =
 		(role: { roleId: string; roleCategoryId: number | null }) => () => {
 			draggedFrom.current = role.roleCategoryId;
@@ -256,10 +331,11 @@ export const ServerSettings = () => {
 												<RoleChip
 													key={role.roleId}
 													id={role.roleId}
-													name={role.name || ""}
+													name={role.name || `이름없음 (ID ${role.roleId})`}
 													color={role.color || "#ffffff"}
 													draggable={true}
 													onDragStart={handleOnDragStart(role)}
+													onClick={handleRoleSettingsModalOpen(role)}
 												/>
 											);
 										})}
@@ -361,10 +437,13 @@ export const ServerSettings = () => {
 																<RoleChip
 																	key={role.roleId}
 																	id={role.roleId}
-																	name={role.name || ""}
+																	name={
+																		role.name || `이름없음 (ID ${role.roleId})`
+																	}
 																	color={role.color || "#ffffff"}
 																	draggable={true}
 																	onDragStart={handleOnDragStart(role)}
+																	onClick={handleRoleSettingsModalOpen(role)}
 																/>
 															);
 														})}
@@ -621,6 +700,77 @@ export const ServerSettings = () => {
 								type="submit"
 							>
 								역할 분류 추가
+							</Button>
+						</form>
+					</Modal>
+				</ModalPortal>
+			)}
+			{isRoleSettingsModalOpen && (
+				<ModalPortal>
+					<Modal title="역할 설정" onClose={handleRoleSettingsModalClose}>
+						<form
+							action={updateRoleFormAction}
+							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						>
+							<div
+								css={{ display: "flex", flexDirection: "column", gap: "4px" }}
+							>
+								<span>이름</span>
+								<div
+									css={{
+										display: "flex",
+										flexDirection: "row",
+										gap: "4px",
+										alignItems: "center",
+									}}
+								>
+									<_8pxCircle
+										css={{
+											backgroundColor:
+												roleSettingsModalRole?.color || "#ffffff",
+										}}
+									/>
+									<h3 css={{ margin: 0 }}>
+										{roleSettingsModalRole?.name ||
+											`이름없음 (ID ${roleSettingsModalRole?.roleId})`}
+									</h3>
+								</div>
+							</div>
+							<label htmlFor="role-category-id">역할 분류</label>
+							<Select id="role-category-id" name="role-category-id">
+								<Option value="">분류 없음</Option>
+								{_serverData.serverDataDb.roleCategories?.map(
+									(roleCategory) => (
+										<Option
+											key={roleCategory.roleCategoryId}
+											value={roleCategory.roleCategoryId.toString()}
+										>
+											{roleCategory.name}
+										</Option>
+									),
+								)}
+							</Select>
+							<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
+								<input
+									type="checkbox"
+									id="self-assignable"
+									name="self-assignable"
+								/>
+								<label htmlFor="self-assignable">
+									누구나 이 역할 할당 가능
+								</label>
+							</div>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									gap: "8px",
+								}}
+								type="submit"
+							>
+								역할 정보 저장
 							</Button>
 						</form>
 					</Modal>

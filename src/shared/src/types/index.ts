@@ -313,6 +313,10 @@ export const AssignRoleCategoryToRoleRequestBody = z.object({
 	roleId: z.string(),
 });
 
+export const SetRoleSelfAssignableRequestBody = z.object({
+	selfAssignable: z.boolean().optional().nullable(),
+});
+
 export type GuildMember = DiscordJSGuildMember & {
 	avatarURL: string | null;
 	bannerURL: string | null;
