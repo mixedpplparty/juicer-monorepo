@@ -178,14 +178,14 @@ export const ServerSettings = () => {
 				"from",
 				draggedFrom.current,
 				"to",
-				(e.target as HTMLElement).id,
+				(e.currentTarget as HTMLElement).id,
 			);
 			await startTransition(
 				_assignRoleCategoryToRole(
 					serverId as string,
-					(e.target as HTMLElement).id === "unassigned"
+					(e.currentTarget as HTMLElement).id === "unassigned"
 						? null
-						: Number((e.target as HTMLElement).id),
+						: Number((e.currentTarget as HTMLElement).id),
 					draggedRoleId.current,
 				),
 			);
