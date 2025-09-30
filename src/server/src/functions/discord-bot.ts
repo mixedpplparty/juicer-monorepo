@@ -47,7 +47,10 @@ export const authenticateAndAuthorizeUser = async (
 	manageGuildPermission: boolean;
 }> => {
 	const userData = await getDiscordOAuthUserData(accessToken);
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+		force: true,
+	});
 	if (!guild) {
 		throw new HTTPException(404, {
 			message: "Server not found. Bot may not be in that server.",
@@ -73,7 +76,10 @@ export const authenticateAndAuthorizeUser = async (
 			}));
 		}),
 	};
-	const member: GuildMember = await guild.members.fetch(userData.id);
+	const member: GuildMember = await guild.members.fetch({
+		user: userData.id,
+		force: true,
+	});
 	if (!member) {
 		throw new HTTPException(404, { message: "User not in server." });
 	}
@@ -99,7 +105,7 @@ export const getAllServersUserAndBotAreIn = async (userId: string) => {
 	const returnGuilds: FilteredGuild[] = [];
 	for (const [_, partialGuild] of guildsBotIsIn) {
 		const guild = await partialGuild.fetch();
-		const member = await guild.members.fetch(userId); //userId can be string
+		const member = await guild.members.fetch({ user: userId, force: true }); //userId can be string
 		const owner = await guild.fetchOwner();
 		if (member) {
 			returnGuilds.push({
@@ -124,14 +130,18 @@ export const assignRolesToUser = async (
 	userId: string,
 	roleIds: string[],
 ) => {
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
 	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	for (const role of roles) {
-		const roleObj = await guild.roles.fetch(role.roleId);
+		const roleObj = await guild.roles.fetch(role.roleId, { force: true });
 		if (roleObj && roleObj.name !== "@everyone") {
-			await guild.members.fetch(userId).then((member) => {
-				member.roles.add(roleObj);
-			});
+			await guild.members
+				.fetch({ user: userId, force: true })
+				.then((member) => {
+					member.roles.add(roleObj);
+				});
 		}
 	}
 };
@@ -144,14 +154,18 @@ export const unassignRolesFromUser = async (
 	userId: string,
 	roleIds: string[],
 ) => {
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
 	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	for (const role of roles) {
-		const roleObj = await guild.roles.fetch(role.roleId);
+		const roleObj = await guild.roles.fetch(role.roleId, { force: true });
 		if (roleObj && roleObj.name !== "@everyone") {
-			await guild.members.fetch(userId).then((member) => {
-				member.roles.remove(roleObj);
-			});
+			await guild.members
+				.fetch({ user: userId, force: true })
+				.then((member) => {
+					member.roles.remove(roleObj);
+				});
 		}
 	}
 };
@@ -159,7 +173,9 @@ export const unassignRolesFromUser = async (
 export const syncRolesWithDbAndDiscord = async (
 	serverId: string,
 ): Promise<SyncRolesResponse> => {
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
 	const roles = await guild.roles.fetch();
 	console.log("Roles fetched from Discord:", roles);
 	const dbRoles = await getAllRolesInServerInDb({ serverId });
@@ -183,7 +199,9 @@ export const syncRolesWithDbAndDiscord = async (
 export const getAllRolesInServerInDiscordApi = async (
 	serverId: string,
 ): Promise<Collection<Snowflake, Role>> => {
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
 	const roles = await guild.roles.fetch();
 	return roles;
 };
@@ -193,7 +211,9 @@ export const getMyDataInServerInDiscordApi = async (
 	serverId: string,
 	userId: string,
 ): Promise<GuildMember> => {
-	const guild = await discordClient.guilds.fetch(serverId);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
 	const member = await guild.members.fetch(userId);
 	return member;
 };
