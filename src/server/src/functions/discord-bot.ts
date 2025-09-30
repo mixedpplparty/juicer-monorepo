@@ -7,6 +7,7 @@ import type {
 } from "discord.js";
 import {
 	Client,
+	DiscordAPIError,
 	Events,
 	GatewayIntentBits,
 	PermissionFlagsBits,
@@ -105,18 +106,24 @@ export const getAllServersUserAndBotAreIn = async (userId: string) => {
 	const returnGuilds: FilteredGuild[] = [];
 	for (const [_, partialGuild] of guildsBotIsIn) {
 		const guild = await partialGuild.fetch();
-		const member = await guild.members.fetch({ user: userId, force: true }); //userId can be string
-		const owner = await guild.fetchOwner();
-		if (member) {
-			returnGuilds.push({
-				id: guild.id,
-				name: guild.name,
-				icon: guild.iconURL() ?? null,
-				ownerId: guild.ownerId,
-				ownerName: owner.displayName,
-				ownerNick: owner.nickname ?? undefined,
-				memberCount: guild.memberCount,
-			});
+		try {
+			const member = await guild.members.fetch({ user: userId, force: true }); //userId can be string
+			const owner = await guild.fetchOwner();
+			if (member) {
+				returnGuilds.push({
+					id: guild.id,
+					name: guild.name,
+					icon: guild.iconURL() ?? null,
+					ownerId: guild.ownerId,
+					ownerName: owner.displayName,
+					ownerNick: owner.nickname ?? undefined,
+					memberCount: guild.memberCount,
+				});
+			}
+		} catch (error) {
+			if (!(error instanceof DiscordAPIError)) {
+				console.error(`Error fetching guild ${guild.id}:`, error);
+			}
 		}
 	}
 	return returnGuilds;
