@@ -746,7 +746,13 @@ export const ServerSettings = () => {
 								</div>
 							</div>
 							<label htmlFor="role-category-id">역할 분류</label>
-							<Select id="role-category-id" name="role-category-id">
+							<Select
+								id="role-category-id"
+								name="role-category-id"
+								defaultValue={
+									roleSettingsModalRole?.roleCategoryId?.toString() || ""
+								}
+							>
 								<Option value="">분류 없음</Option>
 								{_serverData.serverDataDb?.roleCategories?.map(
 									(roleCategory) => (
@@ -764,6 +770,7 @@ export const ServerSettings = () => {
 									type="checkbox"
 									id="self-assignable"
 									name="self-assignable"
+									defaultChecked={roleSettingsModalRole?.selfAssignable}
 								/>
 								<label htmlFor="self-assignable">
 									누구나 이 역할 할당 가능
