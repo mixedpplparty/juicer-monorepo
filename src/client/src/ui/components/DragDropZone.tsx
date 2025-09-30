@@ -5,7 +5,6 @@ export const DragDropZone = ({
 	children,
 	css,
 	id,
-	onDragOver,
 	onDragEnter,
 	onDragLeave,
 	onDrop,
@@ -13,16 +12,25 @@ export const DragDropZone = ({
 	children: React.ReactNode;
 	css?: CSSProperties;
 	id?: number | string;
-	onDragOver?: () => void;
-	onDragEnter?: () => void;
-	onDragLeave?: () => void;
-	onDrop?: () => void;
+	onDragEnter?: (e: React.DragEvent<HTMLElement>) => void;
+	onDragLeave?: (e: React.DragEvent<HTMLElement>) => void;
+	onDrop?: (e: React.DragEvent<HTMLElement>) => void;
 }) => {
 	return (
 		<Card
-			css={{ border: "1px dashed rgba(255, 255, 255, 0.33)", flex: 1, ...css }}
+			css={{
+				border: "1px dashed rgba(255, 255, 255, 0.33)",
+				flex: 1,
+				display: "flex",
+				flexDirection: "row",
+				gap: "4px",
+				flexWrap: "wrap",
+				...css,
+			}}
 			id={id?.toString()}
-			onDragOver={onDragOver}
+			onDragOver={(e: React.DragEvent<HTMLElement>) => {
+				e.preventDefault(); //allows drop
+			}}
 			onDragEnter={onDragEnter}
 			onDragLeave={onDragLeave}
 			onDrop={onDrop}

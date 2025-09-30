@@ -5,6 +5,7 @@ import type {
 	GuildMember,
 	MessageOnSuccess,
 	MyInfo,
+	RoleCategory,
 	ServerData,
 	SyncRolesResponse,
 } from "juicer-shared";
@@ -318,6 +319,18 @@ export const _deleteRoleCategory = async (
 ): Promise<boolean> => {
 	const _res = await axios.delete(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/role-categories/${roleCategoryId}`,
+	);
+	return _res.data;
+};
+
+export const _assignRoleCategoryToRole = async (
+	serverId: string,
+	roleCategoryId: number | null,
+	roleId: string,
+): Promise<RoleCategory> => {
+	const _res = await axios.post(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/role-categories/assign`,
+		{ roleCategoryId, roleId },
 	);
 	return _res.data;
 };

@@ -4,11 +4,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type { Category, RoleCategory, Tag } from "juicer-shared";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
+	_assignRoleCategoryToRole,
 	_createCategory,
 	_createRoleCategory,
 	_createTag,
@@ -30,6 +31,9 @@ import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	//TODO do whatever when loading
 	// usages of isLoading to be added later
+	const draggedFrom = useRef<number | null>(null);
+	const draggedRoleId = useRef<string | null>(null);
+
 	const [isLoading, startTransition] = useLoading();
 	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
 		useState<boolean>(false);
@@ -159,6 +163,36 @@ export const ServerSettings = () => {
 		}
 		await _serverDataQuery.refetch();
 	};
+
+	const handleOnDragStart =
+		(role: { roleId: string; roleCategoryId: number | null }) => () => {
+			draggedFrom.current = role.roleCategoryId;
+			draggedRoleId.current = role.roleId;
+		};
+
+	const handleOnDrop = async (e: React.DragEvent<HTMLElement>) => {
+		if (draggedRoleId.current) {
+			console.log(
+				"drop",
+				draggedRoleId.current,
+				"from",
+				draggedFrom.current,
+				"to",
+				(e.target as HTMLElement).id,
+			);
+			await startTransition(
+				_assignRoleCategoryToRole(
+					serverId as string,
+					(e.target as HTMLElement).id === "unassigned"
+						? null
+						: Number((e.target as HTMLElement).id),
+					draggedRoleId.current,
+				),
+			);
+			draggedRoleId.current = null;
+		}
+		await _serverDataQuery.refetch();
+	};
 	return (
 		<Suspense fallback={<Loading />}>
 			<FullPageBase>
@@ -214,14 +248,7 @@ export const ServerSettings = () => {
 								</div>
 							)}
 							{!!_serverData.serverDataDiscord.roles?.length && (
-								<div
-									css={{
-										display: "flex",
-										flexDirection: "row",
-										gap: "4px",
-										flexWrap: "wrap",
-									}}
-								>
+								<DragDropZone id="unassigned" onDrop={handleOnDrop}>
 									{Object.values(rolesCombined)
 										.filter((role) => role.roleCategoryId === null)
 										.map((role) => {
@@ -232,10 +259,11 @@ export const ServerSettings = () => {
 													name={role.name || ""}
 													color={role.color || "#ffffff"}
 													draggable={true}
+													onDragStart={handleOnDragStart(role)}
 												/>
 											);
 										})}
-								</div>
+								</DragDropZone>
 							)}
 						</div>
 						<div
@@ -318,8 +346,28 @@ export const ServerSettings = () => {
 													</InlineButton>
 													<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
 												</div>
-												<DragDropZone id={roleCategory.roleCategoryId}>
-													Drag here
+												<DragDropZone
+													id={roleCategory.roleCategoryId}
+													onDrop={handleOnDrop}
+												>
+													{Object.values(rolesCombined)
+														.filter(
+															(role) =>
+																role.roleCategoryId ===
+																roleCategory.roleCategoryId,
+														)
+														.map((role) => {
+															return (
+																<RoleChip
+																	key={role.roleId}
+																	id={role.roleId}
+																	name={role.name || ""}
+																	color={role.color || "#ffffff"}
+																	draggable={true}
+																	onDragStart={handleOnDragStart(role)}
+																/>
+															);
+														})}
 												</DragDropZone>
 											</div>
 										),

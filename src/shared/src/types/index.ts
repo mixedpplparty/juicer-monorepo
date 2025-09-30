@@ -309,6 +309,7 @@ export const NameRequiredRequestBody = z.object({
 });
 
 export const AssignRoleCategoryToRoleRequestBody = z.object({
+	roleCategoryId: z.number().nullable(),
 	roleId: z.string(),
 });
 

@@ -237,6 +237,7 @@ export declare const NameRequiredRequestBody: z.ZodObject<{
     name: z.ZodString;
 }, z.core.$strip>;
 export declare const AssignRoleCategoryToRoleRequestBody: z.ZodObject<{
+    roleCategoryId: z.ZodNullable<z.ZodNumber>;
     roleId: z.ZodString;
 }, z.core.$strip>;
 export type GuildMember = DiscordJSGuildMember & {

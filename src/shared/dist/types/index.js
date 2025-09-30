@@ -79,5 +79,6 @@ export const NameRequiredRequestBody = z.object({
     name: z.string(),
 });
 export const AssignRoleCategoryToRoleRequestBody = z.object({
+    roleCategoryId: z.number().nullable(),
     roleId: z.string(),
 });

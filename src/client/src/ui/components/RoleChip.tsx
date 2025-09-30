@@ -12,8 +12,8 @@ export const RoleChip = ({
 	name: string;
 	color: `#${string}`;
 	draggable?: boolean;
-	onDragStart?: () => void;
-	onDragEnd?: () => void;
+	onDragStart?: (e: React.DragEvent<HTMLElement>) => void;
+	onDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
 	id?: string;
 }) => {
 	return (

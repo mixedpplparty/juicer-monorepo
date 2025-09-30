@@ -58,11 +58,10 @@ app.delete("/:roleCategoryId", async (c) => {
 });
 
 app.post(
-	"/:roleCategoryId/assign",
+	"/assign",
 	zValidator("json", AssignRoleCategoryToRoleRequestBody),
 	async (c) => {
 		const serverId = c.req.param("serverId");
-		const roleCategoryId = c.req.param("roleCategoryId");
 		const body = await c.req.valid("json");
 		const accessToken = getCookie(c, "discord_access_token");
 		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
@@ -73,7 +72,7 @@ app.post(
 		if (manageGuildPermission) {
 			const roleCategory = await updateRoleCategoryOfRole({
 				roleId: body.roleId as string,
-				roleCategoryId: Number(roleCategoryId),
+				roleCategoryId: body.roleCategoryId as number | null,
 				serverId: serverId as string,
 			});
 			return c.json(roleCategory, 200);
