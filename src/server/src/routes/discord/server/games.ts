@@ -9,7 +9,7 @@ import {
 	ThumbnailImage,
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
-} from "juicer-shared";
+} from "juicer-shared/dist/types/index.js";
 import {
 	createGame,
 	deleteGame,

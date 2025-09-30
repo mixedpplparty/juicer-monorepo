@@ -22,7 +22,7 @@ import type {
 	Tag,
 	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
-} from "juicer-shared";
+} from "juicer-shared/dist/types/index.js";
 import { DatabaseError } from "pg";
 import type * as z from "zod";
 import { db } from "../db/index.js";

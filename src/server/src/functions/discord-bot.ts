@@ -17,7 +17,7 @@ import type {
 	FilteredGuild,
 	FilteredServerDataDiscord,
 	SyncRolesResponse,
-} from "juicer-shared";
+} from "juicer-shared/dist/types/index.js";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,

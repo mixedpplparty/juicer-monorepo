@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { SetRoleSelfAssignableRequestBody } from "juicer-shared";
+import { SetRoleSelfAssignableRequestBody } from "juicer-shared/dist/types/index.js";
 import {
 	getRoleInServerInDbByRoleIds,
 	setRoleSelfAssignable,

@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import {
 	AssignRoleCategoryToRoleRequestBody,
 	NameRequiredRequestBody,
-} from "juicer-shared";
+} from "juicer-shared/dist/types/index.js";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
