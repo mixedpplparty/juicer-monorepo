@@ -4,11 +4,17 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, Game, Tag, TagRelationToGame } from "juicer-shared";
+import type {
+	Category,
+	Game,
+	RoleRelationToGame,
+	Tag,
+	TagRelationToGame,
+} from "juicer-shared";
 import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
-import { _findTagById, _iHaveRole } from "../../functions/ServerFunctions";
+import { _iHaveRole } from "../../functions/ServerFunctions";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
@@ -312,17 +318,21 @@ export const Server = () => {
 											flexWrap: "wrap",
 										}}
 									>
-										{_myDataInServer.roles.map((role: string) => {
-											if (rolesCombined[role]?.name === "@everyone") {
-												return null;
-											}
-											return (
-												<RoleChip
-													key={role}
-													name={rolesCombined[role]?.name || ""}
-													color={rolesCombined[role]?.color || "#ffffff"}
-												/>
-											);
+										{_myDataInServer.roles.map((roleId: string) => {
+											if (
+												rolesCombined[roleId]?.name !== "@everyone" &&
+												roleId !== (serverId as string)
+											)
+												return (
+													<RoleChip
+														key={roleId}
+														name={
+															rolesCombined[roleId]?.name ||
+															`이름없음(ID ${roleId})`
+														}
+														color={rolesCombined[roleId]?.color || "#ffffff"}
+													/>
+												);
 										})}
 									</div>
 								</div>
@@ -482,38 +492,42 @@ export const Server = () => {
 														>
 															{game.gamesRoles &&
 																game.gamesRoles.length > 0 &&
-																Object.values(rolesCombined).map((role) => (
-																	<Chip
-																		key={role.roleId}
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																			cursor: "pointer",
-																			...(_iHaveRole(
-																				_serverData,
-																				role.roleId,
-																			) && {
-																				border: "1px solid black",
-																				background: "rgba(255, 255, 255, 1)",
-																				color: "rgba(0, 0, 0, 1)",
-																			}),
-																		}}
-																		onClick={() =>
-																			toggleRoleAssign(role.roleId)
-																		}
-																	>
-																		<_8pxCircle
+																game.gamesRoles.map(
+																	(role: RoleRelationToGame) => (
+																		<Chip
+																			key={role.roleId}
 																			css={{
-																				backgroundColor: `${
-																					role.color || "#ffffff"
-																				}`,
+																				display: "flex",
+																				flexDirection: "row",
+																				gap: "4px",
+																				alignItems: "center",
+																				cursor: "pointer",
+																				...(_iHaveRole(
+																					_serverData,
+																					role.roleId,
+																				) && {
+																					border: "1px solid black",
+																					background: "rgba(255, 255, 255, 1)",
+																					color: "rgba(0, 0, 0, 1)",
+																				}),
 																			}}
-																		/>
-																		{role.name}
-																	</Chip>
-																))}
+																			onClick={() =>
+																				toggleRoleAssign(role.roleId)
+																			}
+																		>
+																			<_8pxCircle
+																				css={{
+																					backgroundColor: `${
+																						rolesCombined[role.roleId]?.color ||
+																						"#ffffff"
+																					}`,
+																				}}
+																			/>
+																			{rolesCombined[role.roleId]?.name ||
+																				"역할 이름 없음"}
+																		</Chip>
+																	),
+																)}
 														</div>
 													</div>
 													{_serverData.admin && (
