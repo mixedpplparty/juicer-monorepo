@@ -255,18 +255,27 @@ export const ServerSettings = () => {
 				"to",
 				(e.currentTarget as HTMLElement).id,
 			);
-			await startTransition(
-				_assignRoleCategoryToRole(
-					serverId as string,
-					(e.currentTarget as HTMLElement).id === "unassigned"
-						? null
-						: Number((e.currentTarget as HTMLElement).id),
-					draggedRoleId.current,
-				),
-			);
+
+			if (
+				Number((e.currentTarget as HTMLElement).id) !== draggedFrom.current &&
+				!(
+					(e.currentTarget as HTMLElement).id === "unassigned" &&
+					draggedFrom.current === null
+				)
+			) {
+				await startTransition(
+					_assignRoleCategoryToRole(
+						serverId as string,
+						(e.currentTarget as HTMLElement).id === "unassigned"
+							? null
+							: Number((e.currentTarget as HTMLElement).id),
+						draggedRoleId.current,
+					),
+				);
+				await _serverDataQuery.refetch();
+			}
 			draggedRoleId.current = null;
 		}
-		await _serverDataQuery.refetch();
 	};
 	return (
 		<Suspense fallback={<Loading />}>
