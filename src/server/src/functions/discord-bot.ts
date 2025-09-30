@@ -121,6 +121,7 @@ export const getAllServersUserAndBotAreIn = async (userId: string) => {
 				});
 			}
 		} catch (error) {
+			// if error is DiscordAPIError and error.code is 10007 it's totally fine; it's just that the user is not in the guild the bot is in
 			if (!(error instanceof DiscordAPIError)) {
 				console.error(`Error fetching guild ${guild.id}:`, error);
 			}
