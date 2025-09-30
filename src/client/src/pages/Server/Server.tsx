@@ -318,22 +318,23 @@ export const Server = () => {
 											flexWrap: "wrap",
 										}}
 									>
-										{_myDataInServer.roles.map((roleId: string) => {
-											if (
-												rolesCombined[roleId]?.name !== "@everyone" &&
-												roleId !== (serverId as string)
-											)
-												return (
-													<RoleChip
-														key={roleId}
-														name={
-															rolesCombined[roleId]?.name ||
-															`이름없음 (ID ${roleId})`
-														}
-														color={rolesCombined[roleId]?.color || "#ffffff"}
-													/>
-												);
-										})}
+										{_serverData.serverDataDb &&
+											_myDataInServer.roles.map((roleId: string) => {
+												if (
+													rolesCombined[roleId]?.name !== "@everyone" &&
+													roleId !== (serverId as string)
+												)
+													return (
+														<RoleChip
+															key={roleId}
+															name={
+																rolesCombined[roleId]?.name ||
+																`이름없음 (ID ${roleId})`
+															}
+															color={rolesCombined[roleId]?.color || "#ffffff"}
+														/>
+													);
+											})}
 									</div>
 								</div>
 							</Card>
