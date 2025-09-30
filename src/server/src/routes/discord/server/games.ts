@@ -37,7 +37,7 @@ app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 			serverId: serverId as string,
 			name: body.name as string,
 			description: body.description as string,
-			categoryId: Number(body.categoryId),
+			categoryId: body.categoryId ? Number(body.categoryId) : null,
 		});
 		return c.json(game, 200);
 	}
