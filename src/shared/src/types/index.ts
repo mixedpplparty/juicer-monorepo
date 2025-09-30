@@ -161,7 +161,7 @@ export type ServerDataDiscordRole = {
 
 export type ServerData = {
 	admin: boolean;
-	serverDataDb: ServerDataDb;
+	serverDataDb: ServerDataDb | null;
 	serverDataDiscord: FilteredServerDataDiscord;
 };
 

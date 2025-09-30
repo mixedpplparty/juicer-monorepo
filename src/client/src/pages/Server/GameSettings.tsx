@@ -41,7 +41,7 @@ export const GameSettings = () => {
 	);
 	const _serverData = _serverDataQuery.data;
 	const rolesCombined = useMemo(() => {
-		const dbRoles = _serverData.serverDataDb.roles || [];
+		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
 
 		// Role with roleCategory and selfAssignable
@@ -62,7 +62,7 @@ export const GameSettings = () => {
 		return mergedRoles;
 	}, [_serverData]);
 	const gamesObj = useMemo(() => {
-		return _serverData.serverDataDb.games?.reduce(
+		return _serverData.serverDataDb?.games?.reduce(
 			(obj, game) => {
 				obj[game.gameId] = game;
 				return obj;
@@ -250,7 +250,7 @@ export const GameSettings = () => {
 							}
 						>
 							<Option value="">카테고리 선택</Option>
-							{_serverData.serverDataDb.categories?.map(
+							{_serverData.serverDataDb?.categories?.map(
 								(category: Category) => (
 									<Option key={category.categoryId} value={category.categoryId}>
 										{category.name}
@@ -267,7 +267,7 @@ export const GameSettings = () => {
 								flexWrap: "wrap",
 							}}
 						>
-							{_serverData.serverDataDb.tags?.map((tag: Tag) => (
+							{_serverData.serverDataDb?.tags?.map((tag: Tag) => (
 								<CheckableChip
 									key={tag.tagId}
 									value={tag.tagId}
@@ -286,7 +286,7 @@ export const GameSettings = () => {
 								</CheckableChip>
 							))}
 						</div>
-						{_serverData.serverDataDb.tags?.length === 0 && (
+						{_serverData.serverDataDb?.tags?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 태그가 없습니다.
 							</div>
@@ -329,7 +329,7 @@ export const GameSettings = () => {
 								);
 							})}
 						</div>
-						{_serverData.serverDataDb.roles?.length === 0 && (
+						{_serverData.serverDataDb?.roles?.length === 0 && (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 역할이 없습니다.
 							</div>

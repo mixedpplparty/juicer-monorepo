@@ -70,7 +70,7 @@ export const Server = () => {
 	const _serverData = _serverDataQuery.data;
 
 	const rolesCombined = useMemo(() => {
-		const dbRoles = _serverData.serverDataDb.roles || [];
+		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
 
 		// Role with roleCategory and selfAssignable
@@ -97,7 +97,7 @@ export const Server = () => {
 	}, [_serverData]);
 
 	const categoriesObj = useMemo(() => {
-		return _serverData.serverDataDb.categories?.reduce(
+		return _serverData.serverDataDb?.categories?.reduce(
 			(obj, category: Category) => {
 				obj[category.categoryId] = category;
 				return obj;
@@ -107,7 +107,7 @@ export const Server = () => {
 	}, [_serverData]);
 
 	const tagsObj = useMemo(() => {
-		return _serverData.serverDataDb.tags?.reduce(
+		return _serverData.serverDataDb?.tags?.reduce(
 			(obj, tag: Tag) => {
 				obj[tag.tagId] = tag;
 				return obj;
@@ -612,7 +612,7 @@ export const Server = () => {
 							<label htmlFor="game-category">카테고리 (선택)</label>
 							<Select id="game-category" name="game-category" defaultValue="">
 								<Option value="">카테고리 선택</Option>
-								{_serverData.serverDataDb.categories?.map(
+								{_serverData.serverDataDb?.categories?.map(
 									(category: Category) => (
 										<Option
 											key={category.categoryId}

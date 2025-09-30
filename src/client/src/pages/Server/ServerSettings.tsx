@@ -66,7 +66,7 @@ export const ServerSettings = () => {
 	const _serverData = _serverDataQuery.data;
 
 	const roleCategoriesObj = useMemo(() => {
-		return _serverData.serverDataDb.roleCategories?.reduce(
+		return _serverData.serverDataDb?.roleCategories?.reduce(
 			(obj, roleCategory) => {
 				obj[roleCategory.roleCategoryId] = roleCategory;
 				return obj;
@@ -76,7 +76,7 @@ export const ServerSettings = () => {
 	}, [_serverData]);
 
 	const rolesCombined = useMemo(() => {
-		const dbRoles = _serverData.serverDataDb.roles || [];
+		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
 
 		// Role with roleCategory and selfAssignable
@@ -379,12 +379,12 @@ export const ServerSettings = () => {
 									역할 분류 추가
 								</Button>
 							</div>
-							{!!_serverData.serverDataDb.roleCategories?.length || (
+							{!!_serverData.serverDataDb?.roleCategories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 역할 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.serverDataDb.roleCategories?.length && (
+							{!!_serverData.serverDataDb?.roleCategories?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -393,7 +393,7 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{_serverData.serverDataDb.roleCategories?.map(
+									{_serverData.serverDataDb?.roleCategories?.map(
 										(roleCategory: RoleCategory) => (
 											<div
 												key={roleCategory.roleCategoryId}
@@ -491,12 +491,12 @@ export const ServerSettings = () => {
 									주제 분류 추가
 								</Button>
 							</div>
-							{!!_serverData.serverDataDb.categories?.length || (
+							{!!_serverData.serverDataDb?.categories?.length || (
 								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 									서버에 주제 카테고리가 없습니다.
 								</div>
 							)}
-							{!!_serverData.serverDataDb.categories?.length && (
+							{!!_serverData.serverDataDb?.categories?.length && (
 								<div
 									css={{
 										display: "flex",
@@ -505,7 +505,7 @@ export const ServerSettings = () => {
 										flexWrap: "wrap",
 									}}
 								>
-									{_serverData.serverDataDb.categories?.map(
+									{_serverData.serverDataDb?.categories?.map(
 										(category: Category) => (
 											<Chip
 												key={category.categoryId}
@@ -573,12 +573,12 @@ export const ServerSettings = () => {
 									gap: "6px",
 								}}
 							>
-								{!!_serverData.serverDataDb.tags?.length || (
+								{!!_serverData.serverDataDb?.tags?.length || (
 									<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 										서버에 태그가 없습니다.
 									</div>
 								)}
-								{!!_serverData.serverDataDb.tags?.length && (
+								{!!_serverData.serverDataDb?.tags?.length && (
 									<div
 										css={{
 											display: "flex",
@@ -587,7 +587,7 @@ export const ServerSettings = () => {
 											flexWrap: "wrap",
 										}}
 									>
-										{_serverData.serverDataDb.tags?.map((tag: Tag) => (
+										{_serverData.serverDataDb?.tags?.map((tag: Tag) => (
 											<Chip
 												key={tag.tagId}
 												css={{
@@ -748,7 +748,7 @@ export const ServerSettings = () => {
 							<label htmlFor="role-category-id">역할 분류</label>
 							<Select id="role-category-id" name="role-category-id">
 								<Option value="">분류 없음</Option>
-								{_serverData.serverDataDb.roleCategories?.map(
+								{_serverData.serverDataDb?.roleCategories?.map(
 									(roleCategory) => (
 										<Option
 											key={roleCategory.roleCategoryId}
