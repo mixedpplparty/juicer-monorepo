@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { NameRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import { NameRequiredRequestBody } from "juicer-shared";
 import {
 	createTag,
 	deleteTag,

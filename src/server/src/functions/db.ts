@@ -6,8 +6,6 @@ import {
 } from "@drdgvhbh/postgres-error-codes";
 import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { DatabaseError } from "pg";
-import type * as z from "zod";
 import type {
 	CreateCategoryRequestBody,
 	CreateGameDBParams,
@@ -24,7 +22,9 @@ import type {
 	Tag,
 	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
-} from "../../../shared/dist/index.js";
+} from "juicer-shared";
+import { DatabaseError } from "pg";
+import type * as z from "zod";
 import { db } from "../db/index.js";
 import {
 	categories,
