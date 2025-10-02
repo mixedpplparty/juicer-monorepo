@@ -2,12 +2,14 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
+import TagIcon from "@mui/icons-material/Tag";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
 	Category,
 	Game,
 	RoleRelationToGame,
+	ServerDataDiscordChannel,
 	Tag,
 	TagRelationToGame,
 } from "juicer-shared";
@@ -111,6 +113,16 @@ export const Server = () => {
 				return obj;
 			},
 			{} as Record<number, Tag>,
+		);
+	}, [_serverData]);
+
+	const channelsObj = useMemo(() => {
+		return _serverData.serverDataDiscord.channels?.reduce(
+			(obj, channel: ServerDataDiscordChannel) => {
+				obj[channel.id] = channel;
+				return obj;
+			},
+			{} as Record<string, ServerDataDiscordChannel>,
 		);
 	}, [_serverData]);
 
@@ -480,6 +492,34 @@ export const Server = () => {
 																		</div>
 																	),
 																)}
+														</div>
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "row",
+																gap: "4px",
+																flexWrap: "wrap",
+															}}
+														>
+															{game.channels &&
+																game.channels.length > 0 &&
+																game.channels.map((channelId: string) => (
+																	<div
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																			alignItems: "center",
+																		}}
+																		key={channelId}
+																	>
+																		<TagIcon
+																			css={{ width: "16px", height: "16px" }}
+																		/>
+																		{channelsObj?.[channelId]?.name ||
+																			"채널 이름 없음"}
+																	</div>
+																))}
 														</div>
 														<div
 															css={{
