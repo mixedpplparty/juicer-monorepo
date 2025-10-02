@@ -209,6 +209,7 @@ export const _updateGameWithTagsAndRoles = async (
 	gameCategory: string,
 	gameTags: number[],
 	gameRoles: string[],
+	channels: string[],
 ): Promise<boolean> => {
 	//true on success
 	const _res = await axios.put(
@@ -219,6 +220,7 @@ export const _updateGameWithTagsAndRoles = async (
 			categoryId: gameCategory === "" ? undefined : Number(gameCategory),
 			tagIds: gameTags,
 			roleIds: gameRoles,
+			channels: channels,
 		},
 	);
 	return _res.data;

@@ -1,11 +1,13 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
+import TagIcon from "@mui/icons-material/Tag";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
 	Category,
 	Game,
 	RoleRelationToGame,
+	ServerDataDiscordChannel,
 	Tag,
 	TagRelationToGame,
 } from "juicer-shared";
@@ -31,8 +33,7 @@ import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
 	const { showToast } = useToast();
-	// usages of isLoading to be added later
-	const [isLoading, startTransition] = useLoading();
+	const [isOnTransition, startTransition] = useLoading();
 	const [searchParams] = useSearchParams();
 	const gameId = searchParams.get("gameId");
 	const serverId = searchParams.get("serverId");
@@ -78,6 +79,11 @@ export const GameSettings = () => {
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(
 		gamesObj?.[Number(gameId as string)]?.gamesRoles?.map(
 			(role: RoleRelationToGame) => role.roleId,
+		) || [],
+	);
+	const [selectedChannels, setSelectedChannels] = useState<string[]>(
+		gamesObj?.[Number(gameId as string)]?.channels?.map(
+			(channelId: string) => channelId,
 		) || [],
 	);
 	const navigate = useNavigate();
@@ -132,6 +138,7 @@ export const GameSettings = () => {
 					gameCategory as string,
 					selectedTags as number[],
 					selectedRoles as string[],
+					selectedChannels as string[],
 				),
 			);
 			showToast("Game updated", "success");
@@ -205,7 +212,12 @@ export const GameSettings = () => {
 						</Button>
 					</div>
 					<form
-						action={onGameSettingsChangeSubmitAction}
+						onSubmit={(e) => {
+							e.preventDefault();
+							if (isOnTransition) return;
+							const formData = new FormData(e.currentTarget);
+							onGameSettingsChangeSubmitAction(formData);
+						}}
 						css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 					>
 						<label htmlFor="game-name">이름</label>
@@ -258,6 +270,49 @@ export const GameSettings = () => {
 								),
 							)}
 						</Select>
+
+						<label htmlFor="game-channels">채널 맵핑(선택)</label>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "6px",
+								flexWrap: "wrap",
+							}}
+						>
+							{_serverData.serverDataDiscord.channels?.map(
+								(channel: ServerDataDiscordChannel) => {
+									return (
+										<CheckableChip
+											key={channel.id}
+											value={channel.id}
+											checked={selectedChannels.includes(channel.id)}
+											onChange={(checked) => {
+												if (checked) {
+													setSelectedChannels([
+														...selectedChannels,
+														channel.id,
+													]);
+												} else {
+													setSelectedChannels(
+														selectedChannels.filter((id) => id !== channel.id),
+													);
+												}
+											}}
+										>
+											<TagIcon css={{ width: "16px", height: "16px" }} />
+											{channel.name}
+										</CheckableChip>
+									);
+								},
+							)}
+						</div>
+						{_serverData.serverDataDb?.roles?.length === 0 && (
+							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+								서버에 역할이 없습니다.
+							</div>
+						)}
+
 						<label htmlFor="game-tags">태그 부여(선택)</label>
 						<div
 							css={{
@@ -343,9 +398,11 @@ export const GameSettings = () => {
 								width: "100%",
 								gap: "8px",
 							}}
+							loading={isOnTransition}
+							disabled={isOnTransition}
 							type="submit"
 						>
-							저장
+							{isOnTransition ? "작업 중..." : "저장"}
 						</Button>
 					</form>
 				</ResponsiveCard>
