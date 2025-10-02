@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import TagIcon from "@mui/icons-material/Tag";
@@ -585,6 +586,20 @@ export const Server = () => {
 															</LinkNoStyle>
 														</div>
 													)}
+													<div css={{ alignSelf: "stretch" }}>
+														<LinkNoStyle
+															to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
+															css={{ cursor: "pointer" }}
+														>
+															<InlineButton
+																css={{ height: "100%", alignItems: "center" }}
+															>
+																<NavigateNextIcon
+																	css={{ width: "20px", height: "20px" }}
+																/>
+															</InlineButton>
+														</LinkNoStyle>
+													</div>
 												</div>
 											</Card>
 										);

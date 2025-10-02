@@ -5,6 +5,7 @@ import { SignInFailed } from "./pages/Auth/SignInFailed";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
 import { Landing } from "./pages/Landing/Landing";
 import { Loading } from "./pages/Loading/Loading";
+import { GameInfo } from "./pages/Server/GameInfo";
 import { GameSettings } from "./pages/Server/GameSettings";
 import { Server } from "./pages/Server/Server";
 import { ServerSettings } from "./pages/Server/ServerSettings";
@@ -25,6 +26,7 @@ const App = () => {
 					{ path: "*", element: <Dashboard /> },
 					{ path: "/server", element: <Server /> },
 					{ path: "/server/settings", element: <ServerSettings /> },
+					{ path: "/server/game", element: <GameInfo /> },
 					{ path: "/server/game/settings", element: <GameSettings /> },
 				]
 			: [
