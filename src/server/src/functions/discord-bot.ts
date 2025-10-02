@@ -6,6 +6,7 @@ import type {
 	Snowflake,
 } from "discord.js";
 import {
+	ChannelType,
 	Client,
 	DiscordAPIError,
 	Events,
@@ -17,6 +18,7 @@ import { HTTPException } from "hono/http-exception";
 import type {
 	FilteredGuild,
 	FilteredServerDataDiscord,
+	ServerDataDiscordChannel,
 	SyncRolesResponse,
 } from "juicer-shared/dist/types/index.js";
 import {
@@ -58,6 +60,23 @@ export const authenticateAndAuthorizeUser = async (
 		});
 	}
 	const owner = await guild.fetchOwner();
+
+	const channels: ServerDataDiscordChannel[] = [];
+
+	await guild.channels.fetch().then((fetchedChannels) => {
+		fetchedChannels.forEach((channel) => {
+			if (channel) {
+				if (channel.viewable) {
+					if (channel.type === ChannelType.GuildText) {
+						channels.push({
+							id: channel.id,
+							name: channel.name,
+						});
+					}
+				}
+			}
+		});
+	});
 	const filteredServerDataDiscord = {
 		id: guild.id,
 		name: guild.name,
@@ -76,6 +95,7 @@ export const authenticateAndAuthorizeUser = async (
 				meInRole: role.members.has(userData.id),
 			}));
 		}),
+		channels,
 	};
 	const member: GuildMember = await guild.members.fetch({
 		user: userData.id,

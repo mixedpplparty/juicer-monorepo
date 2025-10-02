@@ -1,5 +1,5 @@
 import type { GuildMember as DiscordJSGuildMember } from "discord.js";
-import type { APIUser } from "discord-api-types/v10";
+import type { APIUser, ChannelType } from "discord-api-types/v10";
 import * as z from "zod";
 
 export const ThumbnailImage = z
@@ -138,6 +138,12 @@ export type FilteredServerDataDiscord = {
 	ownerNick: string | null;
 	memberCount: number;
 	roles: ServerDataDiscordRole2[] | null;
+	channels: ServerDataDiscordChannel[] | null;
+};
+
+export type ServerDataDiscordChannel = {
+	id: string;
+	name: string;
 };
 
 export type ServerDataDiscordRole2 = {
