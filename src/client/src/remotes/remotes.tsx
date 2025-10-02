@@ -187,7 +187,15 @@ export const _createGame = async (
 	//game ID(number) returned on success
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/games/create`,
-		{ name: gameName, description: gameDescription, category_id: gameCategory },
+		{
+			name: gameName,
+			description: gameDescription,
+			categoryId: gameCategory
+				? Number(gameCategory) === 0
+					? null
+					: Number(gameCategory)
+				: null,
+		},
 		{ withCredentials: true },
 	);
 	return _res.data;

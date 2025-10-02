@@ -45,11 +45,9 @@ import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
 
 export const Server = () => {
-	//TODO do whatever when loading
 	const [query, setQuery] = useState<string | null>(null);
 	const debouncedQuery = useDebouncedValue<string | null>(query, 300);
-	// usages of isLoading to be added later
-	const [isLoading, startTransition] = useLoading();
+	const [isOnTransition, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
@@ -136,8 +134,8 @@ export const Server = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
-		await _searchGamesInServerQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
+		await startTransition(_searchGamesInServerQuery.refetch());
 	};
 
 	const toggleRoleAssign = async (roleId: string) => {
@@ -160,7 +158,7 @@ export const Server = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 	};
 
 	const syncServerDataAction = async () => {
@@ -173,8 +171,8 @@ export const Server = () => {
 			}
 		}
 
-		await _serverDataQuery.refetch();
-		await _searchGamesInServerQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
+		await startTransition(_searchGamesInServerQuery.refetch());
 	};
 
 	const addGameFormAction = async (formData: FormData) => {
@@ -185,7 +183,7 @@ export const Server = () => {
 			gameDescription = null;
 		}
 		let gameCategory = formData.get("game-category");
-		if (gameCategory === "") {
+		if (gameCategory === "" || gameCategory === null || gameCategory === "0") {
 			gameCategory = null;
 		}
 		console.log(gameName, gameDescription, gameCategory);
@@ -204,8 +202,8 @@ export const Server = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
-		await _searchGamesInServerQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
+		await startTransition(_searchGamesInServerQuery.refetch());
 		setIsAddGameModalOpen(false);
 	};
 
@@ -603,7 +601,12 @@ export const Server = () => {
 				<ModalPortal>
 					<Modal title="주제 추가" onClose={() => setIsAddGameModalOpen(false)}>
 						<form
-							action={addGameFormAction}
+							onSubmit={async (e) => {
+								e.preventDefault(); // prevent reload
+								if (isOnTransition) return;
+								const formData = new FormData(e.currentTarget);
+								await addGameFormAction(formData);
+							}}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
 							<label htmlFor="game-name">이름</label>
@@ -634,9 +637,11 @@ export const Server = () => {
 									width: "100%",
 									gap: "8px",
 								}}
+								disabled={isOnTransition}
+								loading={isOnTransition}
 								type="submit"
 							>
-								주제 추가
+								{isOnTransition ? "작업 중..." : "주제 추가"}
 							</Button>
 						</form>
 					</Modal>

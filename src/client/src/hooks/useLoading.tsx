@@ -29,7 +29,7 @@ export const useLoading = () => {
 				}
 			}
 		},
-		[ref.isMounted],
+		[ref],
 	) as <T>(promise: Promise<T>) => Promise<T>;
 
 	return useMemo(

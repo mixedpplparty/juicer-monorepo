@@ -32,12 +32,10 @@ import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
-	//TODO do whatever when loading
-	// usages of isLoading to be added later
 	const draggedFrom = useRef<number | null>(null);
 	const draggedRoleId = useRef<string | null>(null);
 
-	const [isLoading, startTransition] = useLoading();
+	const [isOnTransition, startTransition] = useLoading();
 	const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
 		useState<boolean>(false);
 	const [isCreateTagModalOpen, setIsCreateTagModalOpen] =
@@ -119,7 +117,7 @@ export const ServerSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 		setIsCreateCategoryModalOpen(false);
 	};
 	const createRoleCategoryFormAction = async (
@@ -136,7 +134,7 @@ export const ServerSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 		setIsCreateRoleCategoryModalOpen(false);
 	};
 	const createTagFormAction = async (formData: FormData): Promise<void> => {
@@ -149,7 +147,7 @@ export const ServerSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 		setIsCreateTagModalOpen(false);
 	};
 	const deleteRoleCategoryAction =
@@ -164,7 +162,7 @@ export const ServerSettings = () => {
 					showToast(error.response?.data.detail as string, "error");
 				}
 			}
-			await _serverDataQuery.refetch();
+			await startTransition(_serverDataQuery.refetch());
 		};
 	const deleteCategoryAction =
 		(categoryId: number) => async (): Promise<void> => {
@@ -176,7 +174,7 @@ export const ServerSettings = () => {
 					showToast(error.response?.data.detail as string, "error");
 				}
 			}
-			await _serverDataQuery.refetch();
+			await startTransition(_serverDataQuery.refetch());
 		};
 	const deleteTagAction = (tagId: number) => async (): Promise<void> => {
 		try {
@@ -187,7 +185,7 @@ export const ServerSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 	};
 
 	const handleRoleSettingsModalOpen =
@@ -236,7 +234,7 @@ export const ServerSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 		handleRoleSettingsModalClose();
 	};
 	const handleOnDragStart =
@@ -272,7 +270,7 @@ export const ServerSettings = () => {
 						draggedRoleId.current,
 					),
 				);
-				await _serverDataQuery.refetch();
+				await startTransition(_serverDataQuery.refetch());
 			}
 			draggedRoleId.current = null;
 		}
@@ -629,7 +627,12 @@ export const ServerSettings = () => {
 						onClose={() => setIsCreateCategoryModalOpen(false)}
 					>
 						<form
-							action={createCategoryFormAction}
+							onSubmit={async (e) => {
+								e.preventDefault(); // prevent reload
+								if (isOnTransition) return;
+								const formData = new FormData(e.currentTarget);
+								await createCategoryFormAction(formData);
+							}}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
 							<Input
@@ -646,9 +649,11 @@ export const ServerSettings = () => {
 									width: "100%",
 									gap: "8px",
 								}}
+								disabled={isOnTransition}
+								loading={isOnTransition}
 								type="submit"
 							>
-								카테고리 추가
+								{isOnTransition ? "작업 중..." : "카테고리 추가"}
 							</Button>
 						</form>
 					</Modal>
@@ -661,7 +666,12 @@ export const ServerSettings = () => {
 						onClose={() => setIsCreateTagModalOpen(false)}
 					>
 						<form
-							action={createTagFormAction}
+							onSubmit={async (e) => {
+								e.preventDefault(); // prevent reload
+								if (isOnTransition) return;
+								const formData = new FormData(e.currentTarget);
+								await createTagFormAction(formData);
+							}}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
 							<Input type="text" name="tag-name" placeholder="태그 이름" />
@@ -674,9 +684,11 @@ export const ServerSettings = () => {
 									width: "100%",
 									gap: "8px",
 								}}
+								loading={isOnTransition}
+								disabled={isOnTransition}
 								type="submit"
 							>
-								태그 추가
+								{isOnTransition ? "작업 중..." : "태그 추가"}
 							</Button>
 						</form>
 					</Modal>
@@ -689,7 +701,12 @@ export const ServerSettings = () => {
 						onClose={() => setIsCreateRoleCategoryModalOpen(false)}
 					>
 						<form
-							action={createRoleCategoryFormAction}
+							onSubmit={async (e) => {
+								e.preventDefault(); // prevent reload
+								if (isOnTransition) return;
+								const formData = new FormData(e.currentTarget);
+								await createRoleCategoryFormAction(formData);
+							}}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
 							<Input
@@ -706,10 +723,13 @@ export const ServerSettings = () => {
 									width: "100%",
 									gap: "8px",
 								}}
+								loading={isOnTransition}
+								disabled={isOnTransition}
 								type="submit"
 							>
-								역할 분류 추가
+								{isOnTransition ? "작업 중..." : "역할 분류 추가"}
 							</Button>
+							<div>test</div>
 						</form>
 					</Modal>
 				</ModalPortal>
@@ -718,7 +738,12 @@ export const ServerSettings = () => {
 				<ModalPortal>
 					<Modal title="역할 설정" onClose={handleRoleSettingsModalClose}>
 						<form
-							action={updateRoleFormAction}
+							onSubmit={async (e) => {
+								e.preventDefault(); // prevent reload
+								if (isOnTransition) return;
+								const formData = new FormData(e.currentTarget);
+								await updateRoleFormAction(formData);
+							}}
 							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 						>
 							<div
@@ -784,9 +809,11 @@ export const ServerSettings = () => {
 									justifyContent: "center",
 									gap: "8px",
 								}}
+								loading={isOnTransition}
+								disabled={isOnTransition}
 								type="submit"
 							>
-								역할 정보 저장
+								{isOnTransition ? "작업 중..." : "역할 정보 저장"}
 							</Button>
 						</form>
 					</Modal>
