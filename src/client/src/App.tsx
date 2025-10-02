@@ -25,7 +25,7 @@ const App = () => {
 					{ path: "*", element: <Dashboard /> },
 					{ path: "/server", element: <Server /> },
 					{ path: "/server/settings", element: <ServerSettings /> },
-					{ path: "/server/game", element: <GameSettings /> },
+					{ path: "/server/game/settings", element: <GameSettings /> },
 				]
 			: [
 					{ path: "*", element: <Landing /> },

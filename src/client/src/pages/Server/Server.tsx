@@ -532,7 +532,7 @@ export const Server = () => {
 													{_serverData.admin && (
 														<div css={{ alignSelf: "stretch" }}>
 															<LinkNoStyle
-																to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
+																to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
 																css={{ cursor: "pointer" }}
 															>
 																<InlineButton
