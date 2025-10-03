@@ -190,64 +190,69 @@ export const updateGame = async ({
 		}),
 	) as Partial<typeof games.$inferInsert>;
 
-	if (Object.keys(updateFields).length > 0) {
-		const updatedGame = await db
-			.update(games)
-			.set(updateFields)
-			.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
-			.returning();
-		res.updatedGame = updatedGame[0];
-	} else {
-		console.log("DEBUG: no fields to update");
-	}
+	await db.transaction(async (tx) => {
+		if (Object.keys(updateFields).length > 0) {
+			const updatedGame = await tx
+				.update(games)
+				.set(updateFields)
+				.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
+				.returning();
+			res.updatedGame = updatedGame[0];
+		} else {
+			console.log("DEBUG: no fields to update");
+		}
 
-	// update tags table
-	const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
-	// tags to add
-	const tagsToAdd = tagIds?.filter((tagId) => !existingTagIds.includes(tagId));
-	// tags to remove
-	const tagsToRemove = existingTagIds.filter(
-		(tagId) => !tagIds?.includes(tagId),
-	);
-	if (tagsToAdd && tagsToAdd.length > 0) {
-		const addedTags = await db
-			.insert(gamesTags)
-			.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
-			.returning();
-		res.tags.added = addedTags;
-	}
-	if (tagsToRemove && tagsToRemove.length > 0) {
-		const removedTags = await db
-			.delete(gamesTags)
-			.where(inArray(gamesTags.tagId, tagsToRemove))
-			.returning();
-		res.tags.removed = removedTags;
-	}
+		// update tags table
+		const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
+		// tags to add
+		const tagsToAdd = tagIds?.filter(
+			(tagId) => !existingTagIds.includes(tagId),
+		);
+		// tags to remove
+		const tagsToRemove = existingTagIds.filter(
+			(tagId) => !tagIds?.includes(tagId),
+		);
+		if (tagsToAdd && tagsToAdd.length > 0) {
+			const addedTags = await tx
+				.insert(gamesTags)
+				.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
+				.returning();
+			res.tags.added = addedTags;
+		}
+		if (tagsToRemove && tagsToRemove.length > 0) {
+			const removedTags = await tx
+				.delete(gamesTags)
+				.where(inArray(gamesTags.tagId, tagsToRemove))
+				.returning();
+			res.tags.removed = removedTags;
+		}
 
-	// update roles table
-	const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
-	// roles to add
-	const rolesToAdd = roleIds?.filter(
-		(roleId) => !existingRoleIds.includes(roleId),
-	);
-	// roles to remove
-	const rolesToRemove = existingRoleIds.filter(
-		(roleId) => !roleIds?.includes(roleId),
-	);
-	if (rolesToAdd && rolesToAdd.length > 0) {
-		const addedRoles = await db
-			.insert(gamesRoles)
-			.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
-			.returning();
-		res.roles.added = addedRoles;
-	}
-	if (rolesToRemove && rolesToRemove.length > 0) {
-		const removedRoles = await db
-			.delete(gamesRoles)
-			.where(inArray(gamesRoles.roleId, rolesToRemove))
-			.returning();
-		res.roles.removed = removedRoles;
-	}
+		// update roles table
+		const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
+		// roles to add
+		const rolesToAdd = roleIds?.filter(
+			(roleId) => !existingRoleIds.includes(roleId),
+		);
+		// roles to remove
+		const rolesToRemove = existingRoleIds.filter(
+			(roleId) => !roleIds?.includes(roleId),
+		);
+		if (rolesToAdd && rolesToAdd.length > 0) {
+			const addedRoles = await tx
+				.insert(gamesRoles)
+				.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
+				.returning();
+			res.roles.added = addedRoles;
+		}
+		if (rolesToRemove && rolesToRemove.length > 0) {
+			const removedRoles = await tx
+				.delete(gamesRoles)
+				.where(inArray(gamesRoles.roleId, rolesToRemove))
+				.returning();
+			res.roles.removed = removedRoles;
+		}
+	});
+
 	return res;
 };
 
