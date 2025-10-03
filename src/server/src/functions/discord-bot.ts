@@ -46,7 +46,48 @@ export const authenticateAndAuthorizeUser = async (
 	requireManageGuildPermissions: boolean = false,
 ): Promise<{
 	member: GuildMember;
+	manageGuildPermission: boolean;
+}> => {
+	// Fix for #15: Only do the authentication part for optimization
+	const userData = await getDiscordOAuthUserData(accessToken);
+	const guild = await discordClient.guilds.fetch({
+		guild: serverId,
+	});
+	if (!guild) {
+		throw new HTTPException(404, {
+			message: "Server not found. Bot may not be in that server.",
+		});
+	}
+	const member: GuildMember = await guild.members.fetch({
+		user: userData.id,
+		force: true,
+	});
+	if (!member) {
+		throw new HTTPException(404, { message: "User not in server." });
+	}
+	if (
+		requireManageGuildPermissions &&
+		!member.permissions.has(PermissionFlagsBits.ManageGuild)
+	) {
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission in that server.",
+		});
+	}
+	return {
+		member,
+		manageGuildPermission: member.permissions.has(
+			PermissionFlagsBits.ManageGuild,
+		),
+	};
+};
+
+export const getGuildAndMemberData = async (
+	serverId: string,
+	accessToken: string,
+	requireManageGuildPermissions: boolean = false,
+): Promise<{
 	guild: FilteredServerDataDiscord;
+	member: GuildMember;
 	manageGuildPermission: boolean;
 }> => {
 	const userData = await getDiscordOAuthUserData(accessToken);

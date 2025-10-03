@@ -10,6 +10,7 @@ import {
 import {
 	assignRolesToUser,
 	authenticateAndAuthorizeUser,
+	getGuildAndMemberData,
 	unassignRolesFromUser,
 } from "../../../functions/discord-bot.js";
 
@@ -20,7 +21,7 @@ const app = new Hono();
 app.get("/", async (c) => {
 	const serverId = c.req.param("serverId");
 	const accessToken = getCookie(c, "discord_access_token");
-	const { guild, member } = await authenticateAndAuthorizeUser(
+	const { guild, member } = await getGuildAndMemberData(
 		serverId as string,
 		accessToken as string,
 		true,

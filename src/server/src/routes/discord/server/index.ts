@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { createServer, getServerDataInDb } from "../../../functions/db.js";
 import {
 	authenticateAndAuthorizeUser,
+	getGuildAndMemberData,
 	syncRolesWithDbAndDiscord,
 } from "../../../functions/discord-bot.js";
 import categoriesRoutes from "./categories.js";
@@ -20,7 +21,7 @@ const app = new Hono();
 app.get("/:serverId", async (c) => {
 	const serverId = c.req.param("serverId");
 	const accessToken = getCookie(c, "discord_access_token");
-	const { guild, manageGuildPermission } = await authenticateAndAuthorizeUser(
+	const { guild, manageGuildPermission } = await getGuildAndMemberData(
 		serverId,
 		accessToken as string,
 	);
