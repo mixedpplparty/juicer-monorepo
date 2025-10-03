@@ -2,9 +2,9 @@
 	"name": "backend",
 	"type": "module",
 	"scripts": {
-		"dev": "tsx watch src/index.ts",
+		"dev": "bun run --hot src/index.ts",
 		"build": "tsc",
-		"start": "node dist/src/index.js",
+		"start": "bun run src/index.js",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio"
