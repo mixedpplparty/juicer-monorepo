@@ -2,11 +2,12 @@ FROM node:lts-alpine AS base
 
 FROM base AS builder
 
-# vulnurability mitigations
+# vulnerability mitigations
 RUN apk update
 RUN apk upgrade --no-cache
 
 RUN apk add --no-cache gcompat
+RUN apk add --no-cache unzip
 WORKDIR /app
 
 RUN npm install -g pnpm
@@ -20,7 +21,7 @@ COPY shared ./shared
 RUN pnpm install 
 
 RUN pnpm run build:shared
-RUN pnpm run build:server
+#RUN pnpm run build:server
 
 FROM base AS runner
 WORKDIR /app
@@ -28,16 +29,14 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 hono
 
+RUN npm install -g bun
+
 COPY --from=builder --chown=hono:nodejs /app/node_modules /app/node_modules
-COPY --from=builder --chown=hono:nodejs /app/server/node_modules /app/server/node_modules
-COPY --from=builder --chown=hono:nodejs /app/shared/node_modules /app/shared/node_modules
-COPY --from=builder --chown=hono:nodejs /app/server/dist /app/server/dist
-COPY --from=builder --chown=hono:nodejs /app/shared/dist /app/shared/dist
+COPY --from=builder --chown=hono:nodejs /app/server /app/server
+COPY --from=builder --chown=hono:nodejs /app/shared /app/shared
 COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
-COPY --from=builder --chown=hono:nodejs /app/server/package.json /app/server/package.json
-COPY --from=builder --chown=hono:nodejs /app/shared/package.json /app/shared/package.json
 
 USER hono
 EXPOSE 8000
 
-CMD ["node", "/app/server/dist/src/index.js"]
+CMD ["bun", "run", "/app/server/src/index.ts"]
