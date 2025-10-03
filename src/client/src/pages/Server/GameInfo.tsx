@@ -1,54 +1,34 @@
-import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import SettingsIcon from "@mui/icons-material/Settings";
-import SyncIcon from "@mui/icons-material/Sync";
-import TagIcon from "@mui/icons-material/Tag";
-import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
 	Category,
-	Game,
 	RoleRelationToGame,
 	ServerDataDiscordChannel,
 	Tag,
-	TagRelationToGame,
 } from "juicer-shared";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { _iHaveRole } from "../../functions/ServerFunctions";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
 	_assignRoleByIdToUser,
-	_createGame,
-	_createServer,
 	_fetchMyDataInServer,
-	_fetchSearchGamesInServer,
 	_fetchServerData,
 	_fetchThumbnailsInGame,
-	_syncServerData,
 	_unassignRoleByIdFromUser,
 } from "../../remotes/remotes";
-import { LinkNoStyle } from "../../ui/components/Anchor";
-import { Button, InlineButton } from "../../ui/components/Button";
-import { Card, ResponsiveCard } from "../../ui/components/Card";
+import { Button } from "../../ui/components/Button";
+import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { FullPageBase } from "../../ui/components/FullPageBase";
-import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
-import { Input } from "../../ui/components/Input";
-import { Modal } from "../../ui/components/Modal";
-import { ModalPortal } from "../../ui/components/ModalPortal";
-import { RoleChip } from "../../ui/components/RoleChip";
-import { Option, Select } from "../../ui/components/Select";
 import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
 
 export const GameInfo = () => {
-	const [query, setQuery] = useState<string | null>(null);
-	const debouncedQuery = useDebouncedValue<string | null>(query, 300);
 	const [isOnTransition, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -60,7 +40,6 @@ export const GameInfo = () => {
 		queryKey: ["myDataInServer", serverId],
 		queryFn: () => _fetchMyDataInServer(serverId),
 	});
-	const _myDataInServer = _myDataInServerQuery.data;
 
 	const _serverDataQuery = useSuspenseQuery(
 		_fetchServerData.query(serverId as string),
