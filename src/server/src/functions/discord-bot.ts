@@ -52,7 +52,6 @@ export const authenticateAndAuthorizeUser = async (
 	const userData = await getDiscordOAuthUserData(accessToken);
 	const guild = await discordClient.guilds.fetch({
 		guild: serverId,
-		force: true,
 	});
 	if (!guild) {
 		throw new HTTPException(404, {

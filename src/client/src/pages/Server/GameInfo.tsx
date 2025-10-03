@@ -190,7 +190,7 @@ export const GameInfo = () => {
 						</span>
 					</div>
 					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>연결 채널</h2>
+						<h2 css={{ margin: 0 }}>연관 채널</h2>
 						<span>
 							{currentGame?.channels
 								?.map((channel) => `#${channelsObj?.[channel]?.name}`)
