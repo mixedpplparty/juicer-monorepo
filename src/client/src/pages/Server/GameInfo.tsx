@@ -141,7 +141,7 @@ export const GameInfo = () => {
 	return (
 		<Suspense fallback={<Loading />}>
 			<FullPageBase>
-				<ResponsiveCard css={{ gap: "12px" }}>
+				<ResponsiveCard css={{ gap: "18px" }}>
 					<div
 						css={{
 							display: "flex",

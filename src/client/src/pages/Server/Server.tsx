@@ -458,10 +458,9 @@ export const Server = () => {
 																	alignItems: "center",
 																}}
 															>
-																{game.categoryId
-																	? categoriesObj?.[game.categoryId]?.name ||
-																		"카테고리 이름 없음"
-																	: "카테고리 없음"}
+																{game.categoryId &&
+																	(categoriesObj?.[game.categoryId]?.name ||
+																		"카테고리 이름 없음")}
 															</div>
 														</div>
 														<div

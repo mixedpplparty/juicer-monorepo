@@ -147,7 +147,7 @@ export const GameSettings = () => {
 				showToast(error.response?.data.detail as string, "error");
 			}
 		}
-		await _serverDataQuery.refetch();
+		await startTransition(_serverDataQuery.refetch());
 		navigate(`/server?serverId=${serverId}`);
 	};
 

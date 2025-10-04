@@ -729,7 +729,6 @@ export const ServerSettings = () => {
 							>
 								{isOnTransition ? "작업 중..." : "역할 분류 추가"}
 							</Button>
-							<div>test</div>
 						</form>
 					</Modal>
 				</ModalPortal>
