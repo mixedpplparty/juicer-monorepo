@@ -340,9 +340,10 @@ export const ServerSettings = () => {
 													id={role.roleId}
 													name={role.name || `이름없음 (ID ${role.roleId})`}
 													color={role.color || "#ffffff"}
-													draggable={true}
+													draggable={draggedRoleId.current !== role.roleId}
 													onDragStart={handleOnDragStart(role)}
 													onClick={handleRoleSettingsModalOpen(role)}
+													isLoading={draggedRoleId.current === role.roleId}
 												/>
 											);
 										})}
@@ -448,9 +449,14 @@ export const ServerSettings = () => {
 																		role.name || `이름없음 (ID ${role.roleId})`
 																	}
 																	color={role.color || "#ffffff"}
-																	draggable={true}
+																	draggable={
+																		draggedRoleId.current !== role.roleId
+																	}
 																	onDragStart={handleOnDragStart(role)}
 																	onClick={handleRoleSettingsModalOpen(role)}
+																	isLoading={
+																		draggedRoleId.current === role.roleId
+																	}
 																/>
 															);
 														})}

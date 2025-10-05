@@ -1,16 +1,24 @@
 import styled from "@emotion/styled";
 import React from "react";
 export const Chip = styled.div(
-	(props: { variant?: "primary" | "unclickable" }) => ({
+	(props: { variant?: "primary" | "unclickable" | "loading" }) => ({
 		borderRadius:
-			!props.variant || props.variant === "primary" ? "16px" : "6px",
+			!props.variant ||
+			props.variant === "primary" ||
+			props.variant === "loading"
+				? "16px"
+				: "6px",
 		background:
 			!props.variant || props.variant === "primary"
 				? "rgba(255, 255, 255, 0.1)"
-				: "rgb(14, 14, 14)",
+				: props.variant === "loading"
+					? "rgba(255, 255, 255, 0.05)"
+					: "rgb(14, 14, 14)",
 		padding: "4px 6px",
 		border:
-			!props.variant || props.variant === "primary"
+			!props.variant ||
+			props.variant === "primary" ||
+			props.variant === "loading"
 				? "1px solid rgba(255, 255, 255, 0.66)"
 				: "1px solid rgba(255, 255, 255, 0.15)",
 	}),

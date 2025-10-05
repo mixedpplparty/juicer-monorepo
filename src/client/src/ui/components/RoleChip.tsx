@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Chip } from "./Chip";
 import { _8pxCircle } from "./Circle";
+import { Spinner } from "./Spinner";
 
 export const RoleChip = ({
 	name,
@@ -12,6 +13,7 @@ export const RoleChip = ({
 	onClick,
 	css,
 	variant,
+	isLoading,
 }: {
 	name: string;
 	color: `#${string}`;
@@ -22,6 +24,7 @@ export const RoleChip = ({
 	id?: string;
 	css?: CSSProperties;
 	variant?: "primary" | "unclickable";
+	isLoading?: boolean;
 }) => {
 	return (
 		<Chip
@@ -30,6 +33,7 @@ export const RoleChip = ({
 				flexDirection: "row",
 				gap: "4px",
 				alignItems: "center",
+				cursor: isLoading ? "not-allowed" : "",
 				...css,
 			}}
 			draggable={draggable}
@@ -37,13 +41,24 @@ export const RoleChip = ({
 			onDragStart={onDragStart}
 			onDragEnd={onDragEnd}
 			onClick={onClick}
-			variant={variant}
+			variant={isLoading ? "loading" : variant}
 		>
-			<_8pxCircle
-				css={{
-					backgroundColor: color,
-				}}
-			/>
+			{isLoading ? (
+				<Spinner
+					css={{
+						width: "16px",
+						height: "16px",
+						border: "3px solid rgba(255, 255, 255, 0.5)",
+						borderTopColor: "rgba(255, 255, 255, 1)",
+					}}
+				/>
+			) : (
+				<_8pxCircle
+					css={{
+						backgroundColor: color,
+					}}
+				/>
+			)}
 			{name}
 		</Chip>
 	);
