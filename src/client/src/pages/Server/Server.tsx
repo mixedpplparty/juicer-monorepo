@@ -3,7 +3,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
-import TagIcon from "@mui/icons-material/Tag";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
@@ -12,7 +11,6 @@ import type {
 	RoleRelationToGame,
 	ServerDataDiscordChannel,
 	Tag,
-	TagRelationToGame,
 } from "juicer-shared";
 import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -42,7 +40,6 @@ import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
-import { RoleCategoryContainer } from "../../ui/components/RoleCategoryContainer";
 import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Skeleton } from "../../ui/components/Skeleton";
@@ -473,36 +470,6 @@ export const Server = () => {
 																flexWrap: "wrap",
 															}}
 														>
-															{game.gamesTags &&
-																game.gamesTags.length > 0 &&
-																game.gamesTags?.map(
-																	(tag: TagRelationToGame) => (
-																		<div
-																			key={tag.tagId}
-																			css={{
-																				display: "flex",
-																				flexDirection: "row",
-																				gap: "4px",
-																				alignItems: "center",
-																				border: "none",
-																				background: "none",
-																			}}
-																		>
-																			#
-																			{tagsObj?.[tag.tagId]?.name ||
-																				"태그 이름 없음"}
-																		</div>
-																	),
-																)}
-														</div>
-														<div
-															css={{
-																display: "flex",
-																flexDirection: "row",
-																gap: "4px",
-																flexWrap: "wrap",
-															}}
-														>
 															{game.channels &&
 																game.channels.length > 0 &&
 																game.channels.map((channelId: string) => (
@@ -515,9 +482,7 @@ export const Server = () => {
 																		}}
 																		key={channelId}
 																	>
-																		<TagIcon
-																			css={{ width: "16px", height: "16px" }}
-																		/>
+																		#
 																		{channelsObj?.[channelId]?.name ||
 																			"채널 이름 없음"}
 																	</div>
