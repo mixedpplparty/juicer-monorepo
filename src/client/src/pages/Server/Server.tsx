@@ -42,6 +42,7 @@ import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { RoleCategoryContainer } from "../../ui/components/RoleCategoryContainer";
 import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Skeleton } from "../../ui/components/Skeleton";
@@ -337,6 +338,7 @@ export const Server = () => {
 												)
 													return (
 														<RoleChip
+															variant="unclickable"
 															key={roleId}
 															name={
 																rolesCombined[roleId]?.name ||

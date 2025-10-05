@@ -11,6 +11,7 @@ export const RoleChip = ({
 	id,
 	onClick,
 	css,
+	variant,
 }: {
 	name: string;
 	color: `#${string}`;
@@ -20,6 +21,7 @@ export const RoleChip = ({
 	onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 	id?: string;
 	css?: CSSProperties;
+	variant?: "primary" | "unclickable";
 }) => {
 	return (
 		<Chip
@@ -35,6 +37,7 @@ export const RoleChip = ({
 			onDragStart={onDragStart}
 			onDragEnd={onDragEnd}
 			onClick={onClick}
+			variant={variant}
 		>
 			<_8pxCircle
 				css={{

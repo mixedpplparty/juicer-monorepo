@@ -1,11 +1,20 @@
 import styled from "@emotion/styled";
 import React from "react";
-export const Chip = styled.div({
-	borderRadius: "16px",
-	border: "1px solid rgba(255, 255, 255, 0.66)",
-	background: "rgba(255, 255, 255, 0.1)",
-	padding: "4px 6px",
-});
+export const Chip = styled.div(
+	(props: { variant?: "primary" | "unclickable" }) => ({
+		borderRadius:
+			!props.variant || props.variant === "primary" ? "16px" : "6px",
+		background:
+			!props.variant || props.variant === "primary"
+				? "rgba(255, 255, 255, 0.1)"
+				: "rgb(14, 14, 14)",
+		padding: "4px 6px",
+		border:
+			!props.variant || props.variant === "primary"
+				? "1px solid rgba(255, 255, 255, 0.66)"
+				: "1px solid rgba(255, 255, 255, 0.15)",
+	}),
+);
 
 //create checkableChip
 export const CheckableChipBase = styled(Chip, {
