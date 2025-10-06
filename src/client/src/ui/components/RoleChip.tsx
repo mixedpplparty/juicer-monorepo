@@ -33,7 +33,7 @@ export const RoleChip = ({
 				flexDirection: "row",
 				gap: "4px",
 				alignItems: "center",
-				cursor: isLoading ? "not-allowed" : "",
+				cursor: isLoading ? "not-allowed" : css?.cursor,
 				...css,
 			}}
 			draggable={draggable}

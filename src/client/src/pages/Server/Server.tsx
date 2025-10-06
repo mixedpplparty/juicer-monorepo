@@ -1,5 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -8,6 +10,7 @@ import { isAxiosError } from "axios";
 import type {
 	Category,
 	Game,
+	RoleCategory,
 	RoleRelationToGame,
 	ServerDataDiscordChannel,
 	Tag,
@@ -48,6 +51,7 @@ import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	const [query, setQuery] = useState<string | null>(null);
 	const debouncedQuery = useDebouncedValue<string | null>(query, 300);
+	const [areMyRolesSorted, setAreMyRolesSorted] = useState<boolean>(false);
 	const [isOnTransition, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -68,6 +72,16 @@ export const Server = () => {
 	);
 	const _serverData = _serverDataQuery.data;
 
+	const roleCategoriesObj = useMemo(() => {
+		return _serverData.serverDataDb?.roleCategories?.reduce(
+			(obj, roleCategory) => {
+				obj[roleCategory.roleCategoryId] = roleCategory;
+				return obj;
+			},
+			{} as Record<number, RoleCategory>,
+		);
+	}, [_serverData]);
+
 	const rolesCombined = useMemo(() => {
 		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
@@ -82,6 +96,9 @@ export const Server = () => {
 					...dbRole,
 					...discordRole,
 					roleCategoryId: dbRole.roleCategoryId,
+					roleCategoryName: dbRole.roleCategoryId
+						? roleCategoriesObj?.[dbRole.roleCategoryId]?.name
+						: null,
 					selfAssignable: dbRole.selfAssignable,
 				};
 			})
@@ -93,7 +110,7 @@ export const Server = () => {
 		});
 
 		return mergedRolesObj;
-	}, [_serverData]);
+	}, [_serverData, roleCategoriesObj]);
 
 	const categoriesObj = useMemo(() => {
 		return _serverData.serverDataDb?.categories?.reduce(
@@ -319,32 +336,167 @@ export const Server = () => {
 									>
 										<h2 css={{ margin: 0 }}>{_myDataInServer.displayName}</h2>
 									</div>
-									<div
-										css={{
-											display: "flex",
-											flexDirection: "row",
-											gap: "4px",
-											flexWrap: "wrap",
-										}}
-									>
-										{_serverData.serverDataDb &&
-											_myDataInServer.roles.map((roleId: string) => {
-												if (
-													rolesCombined[roleId]?.name !== "@everyone" &&
-													roleId !== (serverId as string)
-												)
+									<div>
+										{!areMyRolesSorted ? (
+											<div
+												css={{
+													display: "flex",
+													flexDirection: "row",
+													gap: "4px",
+													flexWrap: "wrap",
+												}}
+											>
+												{_myDataInServer.roles.map((role: string) => {
 													return (
 														<RoleChip
 															variant="unclickable"
-															key={roleId}
+															key={role}
 															name={
-																rolesCombined[roleId]?.name ||
-																`이름없음 (ID ${roleId})`
+																rolesCombined[role]?.name ||
+																`이름없음 (ID ${role})`
 															}
-															color={rolesCombined[roleId]?.color || "#ffffff"}
+															color={rolesCombined[role]?.color || "#ffffff"}
 														/>
 													);
-											})}
+												})}
+												<Chip
+													css={{
+														display: "flex",
+														alignItems: "center",
+														cursor: "pointer",
+													}}
+													onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
+												>
+													<FilterAltIcon
+														css={{ width: "16px", height: "16px" }}
+													/>
+												</Chip>
+											</div>
+										) : (
+											<div
+												css={{
+													display: "flex",
+													flexDirection: "column",
+													gap: "4px",
+												}}
+											>
+												{_serverData.serverDataDb?.roleCategories?.map(
+													(roleCategory: RoleCategory) => {
+														if (
+															_myDataInServer.roles.filter((roleId: string) => {
+																return (
+																	rolesCombined[roleId]?.roleCategoryId ===
+																	roleCategory.roleCategoryId
+																);
+															}).length > 0
+														) {
+															return (
+																<div
+																	key={roleCategory.roleCategoryId}
+																	css={{
+																		display: "flex",
+																		flexDirection: "column",
+																		gap: "4px",
+																	}}
+																>
+																	<h3 css={{ margin: 0, fontWeight: 500 }}>
+																		{roleCategory.name}
+																	</h3>
+																	<div
+																		css={{
+																			display: "flex",
+																			flexDirection: "row",
+																			gap: "4px",
+																		}}
+																	>
+																		{_myDataInServer.roles
+																			.filter((roleId: string) => {
+																				return (
+																					rolesCombined[roleId]
+																						?.roleCategoryId ===
+																					roleCategory.roleCategoryId
+																				);
+																			})
+																			.map((role: string) => {
+																				return (
+																					<RoleChip
+																						variant="unclickable"
+																						key={role}
+																						name={
+																							rolesCombined[role]?.name ||
+																							`이름없음 (ID ${role})`
+																						}
+																						color={
+																							rolesCombined[role]?.color ||
+																							"#ffffff"
+																						}
+																					/>
+																				);
+																			})}
+																	</div>
+																</div>
+															);
+														}
+													},
+												)}
+												<div
+													css={{
+														display: "flex",
+														flexDirection: "column",
+														gap: "4px",
+													}}
+												>
+													<h3 css={{ margin: 0, fontWeight: 500 }}>미분류</h3>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+														}}
+													>
+														{_myDataInServer.roles
+															.filter((roleId: string) => {
+																return (
+																	rolesCombined[roleId]?.roleCategoryId === null
+																);
+															})
+															.map((role: string) => {
+																return (
+																	<RoleChip
+																		variant="unclickable"
+																		key={role}
+																		name={
+																			rolesCombined[role]?.name ||
+																			`이름없음 (ID ${role})`
+																		}
+																		color={
+																			rolesCombined[role]?.color || "#ffffff"
+																		}
+																	/>
+																);
+															})}
+													</div>
+													<div css={{ display: "flex" }}>
+														<Chip
+															css={{
+																display: "flex",
+																alignItems: "center",
+																cursor: "pointer",
+																flexGrow: 0,
+															}}
+															onClick={() =>
+																setAreMyRolesSorted(!areMyRolesSorted)
+															}
+														>
+															<FilterAltOffIcon
+																css={{ width: "16px", height: "16px" }}
+															/>
+														</Chip>
+														<div></div>
+													</div>
+												</div>
+											</div>
+										)}
 									</div>
 								</div>
 							</Card>
