@@ -27,6 +27,7 @@ import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { Contents } from "../../ui/components/Contents";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Option, Select } from "../../ui/components/Select";
@@ -218,7 +219,14 @@ export const GameSettings = () => {
 							const formData = new FormData(e.currentTarget);
 							onGameSettingsChangeSubmitAction(formData);
 						}}
-						css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+						css={{
+							display: "flex",
+							flexDirection: "column",
+							gap: "12px",
+							overflowY: "auto",
+							flex: 1,
+							maxHeight: "100%",
+						}}
 					>
 						<label htmlFor="game-name">이름</label>
 						<Input
@@ -389,22 +397,22 @@ export const GameSettings = () => {
 								서버에 역할이 없습니다.
 							</div>
 						)}
-						<Button
-							css={{
-								background: "#5865F2",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								width: "100%",
-								gap: "8px",
-							}}
-							loading={isOnTransition}
-							disabled={isOnTransition}
-							type="submit"
-						>
-							{isOnTransition ? "작업 중..." : "저장"}
-						</Button>
 					</form>
+					<Button
+						css={{
+							background: "#5865F2",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							width: "100%",
+							gap: "8px",
+						}}
+						loading={isOnTransition}
+						disabled={isOnTransition}
+						type="submit"
+					>
+						{isOnTransition ? "작업 중..." : "저장"}
+					</Button>
 				</ResponsiveCard>
 			</FullPageBase>
 		</Suspense>

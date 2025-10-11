@@ -38,6 +38,7 @@ import { Button, InlineButton } from "../../ui/components/Button";
 import { Card, ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { Contents } from "../../ui/components/Contents";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
@@ -244,29 +245,48 @@ export const Server = () => {
 					<div
 						css={{
 							display: "flex",
-							justifyContent: "space-between",
 							alignItems: "center",
 							gap: "12px",
+							flexDirection: "row",
+							flexWrap: "wrap",
 						}}
 					>
-						<Button
-							css={{ background: "none", alignItems: "center" }}
-							onClick={() => navigate("/")}
-						>
-							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
-						</Button>
-						<img
-							src={_serverData.serverDataDiscord.icon || serverPlaceholderIcon}
-							alt={_serverData.serverDataDiscord.name}
-							css={{ width: "48px", height: "48px", borderRadius: "50%" }}
-						/>
 						<div
-							css={{ display: "flex", flexDirection: "column", width: "100%" }}
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "inherit",
+								alignItems: "center",
+								flex: "1",
+							}}
 						>
-							<h1 css={{ margin: 0 }}>{_serverData.serverDataDiscord.name}</h1>
-							<div>
-								by {_serverData.serverDataDiscord.ownerName},{" "}
-								{_serverData.serverDataDiscord.memberCount}명
+							<Button
+								css={{ background: "none", alignItems: "center" }}
+								onClick={() => navigate("/")}
+							>
+								<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+							</Button>
+							<img
+								src={
+									_serverData.serverDataDiscord.icon || serverPlaceholderIcon
+								}
+								alt={_serverData.serverDataDiscord.name}
+								css={{ width: "48px", height: "48px", borderRadius: "50%" }}
+							/>
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "column",
+									width: "100%",
+								}}
+							>
+								<h1 css={{ margin: 0 }}>
+									{_serverData.serverDataDiscord.name}
+								</h1>
+								<div>
+									by {_serverData.serverDataDiscord.ownerName},{" "}
+									{_serverData.serverDataDiscord.memberCount}명
+								</div>
 							</div>
 						</div>
 						{_serverData.serverDataDb && (
@@ -276,6 +296,8 @@ export const Server = () => {
 									alignItems: "center",
 									gap: "8px",
 									flexDirection: "row",
+									flexShrink: 0,
+									marginLeft: "auto",
 								}}
 							>
 								<Button
@@ -305,140 +327,84 @@ export const Server = () => {
 							</div>
 						)}
 					</div>
-
-					{
-						<div
-							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
-						>
-							<h2 css={{ margin: 0 }}>내 정보</h2>
-
-							<Card
-								css={{
-									border: "none",
-									display: "flex",
-									flexDirection: "row",
-									alignItems: "center",
-									gap: "12px",
-								}}
+					<Contents>
+						{
+							<div
+								css={{ display: "flex", flexDirection: "column", gap: "12px" }}
 							>
-								<img
-									src={
-										_myDataInServer.displayAvatarURL || serverPlaceholderIcon
-									}
-									alt={_myDataInServer.displayName}
-									css={{ width: "48px", height: "48px", borderRadius: "50%" }}
-								/>
-								<div
-									css={{ display: "flex", flexDirection: "column", gap: "4px" }}
+								<h2 css={{ margin: 0 }}>내 정보</h2>
+
+								<Card
+									css={{
+										border: "none",
+										display: "flex",
+										flexDirection: "row",
+										alignItems: "center",
+										gap: "12px",
+									}}
 								>
+									<img
+										src={
+											_myDataInServer.displayAvatarURL || serverPlaceholderIcon
+										}
+										alt={_myDataInServer.displayName}
+										css={{ width: "48px", height: "48px", borderRadius: "50%" }}
+									/>
 									<div
-										css={{ display: "flex", flexDirection: "row", gap: "4px" }}
+										css={{
+											display: "flex",
+											flexDirection: "column",
+											gap: "4px",
+										}}
 									>
-										<h2 css={{ margin: 0 }}>{_myDataInServer.displayName}</h2>
-									</div>
-									<div>
-										{!areMyRolesSorted ? (
-											<div
-												css={{
-													display: "flex",
-													flexDirection: "row",
-													gap: "4px",
-													flexWrap: "wrap",
-												}}
-											>
-												{_myDataInServer.roles.map((role: string) => {
-													return (
-														<RoleChip
-															variant="unclickable"
-															key={role}
-															name={
-																rolesCombined[role]?.name ||
-																`이름없음 (ID ${role})`
-															}
-															color={rolesCombined[role]?.color || "#ffffff"}
-														/>
-													);
-												})}
-												<Chip
+										<div
+											css={{
+												display: "flex",
+												flexDirection: "row",
+												gap: "4px",
+											}}
+										>
+											<h2 css={{ margin: 0 }}>{_myDataInServer.displayName}</h2>
+										</div>
+										<div>
+											{!areMyRolesSorted ? (
+												<div
 													css={{
 														display: "flex",
-														alignItems: "center",
-														cursor: "pointer",
+														flexDirection: "row",
+														gap: "4px",
+														flexWrap: "wrap",
 													}}
-													onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
 												>
-													<FilterAltIcon
-														css={{ width: "16px", height: "16px" }}
-													/>
-												</Chip>
-											</div>
-										) : (
-											<div
-												css={{
-													display: "flex",
-													flexDirection: "column",
-													gap: "4px",
-												}}
-											>
-												{_serverData.serverDataDb?.roleCategories?.map(
-													(roleCategory: RoleCategory) => {
-														if (
-															_myDataInServer.roles.filter((roleId: string) => {
-																return (
-																	rolesCombined[roleId]?.roleCategoryId ===
-																	roleCategory.roleCategoryId
-																);
-															}).length > 0
-														) {
-															return (
-																<div
-																	key={roleCategory.roleCategoryId}
-																	css={{
-																		display: "flex",
-																		flexDirection: "column",
-																		gap: "4px",
-																	}}
-																>
-																	<h3 css={{ margin: 0, fontWeight: 500 }}>
-																		{roleCategory.name}
-																	</h3>
-																	<div
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																		}}
-																	>
-																		{_myDataInServer.roles
-																			.filter((roleId: string) => {
-																				return (
-																					rolesCombined[roleId]
-																						?.roleCategoryId ===
-																					roleCategory.roleCategoryId
-																				);
-																			})
-																			.map((role: string) => {
-																				return (
-																					<RoleChip
-																						variant="unclickable"
-																						key={role}
-																						name={
-																							rolesCombined[role]?.name ||
-																							`이름없음 (ID ${role})`
-																						}
-																						color={
-																							rolesCombined[role]?.color ||
-																							"#ffffff"
-																						}
-																					/>
-																				);
-																			})}
-																	</div>
-																</div>
-															);
+													{_myDataInServer.roles.map((role: string) => {
+														return (
+															<RoleChip
+																variant="unclickable"
+																key={role}
+																name={
+																	rolesCombined[role]?.name ||
+																	`이름없음 (ID ${role})`
+																}
+																color={rolesCombined[role]?.color || "#ffffff"}
+															/>
+														);
+													})}
+													<Chip
+														css={{
+															display: "flex",
+															alignItems: "center",
+															cursor: "pointer",
+														}}
+														onClick={() =>
+															setAreMyRolesSorted(!areMyRolesSorted)
 														}
-													},
-												)}
+													>
+														<FilterAltIcon
+															css={{ width: "16px", height: "16px" }}
+														/>
+													</Chip>
+												</div>
+											) : (
 												<div
 													css={{
 														display: "flex",
@@ -446,151 +412,75 @@ export const Server = () => {
 														gap: "4px",
 													}}
 												>
-													<h3 css={{ margin: 0, fontWeight: 500 }}>미분류</h3>
-													<div
-														css={{
-															display: "flex",
-															flexDirection: "row",
-															gap: "4px",
-														}}
-													>
-														{_myDataInServer.roles
-															.filter((roleId: string) => {
+													{_serverData.serverDataDb?.roleCategories?.map(
+														(roleCategory: RoleCategory) => {
+															if (
+																_myDataInServer.roles.filter(
+																	(roleId: string) => {
+																		return (
+																			rolesCombined[roleId]?.roleCategoryId ===
+																			roleCategory.roleCategoryId
+																		);
+																	},
+																).length > 0
+															) {
 																return (
-																	rolesCombined[roleId]?.roleCategoryId === null
+																	<div
+																		key={roleCategory.roleCategoryId}
+																		css={{
+																			display: "flex",
+																			flexDirection: "column",
+																			gap: "4px",
+																		}}
+																	>
+																		<h3 css={{ margin: 0, fontWeight: 500 }}>
+																			{roleCategory.name}
+																		</h3>
+																		<div
+																			css={{
+																				display: "flex",
+																				flexDirection: "row",
+																				gap: "4px",
+																			}}
+																		>
+																			{_myDataInServer.roles
+																				.filter((roleId: string) => {
+																					return (
+																						rolesCombined[roleId]
+																							?.roleCategoryId ===
+																						roleCategory.roleCategoryId
+																					);
+																				})
+																				.map((role: string) => {
+																					return (
+																						<RoleChip
+																							variant="unclickable"
+																							key={role}
+																							name={
+																								rolesCombined[role]?.name ||
+																								`이름없음 (ID ${role})`
+																							}
+																							color={
+																								rolesCombined[role]?.color ||
+																								"#ffffff"
+																							}
+																						/>
+																					);
+																				})}
+																		</div>
+																	</div>
 																);
-															})
-															.map((role: string) => {
-																return (
-																	<RoleChip
-																		variant="unclickable"
-																		key={role}
-																		name={
-																			rolesCombined[role]?.name ||
-																			`이름없음 (ID ${role})`
-																		}
-																		color={
-																			rolesCombined[role]?.color || "#ffffff"
-																		}
-																	/>
-																);
-															})}
-													</div>
-													<div css={{ display: "flex" }}>
-														<Chip
-															css={{
-																display: "flex",
-																alignItems: "center",
-																cursor: "pointer",
-																flexGrow: 0,
-															}}
-															onClick={() =>
-																setAreMyRolesSorted(!areMyRolesSorted)
 															}
-														>
-															<FilterAltOffIcon
-																css={{ width: "16px", height: "16px" }}
-															/>
-														</Chip>
-														<div></div>
-													</div>
-												</div>
-											</div>
-										)}
-									</div>
-								</div>
-							</Card>
-						</div>
-					}
-					<div
-						css={{
-							display: "flex",
-							flexDirection: "row",
-							gap: "12px",
-							alignItems: "center",
-						}}
-					>
-						<h2 css={{ margin: 0, flex: 1 }}>주제</h2>
-						<Input
-							placeholder="이름/카테고리/태그 검색"
-							value={query || ""}
-							onChange={(e) => setQuery(e.target.value)}
-						/>
-					</div>
-
-					{_searchGamesInServerQuery.isLoading && (
-						<div
-							css={{ display: "flex", flexDirection: "column", gap: "12px" }}
-						>
-							<GameCardSkeleton />
-							<GameCardSkeleton />
-							<GameCardSkeleton />
-						</div>
-					)}
-
-					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.length === false &&
-						query && <div>검색 결과가 없습니다.</div>}
-
-					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.length === false &&
-						!query && <div>주제가 없습니다.</div>}
-
-					{_searchGamesInServerQuery?.data &&
-						!!_searchGamesInServerQuery?.data?.length === true && (
-							<div
-								css={{
-									display: "flex",
-									flexDirection: "column",
-									gap: "12px",
-								}}
-							>
-								{_searchGamesInServerQuery?.data?.map(
-									(game: Game, idx: number) => {
-										return (
-											<Card
-												css={{
-													border: "1px solid rgb(255, 255, 255)",
-													alignItems: "center",
-													display: "flex",
-													flexDirection: "row",
-												}}
-												key={game.gameId}
-											>
-												{_gameThumbnailQueries[idx].isLoading ? (
-													<Skeleton css={{ width: "64px", height: "64px" }} />
-												) : (
-													<img
-														src={
-															_gameThumbnailQueries[idx].data ||
-															serverPlaceholderIcon
-														}
-														alt={game.name}
-														css={{
-															width: "64px",
-															height: "64px",
-															borderRadius: "16px",
-														}}
-													/>
-												)}
-												<div
-													css={{
-														display: "flex",
-														flexDirection: "row",
-														gap: "8px",
-														width: "100%",
-														alignItems: "stretch",
-													}}
-												>
+														},
+													)}
 													<div
 														css={{
 															display: "flex",
 															flexDirection: "column",
-															width: "100%",
 															gap: "4px",
-															flex: 1,
 														}}
 													>
+														<h3 css={{ margin: 0, fontWeight: 500 }}>미분류</h3>
 														<div
 															css={{
 																display: "flex",
@@ -598,176 +488,326 @@ export const Server = () => {
 																gap: "4px",
 															}}
 														>
-															<h2 css={{ margin: 0, display: "inline" }}>
-																{game.name}
-															</h2>
+															{_myDataInServer.roles
+																.filter((roleId: string) => {
+																	return (
+																		rolesCombined[roleId]?.roleCategoryId ===
+																		null
+																	);
+																})
+																.map((role: string) => {
+																	return (
+																		<RoleChip
+																			variant="unclickable"
+																			key={role}
+																			name={
+																				rolesCombined[role]?.name ||
+																				`이름없음 (ID ${role})`
+																			}
+																			color={
+																				rolesCombined[role]?.color || "#ffffff"
+																			}
+																		/>
+																	);
+																})}
+														</div>
+														<div css={{ display: "flex" }}>
+															<Chip
+																css={{
+																	display: "flex",
+																	alignItems: "center",
+																	cursor: "pointer",
+																	flexGrow: 0,
+																}}
+																onClick={() =>
+																	setAreMyRolesSorted(!areMyRolesSorted)
+																}
+															>
+																<FilterAltOffIcon
+																	css={{ width: "16px", height: "16px" }}
+																/>
+															</Chip>
+															<div></div>
+														</div>
+													</div>
+												</div>
+											)}
+										</div>
+									</div>
+								</Card>
+							</div>
+						}
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "12px",
+								alignItems: "center",
+							}}
+						>
+							<h2 css={{ margin: 0, flex: 1 }}>주제</h2>
+							<Input
+								placeholder="이름/카테고리/태그 검색"
+								value={query || ""}
+								onChange={(e) => setQuery(e.target.value)}
+							/>
+						</div>
+
+						{_searchGamesInServerQuery.isLoading && (
+							<div
+								css={{ display: "flex", flexDirection: "column", gap: "12px" }}
+							>
+								<GameCardSkeleton />
+								<GameCardSkeleton />
+								<GameCardSkeleton />
+							</div>
+						)}
+
+						{_searchGamesInServerQuery?.data &&
+							!!_searchGamesInServerQuery?.data?.length === false &&
+							query && <div>검색 결과가 없습니다.</div>}
+
+						{_searchGamesInServerQuery?.data &&
+							!!_searchGamesInServerQuery?.data?.length === false &&
+							!query && <div>주제가 없습니다.</div>}
+
+						{_searchGamesInServerQuery?.data &&
+							!!_searchGamesInServerQuery?.data?.length === true && (
+								<div
+									css={{
+										display: "flex",
+										flexDirection: "column",
+										gap: "12px",
+									}}
+								>
+									{_searchGamesInServerQuery?.data?.map(
+										(game: Game, idx: number) => {
+											return (
+												<Card
+													css={{
+														border: "1px solid rgb(255, 255, 255)",
+														alignItems: "center",
+														display: "flex",
+														flexDirection: "row",
+													}}
+													key={game.gameId}
+												>
+													{_gameThumbnailQueries[idx].isLoading ? (
+														<Skeleton css={{ width: "64px", height: "64px" }} />
+													) : (
+														<img
+															src={
+																_gameThumbnailQueries[idx].data ||
+																serverPlaceholderIcon
+															}
+															alt={game.name}
+															css={{
+																width: "64px",
+																height: "64px",
+																borderRadius: "16px",
+															}}
+														/>
+													)}
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "8px",
+															width: "100%",
+															alignItems: "stretch",
+														}}
+													>
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "column",
+																width: "100%",
+																gap: "4px",
+																flex: 1,
+															}}
+														>
 															<div
 																css={{
 																	display: "flex",
 																	flexDirection: "row",
 																	gap: "4px",
-																	alignItems: "center",
 																}}
 															>
-																{game.categoryId &&
-																	(categoriesObj?.[game.categoryId]?.name ||
-																		"카테고리 이름 없음")}
+																<h2 css={{ margin: 0, display: "inline" }}>
+																	{game.name}
+																</h2>
+																<div
+																	css={{
+																		display: "flex",
+																		flexDirection: "row",
+																		gap: "4px",
+																		alignItems: "center",
+																	}}
+																>
+																	{game.categoryId &&
+																		(categoriesObj?.[game.categoryId]?.name ||
+																			"카테고리 이름 없음")}
+																</div>
 															</div>
-														</div>
-														<div
-															css={{
-																display: "flex",
-																flexDirection: "row",
-																gap: "4px",
-																flexWrap: "wrap",
-															}}
-														>
-															{game.channels &&
-																game.channels.length > 0 &&
-																game.channels.map((channelId: string) => (
-																	<div
-																		css={{
-																			display: "flex",
-																			flexDirection: "row",
-																			gap: "4px",
-																			alignItems: "center",
-																		}}
-																		key={channelId}
-																	>
-																		#
-																		{channelsObj?.[channelId]?.name ||
-																			"채널 이름 없음"}
-																	</div>
-																))}
-														</div>
-														<div
-															css={{
-																display: "flex",
-																flexDirection: "row",
-																gap: "4px",
-																flexWrap: "wrap",
-															}}
-														>
-															{game.gamesRoles &&
-																game.gamesRoles.length > 0 &&
-																game.gamesRoles.map(
-																	(role: RoleRelationToGame) => (
-																		<Chip
-																			key={role.roleId}
+															<div
+																css={{
+																	display: "flex",
+																	flexDirection: "row",
+																	gap: "4px",
+																	flexWrap: "wrap",
+																}}
+															>
+																{game.channels &&
+																	game.channels.length > 0 &&
+																	game.channels.map((channelId: string) => (
+																		<div
 																			css={{
 																				display: "flex",
 																				flexDirection: "row",
 																				gap: "4px",
 																				alignItems: "center",
-																				cursor: "pointer",
-																				...(_iHaveRole(
-																					_serverData,
-																					role.roleId,
-																				) && {
-																					border: "1px solid black",
-																					background: "rgba(255, 255, 255, 1)",
-																					color: "rgba(0, 0, 0, 1)",
-																				}),
 																			}}
-																			onClick={() =>
-																				toggleRoleAssign(role.roleId)
-																			}
+																			key={channelId}
 																		>
-																			<_8pxCircle
+																			#
+																			{channelsObj?.[channelId]?.name ||
+																				"채널 이름 없음"}
+																		</div>
+																	))}
+															</div>
+															<div
+																css={{
+																	display: "flex",
+																	flexDirection: "row",
+																	gap: "4px",
+																	flexWrap: "wrap",
+																}}
+															>
+																{game.gamesRoles &&
+																	game.gamesRoles.length > 0 &&
+																	game.gamesRoles.map(
+																		(role: RoleRelationToGame) => (
+																			<Chip
+																				key={role.roleId}
 																				css={{
-																					backgroundColor: `${
-																						rolesCombined[role.roleId]?.color ||
-																						"#ffffff"
-																					}`,
+																					display: "flex",
+																					flexDirection: "row",
+																					gap: "4px",
+																					alignItems: "center",
+																					cursor: "pointer",
+																					...(_iHaveRole(
+																						_serverData,
+																						role.roleId,
+																					) && {
+																						border: "1px solid black",
+																						background:
+																							"rgba(255, 255, 255, 1)",
+																						color: "rgba(0, 0, 0, 1)",
+																					}),
 																				}}
-																			/>
-																			{rolesCombined[role.roleId]?.name ||
-																				"역할 이름 없음"}
-																		</Chip>
-																	),
-																)}
+																				onClick={() =>
+																					toggleRoleAssign(role.roleId)
+																				}
+																			>
+																				<_8pxCircle
+																					css={{
+																						backgroundColor: `${
+																							rolesCombined[role.roleId]
+																								?.color || "#ffffff"
+																						}`,
+																					}}
+																				/>
+																				{rolesCombined[role.roleId]?.name ||
+																					"역할 이름 없음"}
+																			</Chip>
+																		),
+																	)}
+															</div>
 														</div>
-													</div>
-													{_serverData.admin && (
+														{_serverData.admin && (
+															<div css={{ alignSelf: "stretch" }}>
+																<LinkNoStyle
+																	to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
+																	css={{ cursor: "pointer" }}
+																>
+																	<InlineButton
+																		css={{
+																			height: "100%",
+																			alignItems: "center",
+																		}}
+																	>
+																		<SettingsIcon
+																			css={{ width: "20px", height: "20px" }}
+																		/>
+																	</InlineButton>
+																</LinkNoStyle>
+															</div>
+														)}
 														<div css={{ alignSelf: "stretch" }}>
 															<LinkNoStyle
-																to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
+																to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
 																css={{ cursor: "pointer" }}
 															>
 																<InlineButton
 																	css={{ height: "100%", alignItems: "center" }}
 																>
-																	<SettingsIcon
+																	<NavigateNextIcon
 																		css={{ width: "20px", height: "20px" }}
 																	/>
 																</InlineButton>
 															</LinkNoStyle>
 														</div>
-													)}
-													<div css={{ alignSelf: "stretch" }}>
-														<LinkNoStyle
-															to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
-															css={{ cursor: "pointer" }}
-														>
-															<InlineButton
-																css={{ height: "100%", alignItems: "center" }}
-															>
-																<NavigateNextIcon
-																	css={{ width: "20px", height: "20px" }}
-																/>
-															</InlineButton>
-														</LinkNoStyle>
 													</div>
-												</div>
-											</Card>
-										);
-									},
-								)}
-							</div>
-						)}
-					{_serverData.serverDataDb && _serverData.admin && (
-						<Card
-							css={{
-								border: "1px solid rgba(255, 255, 255, 0.66)",
-								alignItems: "center",
-								cursor: "pointer",
-								display: "flex",
-								flexDirection: "row",
-							}}
-							onClick={() => setIsAddGameModalOpen(true)}
-						>
-							<AddIcon css={{ width: "16px", height: "16px" }} />
-							주제 추가하기
-						</Card>
-					)}
-
-					{!_serverData.serverDataDb && (
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "column",
-								gap: "12px",
-								alignItems: "center",
-							}}
-						>
-							<div>
-								서버 데이터가 없습니다. juicer DB에 서버를 추가해 주세요.
-							</div>
-							<Button
+												</Card>
+											);
+										},
+									)}
+								</div>
+							)}
+						{_serverData.serverDataDb && _serverData.admin && (
+							<Card
 								css={{
-									background: "#5865F2",
-									display: "flex",
+									border: "1px solid rgba(255, 255, 255, 0.66)",
 									alignItems: "center",
-									justifyContent: "center",
-									gap: "8px",
+									cursor: "pointer",
+									display: "flex",
+									flexDirection: "row",
 								}}
-								onClick={createServerAction}
+								onClick={() => setIsAddGameModalOpen(true)}
 							>
 								<AddIcon css={{ width: "16px", height: "16px" }} />
-								juicer DB에 서버 추가
-							</Button>
-						</div>
-					)}
+								주제 추가하기
+							</Card>
+						)}
+
+						{!_serverData.serverDataDb && (
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "column",
+									gap: "12px",
+									alignItems: "center",
+								}}
+							>
+								<div>
+									서버 데이터가 없습니다. juicer DB에 서버를 추가해 주세요.
+								</div>
+								<Button
+									css={{
+										background: "#5865F2",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										gap: "8px",
+									}}
+									onClick={createServerAction}
+								>
+									<AddIcon css={{ width: "16px", height: "16px" }} />
+									juicer DB에 서버 추가
+								</Button>
+							</div>
+						)}
+					</Contents>
 				</ResponsiveCard>
 			</FullPageBase>
 			{isAddGameModalOpen && (

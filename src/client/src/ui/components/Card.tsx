@@ -10,8 +10,9 @@ export const Card = styled.div({
 	padding: "16px",
 	display: "flex",
 	flexDirection: "column",
-	height: "auto",
 	gap: " 8px",
+	maxHeight: "100%",
+	maxWidth: "100%",
 });
 
 //with responsive width
@@ -27,7 +28,8 @@ export const ResponsiveCard = styled.div({
 	display: "flex",
 	flexDirection: "column",
 	minWidth: "70%",
-	height: "auto",
+	maxHeight: "100%",
+	maxWidth: "100%",
 	"@media (max-aspect-ratio: 1/1)": {
 		width: "100%",
 	},
