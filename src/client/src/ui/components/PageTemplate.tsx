@@ -21,21 +21,17 @@ export const PageTemplate = ({
 		useState<boolean>(false);
 	const [observeTop, unobserveTop] = useIntersectionObserver(
 		() => {
-			console.log("intersected top");
 			setIsTopIntersecting(true);
 		},
 		() => {
-			console.log("unintersected top");
 			setIsTopIntersecting(false);
 		},
 	);
 	const [observeBottom, unobserveBottom] = useIntersectionObserver(
 		() => {
-			console.log("intersected bottom");
 			setIsBottomIntersecting(true);
 		},
 		() => {
-			console.log("unintersected bottom");
 			setIsBottomIntersecting(false);
 		},
 	);
