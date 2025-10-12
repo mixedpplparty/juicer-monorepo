@@ -542,6 +542,7 @@ export const ServerSettings = () => {
 								)}
 							</div>
 						)}
+						<div></div>
 					</div>
 				</div>
 			</PageTemplate>

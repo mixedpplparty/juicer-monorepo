@@ -399,7 +399,6 @@ export const GameSettings = () => {
 												);
 											}
 										}}
-										disabled={!role.selfAssignable}
 									>
 										<_8pxCircle
 											css={{
