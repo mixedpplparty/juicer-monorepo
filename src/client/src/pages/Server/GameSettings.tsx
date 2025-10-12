@@ -237,6 +237,7 @@ export const GameSettings = () => {
 					const formData = new FormData(e.currentTarget);
 					onGameSettingsChangeSubmitAction(formData);
 				}}
+				css={{ height: "100%" }}
 			>
 				<PageTemplate nav={nav} footer={footer}>
 					<Main
