@@ -16,22 +16,27 @@ export const PageTemplate = ({
 }) => {
 	const topRef = useRef<HTMLDivElement>(null);
 	const bottomRef = useRef<HTMLDivElement>(null);
-	const isTopIntersecting = useState<boolean>(false);
-	const isBottomIntersecting = useState<boolean>(false);
+	const [isTopIntersecting, setIsTopIntersecting] = useState<boolean>(false);
+	const [isBottomIntersecting, setIsBottomIntersecting] =
+		useState<boolean>(false);
 	const [observeTop, unobserveTop] = useIntersectionObserver(
 		() => {
 			console.log("intersected top");
+			setIsTopIntersecting(true);
 		},
 		() => {
 			console.log("unintersected top");
+			setIsTopIntersecting(false);
 		},
 	);
 	const [observeBottom, unobserveBottom] = useIntersectionObserver(
 		() => {
 			console.log("intersected bottom");
+			setIsBottomIntersecting(true);
 		},
 		() => {
 			console.log("unintersected bottom");
+			setIsBottomIntersecting(false);
 		},
 	);
 	const intersectingCss = {
