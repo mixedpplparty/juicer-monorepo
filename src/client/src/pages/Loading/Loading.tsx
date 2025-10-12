@@ -8,8 +8,10 @@ export const Loading = ({ message }: { message?: string | undefined }) => {
 			<ResponsiveCard
 				css={{ alignItems: "center", justifyContent: "center", gap: "12px" }}
 			>
+				<div></div>
 				<Spinner />
 				<h3 css={{ margin: 0 }}>{message || "Loading..."}</h3>
+				<div></div>
 			</ResponsiveCard>
 		</FullPageBase>
 	);

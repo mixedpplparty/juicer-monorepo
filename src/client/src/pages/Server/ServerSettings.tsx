@@ -28,6 +28,8 @@ import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
+import { Nav } from "../../ui/components/Nav";
+import { PageTemplate } from "../../ui/components/PageTemplate";
 import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
@@ -275,30 +277,79 @@ export const ServerSettings = () => {
 			draggedRoleId.current = null;
 		}
 	};
+	const nav = (
+		<Nav
+			css={{
+				display: "flex",
+				justifyContent: "space-between",
+				alignItems: "center",
+				gap: "12px",
+			}}
+		>
+			<Button
+				css={{ background: "none", alignItems: "center" }}
+				onClick={() => navigate(`/server?serverId=${serverId}`)}
+			>
+				<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+			</Button>
+			<div css={{ display: "flex", flexDirection: "column", width: "100%" }}>
+				<h1 css={{ margin: 0 }}>서버 설정</h1>
+				<div>{_serverData.serverDataDiscord.name}</div>
+			</div>
+		</Nav>
+	);
 	return (
 		<Suspense fallback={<Loading />}>
-			<FullPageBase>
-				<ResponsiveCard css={{ gap: "12px" }}>
+			<PageTemplate nav={nav}>
+				<div
+					css={{
+						display: "flex",
+						flexDirection: "column",
+						width: "100%",
+						gap: "12px",
+					}}
+				>
 					<div
 						css={{
 							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
+							flexDirection: "column",
+							width: "100%",
 							gap: "12px",
 						}}
 					>
-						<Button
-							css={{ background: "none", alignItems: "center" }}
-							onClick={() => navigate(`/server?serverId=${serverId}`)}
-						>
-							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
-						</Button>
 						<div
-							css={{ display: "flex", flexDirection: "column", width: "100%" }}
+							css={{
+								display: "flex",
+								flexDirection: "row",
+							}}
 						>
-							<h1 css={{ margin: 0 }}>서버 설정</h1>
-							<div>{_serverData.serverDataDiscord.name}</div>
+							<h2 css={{ margin: 0, flex: 1 }}>분류 없는 역할</h2>
 						</div>
+						{!!_serverData.serverDataDiscord.roles?.length || (
+							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+								서버에 역할이 없습니다.
+							</div>
+						)}
+						{!!_serverData.serverDataDiscord.roles?.length && (
+							<DragDropZone id="unassigned" onDrop={handleOnDrop}>
+								{Object.values(rolesCombined)
+									.filter((role) => role.roleCategoryId === null)
+									.map((role) => {
+										return (
+											<RoleChip
+												key={role.roleId}
+												id={role.roleId}
+												name={role.name || `이름없음 (ID ${role.roleId})`}
+												color={role.color || "#ffffff"}
+												draggable={draggedRoleId.current !== role.roleId}
+												onDragStart={handleOnDragStart(role)}
+												onClick={handleRoleSettingsModalOpen(role)}
+												isLoading={draggedRoleId.current === role.roleId}
+											/>
+										);
+									})}
+							</DragDropZone>
+						)}
 					</div>
 					<div
 						css={{
@@ -311,212 +362,53 @@ export const ServerSettings = () => {
 						<div
 							css={{
 								display: "flex",
-								flexDirection: "column",
-								width: "100%",
-								gap: "12px",
+								flexDirection: "row",
 							}}
 						>
-							<div
+							<h2 css={{ margin: 0, flex: 1 }}>역할 분류</h2>
+							<Button
 								css={{
+									background: "#5865F2",
 									display: "flex",
-									flexDirection: "row",
+									alignItems: "center",
+									gap: "8px",
 								}}
+								onClick={() => setIsCreateRoleCategoryModalOpen(true)}
 							>
-								<h2 css={{ margin: 0, flex: 1 }}>분류 없는 역할</h2>
-							</div>
-							{!!_serverData.serverDataDiscord.roles?.length || (
-								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
-									서버에 역할이 없습니다.
-								</div>
-							)}
-							{!!_serverData.serverDataDiscord.roles?.length && (
-								<DragDropZone id="unassigned" onDrop={handleOnDrop}>
-									{Object.values(rolesCombined)
-										.filter((role) => role.roleCategoryId === null)
-										.map((role) => {
-											return (
-												<RoleChip
-													key={role.roleId}
-													id={role.roleId}
-													name={role.name || `이름없음 (ID ${role.roleId})`}
-													color={role.color || "#ffffff"}
-													draggable={draggedRoleId.current !== role.roleId}
-													onDragStart={handleOnDragStart(role)}
-													onClick={handleRoleSettingsModalOpen(role)}
-													isLoading={draggedRoleId.current === role.roleId}
-												/>
-											);
-										})}
-								</DragDropZone>
-							)}
+								<AddIcon css={{ width: "16px", height: "16px" }} />
+								역할 분류 추가
+							</Button>
 						</div>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "column",
-								width: "100%",
-								gap: "12px",
-							}}
-						>
+						{!!_serverData.serverDataDb?.roleCategories?.length || (
+							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+								서버에 역할 카테고리가 없습니다.
+							</div>
+						)}
+						{!!_serverData.serverDataDb?.roleCategories?.length && (
 							<div
 								css={{
 									display: "flex",
-									flexDirection: "row",
+									flexDirection: "column",
+									gap: "6px",
+									flexWrap: "wrap",
 								}}
 							>
-								<h2 css={{ margin: 0, flex: 1 }}>역할 분류</h2>
-								<Button
-									css={{
-										background: "#5865F2",
-										display: "flex",
-										alignItems: "center",
-										gap: "8px",
-									}}
-									onClick={() => setIsCreateRoleCategoryModalOpen(true)}
-								>
-									<AddIcon css={{ width: "16px", height: "16px" }} />
-									역할 분류 추가
-								</Button>
-							</div>
-							{!!_serverData.serverDataDb?.roleCategories?.length || (
-								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
-									서버에 역할 카테고리가 없습니다.
-								</div>
-							)}
-							{!!_serverData.serverDataDb?.roleCategories?.length && (
-								<div
-									css={{
-										display: "flex",
-										flexDirection: "column",
-										gap: "6px",
-										flexWrap: "wrap",
-									}}
-								>
-									{_serverData.serverDataDb?.roleCategories?.map(
-										(roleCategory: RoleCategory) => (
+								{_serverData.serverDataDb?.roleCategories?.map(
+									(roleCategory: RoleCategory) => (
+										<div
+											key={roleCategory.roleCategoryId}
+											css={{
+												display: "flex",
+												flexDirection: "column",
+												gap: "4px",
+											}}
+										>
 											<div
-												key={roleCategory.roleCategoryId}
-												css={{
-													display: "flex",
-													flexDirection: "column",
-													gap: "4px",
-												}}
-											>
-												<div
-													css={{
-														display: "flex",
-														flexDirection: "row",
-														gap: "4px",
-														alignItems: "center",
-													}}
-												>
-													<InlineButton
-														css={{
-															height: "100%",
-															alignItems: "center",
-															justifyContent: "center",
-														}}
-														onClick={deleteRoleCategoryAction(
-															roleCategory.roleCategoryId,
-														)}
-													>
-														<DeleteIcon
-															css={{
-																width: "16px",
-																height: "16px",
-																color: "#FFF",
-															}}
-														/>
-													</InlineButton>
-													<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
-												</div>
-												<DragDropZone
-													id={roleCategory.roleCategoryId}
-													onDrop={handleOnDrop}
-												>
-													{Object.values(rolesCombined)
-														.filter(
-															(role) =>
-																role.roleCategoryId ===
-																roleCategory.roleCategoryId,
-														)
-														.map((role) => {
-															return (
-																<RoleChip
-																	key={role.roleId}
-																	id={role.roleId}
-																	name={
-																		role.name || `이름없음 (ID ${role.roleId})`
-																	}
-																	color={role.color || "#ffffff"}
-																	draggable={
-																		draggedRoleId.current !== role.roleId
-																	}
-																	onDragStart={handleOnDragStart(role)}
-																	onClick={handleRoleSettingsModalOpen(role)}
-																	isLoading={
-																		draggedRoleId.current === role.roleId
-																	}
-																/>
-															);
-														})}
-												</DragDropZone>
-											</div>
-										),
-									)}
-								</div>
-							)}
-						</div>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "column",
-								width: "100%",
-								gap: "12px",
-							}}
-						>
-							<div
-								css={{
-									display: "flex",
-									flexDirection: "row",
-								}}
-							>
-								<h2 css={{ margin: 0, flex: 1 }}>주제 분류</h2>
-								<Button
-									css={{
-										background: "#5865F2",
-										display: "flex",
-										alignItems: "center",
-										gap: "8px",
-									}}
-									onClick={() => setIsCreateCategoryModalOpen(true)}
-								>
-									<AddIcon css={{ width: "16px", height: "16px" }} />
-									주제 분류 추가
-								</Button>
-							</div>
-							{!!_serverData.serverDataDb?.categories?.length || (
-								<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
-									서버에 주제 카테고리가 없습니다.
-								</div>
-							)}
-							{!!_serverData.serverDataDb?.categories?.length && (
-								<div
-									css={{
-										display: "flex",
-										flexDirection: "row",
-										gap: "6px",
-										flexWrap: "wrap",
-									}}
-								>
-									{_serverData.serverDataDb?.categories?.map(
-										(category: Category) => (
-											<Chip
-												key={category.categoryId}
 												css={{
 													display: "flex",
 													flexDirection: "row",
 													gap: "4px",
+													alignItems: "center",
 												}}
 											>
 												<InlineButton
@@ -525,7 +417,9 @@ export const ServerSettings = () => {
 														alignItems: "center",
 														justifyContent: "center",
 													}}
-													onClick={deleteCategoryAction(category.categoryId)}
+													onClick={deleteRoleCategoryAction(
+														roleCategory.roleCategoryId,
+													)}
 												>
 													<DeleteIcon
 														css={{
@@ -535,16 +429,122 @@ export const ServerSettings = () => {
 														}}
 													/>
 												</InlineButton>
-												{category.name}
-											</Chip>
-										),
-									)}
-								</div>
-							)}
-						</div>
+												<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
+											</div>
+											<DragDropZone
+												id={roleCategory.roleCategoryId}
+												onDrop={handleOnDrop}
+											>
+												{Object.values(rolesCombined)
+													.filter(
+														(role) =>
+															role.roleCategoryId ===
+															roleCategory.roleCategoryId,
+													)
+													.map((role) => {
+														return (
+															<RoleChip
+																key={role.roleId}
+																id={role.roleId}
+																name={
+																	role.name || `이름없음 (ID ${role.roleId})`
+																}
+																color={role.color || "#ffffff"}
+																draggable={
+																	draggedRoleId.current !== role.roleId
+																}
+																onDragStart={handleOnDragStart(role)}
+																onClick={handleRoleSettingsModalOpen(role)}
+																isLoading={
+																	draggedRoleId.current === role.roleId
+																}
+															/>
+														);
+													})}
+											</DragDropZone>
+										</div>
+									),
+								)}
+							</div>
+						)}
 					</div>
-				</ResponsiveCard>
-			</FullPageBase>
+					<div
+						css={{
+							display: "flex",
+							flexDirection: "column",
+							width: "100%",
+							gap: "12px",
+						}}
+					>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+							}}
+						>
+							<h2 css={{ margin: 0, flex: 1 }}>주제 분류</h2>
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									gap: "8px",
+								}}
+								onClick={() => setIsCreateCategoryModalOpen(true)}
+							>
+								<AddIcon css={{ width: "16px", height: "16px" }} />
+								주제 분류 추가
+							</Button>
+						</div>
+						{!!_serverData.serverDataDb?.categories?.length || (
+							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
+								서버에 주제 카테고리가 없습니다.
+							</div>
+						)}
+						{!!_serverData.serverDataDb?.categories?.length && (
+							<div
+								css={{
+									display: "flex",
+									flexDirection: "row",
+									gap: "6px",
+									flexWrap: "wrap",
+								}}
+							>
+								{_serverData.serverDataDb?.categories?.map(
+									(category: Category) => (
+										<Chip
+											key={category.categoryId}
+											css={{
+												display: "flex",
+												flexDirection: "row",
+												gap: "4px",
+											}}
+										>
+											<InlineButton
+												css={{
+													height: "100%",
+													alignItems: "center",
+													justifyContent: "center",
+												}}
+												onClick={deleteCategoryAction(category.categoryId)}
+											>
+												<DeleteIcon
+													css={{
+														width: "16px",
+														height: "16px",
+														color: "#FFF",
+													}}
+												/>
+											</InlineButton>
+											{category.name}
+										</Chip>
+									),
+								)}
+							</div>
+						)}
+					</div>
+				</div>
+			</PageTemplate>
 			{isCreateCategoryModalOpen && (
 				<ModalPortal>
 					<Modal

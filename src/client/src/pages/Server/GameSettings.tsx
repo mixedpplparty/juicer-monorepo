@@ -27,9 +27,12 @@ import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
-import { Contents } from "../../ui/components/Contents";
+import { Footer } from "../../ui/components/Footer";
 import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
+import { Main } from "../../ui/components/Main";
+import { Nav } from "../../ui/components/Nav";
+import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
 export const GameSettings = () => {
@@ -168,62 +171,78 @@ export const GameSettings = () => {
 		navigate(`/server?serverId=${serverId}`);
 	};
 
+	const nav = (
+		<Nav>
+			<Button
+				css={{ background: "none", alignItems: "center" }}
+				onClick={() => navigate(`/server?serverId=${serverId}`)}
+			>
+				<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+			</Button>
+			<div
+				css={{
+					display: "flex",
+					flexDirection: "column",
+					width: "100%",
+					flex: 1,
+				}}
+			>
+				<h1 css={{ margin: 0 }}>
+					{gamesObj?.[Number(gameId as string)]?.name}
+				</h1>
+				<div>주제 설정</div>
+			</div>
+			<Button
+				css={{
+					background: "#ed5555",
+					alignItems: "center",
+					gap: "8px",
+					display: "flex",
+				}}
+				onClick={handleDeleteGame}
+			>
+				<DeleteIcon css={{ width: "20px", height: "20px" }} />
+				주제 삭제
+			</Button>
+		</Nav>
+	);
+
+	const footer = (
+		<Footer>
+			<Button
+				css={{
+					background: "#5865F2",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					width: "100%",
+					gap: "8px",
+				}}
+				loading={isOnTransition}
+				disabled={isOnTransition}
+				type="submit"
+			>
+				{isOnTransition ? "작업 중..." : "저장"}
+			</Button>
+		</Footer>
+	);
+
 	return (
 		<Suspense fallback={<Loading />}>
-			<FullPageBase>
-				<ResponsiveCard css={{ gap: "12px" }}>
-					<div
-						css={{
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-							gap: "12px",
-						}}
-					>
-						<Button
-							css={{ background: "none", alignItems: "center" }}
-							onClick={() => navigate(`/server?serverId=${serverId}`)}
-						>
-							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
-						</Button>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "column",
-								width: "100%",
-								flex: 1,
-							}}
-						>
-							<h1 css={{ margin: 0 }}>
-								{gamesObj?.[Number(gameId as string)]?.name}
-							</h1>
-							<div>주제 설정</div>
-						</div>
-						<Button
-							css={{
-								background: "#ed5555",
-								alignItems: "center",
-								gap: "8px",
-								display: "flex",
-							}}
-							onClick={handleDeleteGame}
-						>
-							<DeleteIcon css={{ width: "20px", height: "20px" }} />
-							주제 삭제
-						</Button>
-					</div>
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							if (isOnTransition) return;
-							const formData = new FormData(e.currentTarget);
-							onGameSettingsChangeSubmitAction(formData);
-						}}
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (isOnTransition) return;
+					const formData = new FormData(e.currentTarget);
+					onGameSettingsChangeSubmitAction(formData);
+				}}
+			>
+				<PageTemplate nav={nav} footer={footer}>
+					<Main
 						css={{
 							display: "flex",
 							flexDirection: "column",
 							gap: "12px",
-							overflowY: "auto",
 							flex: 1,
 							maxHeight: "100%",
 						}}
@@ -397,24 +416,9 @@ export const GameSettings = () => {
 								서버에 역할이 없습니다.
 							</div>
 						)}
-					</form>
-					<Button
-						css={{
-							background: "#5865F2",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							width: "100%",
-							gap: "8px",
-						}}
-						loading={isOnTransition}
-						disabled={isOnTransition}
-						type="submit"
-					>
-						{isOnTransition ? "작업 중..." : "저장"}
-					</Button>
-				</ResponsiveCard>
-			</FullPageBase>
+					</Main>
+				</PageTemplate>
+			</form>
 		</Suspense>
 	);
 };

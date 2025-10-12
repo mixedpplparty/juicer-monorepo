@@ -24,7 +24,10 @@ import { Button } from "../../ui/components/Button";
 import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { Footer } from "../../ui/components/Footer";
 import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Nav } from "../../ui/components/Nav";
+import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Skeleton } from "../../ui/components/Skeleton";
 import { Loading } from "../Loading/Loading";
 
@@ -138,116 +141,109 @@ export const GameInfo = () => {
 		await startTransition(_serverDataQuery.refetch());
 	};
 
+	const nav = (
+		<Nav>
+			<Button
+				css={{ background: "none", alignItems: "center" }}
+				onClick={() => navigate(`/server?serverId=${serverId}`)}
+			>
+				<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+			</Button>{" "}
+			{_gameThumbnailQueries[0].isLoading ? (
+				<Skeleton css={{ width: "64px", height: "64px" }} />
+			) : (
+				<img
+					src={_gameThumbnailQueries[0].data || serverPlaceholderIcon}
+					alt={currentGame?.name}
+					css={{
+						width: "64px",
+						height: "64px",
+						borderRadius: "16px",
+					}}
+				/>
+			)}
+			<div css={{ display: "flex", flexDirection: "column", width: "100%" }}>
+				<h1 css={{ margin: 0 }}>{currentGame?.name}</h1>
+				<div>게임 정보</div>
+			</div>
+		</Nav>
+	);
+
 	return (
 		<Suspense fallback={<Loading />}>
-			<FullPageBase>
-				<ResponsiveCard css={{ gap: "18px" }}>
+			<PageTemplate nav={nav}>
+				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+					<h2 css={{ margin: 0 }}>설명</h2>
+					<span>{currentGame?.description || "설명 없음"}</span>
+				</div>
+				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+					<h2 css={{ margin: 0 }}>카테고리</h2>
+					<span>
+						{currentGame?.categoryId
+							? categoriesObj?.[currentGame.categoryId]?.name ||
+								"카테고리 이름 없음"
+							: "카테고리 없음"}
+					</span>
+				</div>
+				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+					<h2 css={{ margin: 0 }}>연관 채널</h2>
+					<span>
+						{currentGame?.channels
+							?.map((channel) => `#${channelsObj?.[channel]?.name}`)
+							.join(", ") || "채널 없음"}
+					</span>
+				</div>
+				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+					<h2 css={{ margin: 0 }}>태그</h2>
+					<span>
+						{currentGame?.gamesTags
+							?.map((tag) => `#${tagsObj?.[tag.tagId]?.name}`)
+							.join(", ") || "태그 없음"}
+					</span>
+				</div>
+				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+					<h2 css={{ margin: 0 }}>역할</h2>
 					<div
 						css={{
 							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-							gap: "12px",
+							flexDirection: "row",
+							gap: "6px",
+							flexWrap: "wrap",
+							paddingBottom: "16px",
 						}}
 					>
-						<Button
-							css={{ background: "none", alignItems: "center" }}
-							onClick={() => navigate(`/server?serverId=${serverId}`)}
-						>
-							<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
-						</Button>{" "}
-						{_gameThumbnailQueries[0].isLoading ? (
-							<Skeleton css={{ width: "64px", height: "64px" }} />
-						) : (
-							<img
-								src={_gameThumbnailQueries[0].data || serverPlaceholderIcon}
-								alt={currentGame?.name}
-								css={{
-									width: "64px",
-									height: "64px",
-									borderRadius: "16px",
-								}}
-							/>
-						)}
-						<div
-							css={{ display: "flex", flexDirection: "column", width: "100%" }}
-						>
-							<h1 css={{ margin: 0 }}>{currentGame?.name}</h1>
-							<div>게임 정보</div>
-						</div>
-					</div>
-					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>설명</h2>
-						<span>{currentGame?.description || "설명 없음"}</span>
-					</div>
-					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>카테고리</h2>
-						<span>
-							{currentGame?.categoryId
-								? categoriesObj?.[currentGame.categoryId]?.name ||
-									"카테고리 이름 없음"
-								: "카테고리 없음"}
-						</span>
-					</div>
-					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>연관 채널</h2>
-						<span>
-							{currentGame?.channels
-								?.map((channel) => `#${channelsObj?.[channel]?.name}`)
-								.join(", ") || "채널 없음"}
-						</span>
-					</div>
-					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>태그</h2>
-						<span>
-							{currentGame?.gamesTags
-								?.map((tag) => `#${tagsObj?.[tag.tagId]?.name}`)
-								.join(", ") || "태그 없음"}
-						</span>
-					</div>
-					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-						<h2 css={{ margin: 0 }}>역할</h2>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "row",
-								gap: "6px",
-								flexWrap: "wrap",
-							}}
-						>
-							{currentGame?.gamesRoles &&
-								currentGame.gamesRoles.length > 0 &&
-								currentGame.gamesRoles.map((role: RoleRelationToGame) => (
-									<Chip
-										key={role.roleId}
+						{currentGame?.gamesRoles &&
+							currentGame.gamesRoles.length > 0 &&
+							currentGame.gamesRoles.map((role: RoleRelationToGame) => (
+								<Chip
+									key={role.roleId}
+									css={{
+										display: "flex",
+										flexDirection: "row",
+										gap: "4px",
+										alignItems: "center",
+										cursor: "pointer",
+										...(_iHaveRole(_serverData, role.roleId) && {
+											border: "1px solid black",
+											background: "rgba(255, 255, 255, 1)",
+											color: "rgba(0, 0, 0, 1)",
+										}),
+									}}
+									onClick={() => toggleRoleAssign(role.roleId)}
+								>
+									<_8pxCircle
 										css={{
-											display: "flex",
-											flexDirection: "row",
-											gap: "4px",
-											alignItems: "center",
-											cursor: "pointer",
-											...(_iHaveRole(_serverData, role.roleId) && {
-												border: "1px solid black",
-												background: "rgba(255, 255, 255, 1)",
-												color: "rgba(0, 0, 0, 1)",
-											}),
+											backgroundColor: `${
+												rolesCombined[role.roleId]?.color || "#ffffff"
+											}`,
 										}}
-										onClick={() => toggleRoleAssign(role.roleId)}
-									>
-										<_8pxCircle
-											css={{
-												backgroundColor: `${
-													rolesCombined[role.roleId]?.color || "#ffffff"
-												}`,
-											}}
-										/>
-										{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
-									</Chip>
-								))}
-						</div>
+									/>
+									{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
+								</Chip>
+							))}
 					</div>
-				</ResponsiveCard>
-			</FullPageBase>
+				</div>
+			</PageTemplate>
 		</Suspense>
 	);
 };
