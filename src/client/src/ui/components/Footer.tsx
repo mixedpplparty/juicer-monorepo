@@ -6,4 +6,5 @@ export const Footer = styled.div({
 	alignItems: "center",
 	gap: "12px",
 	paddingBottom: "16px",
+	width: "100%",
 });

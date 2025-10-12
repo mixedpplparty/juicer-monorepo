@@ -176,6 +176,7 @@ export const GameSettings = () => {
 			<Button
 				css={{ background: "none", alignItems: "center" }}
 				onClick={() => navigate(`/server?serverId=${serverId}`)}
+				type="button"
 			>
 				<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
 			</Button>
