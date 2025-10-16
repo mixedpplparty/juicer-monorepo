@@ -52,7 +52,7 @@ import { Loading } from "../Loading/Loading";
 export const Server = () => {
 	const [query, setQuery] = useState<string | null>(null);
 	const debouncedQuery = useDebouncedValue<string | null>(query, 300);
-	const [areMyRolesSorted, setAreMyRolesSorted] = useState<boolean>(false);
+	const [areMyRolesSorted, setAreMyRolesSorted] = useState<boolean>(true);
 	const [isOnTransition, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
