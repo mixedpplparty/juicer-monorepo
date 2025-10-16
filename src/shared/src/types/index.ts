@@ -153,6 +153,7 @@ export type ServerDataDiscordRole2 = {
 	icon: string | null;
 	managed: boolean;
 	meInRole: boolean;
+	description: string | null;
 };
 
 export type ServerDataDiscordRole = {

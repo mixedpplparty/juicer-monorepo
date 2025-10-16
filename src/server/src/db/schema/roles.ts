@@ -20,6 +20,7 @@ export const roles = pgTable("roles", {
 		{ onDelete: "set null" },
 	),
 	selfAssignable: boolean("self_assignable").notNull().default(false),
+	description: text("description"),
 });
 
 // Category for roles. One role can have one category.
