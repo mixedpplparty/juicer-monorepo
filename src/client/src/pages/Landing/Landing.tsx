@@ -8,6 +8,7 @@ export const Landing = () => {
 	return (
 		<FullPageBase>
 			<ResponsiveCard css={{ gap: "12px" }}>
+				<div/>
 				<h1 css={{ margin: 0 }}>juicer</h1>
 				<div>
 					<AnchorNoStyle href={import.meta.env.VITE_USER_AUTH_URI}>
@@ -25,6 +26,7 @@ export const Landing = () => {
 						</Button>
 					</AnchorNoStyle>
 				</div>
+				<div/>
 			</ResponsiveCard>
 		</FullPageBase>
 	);
