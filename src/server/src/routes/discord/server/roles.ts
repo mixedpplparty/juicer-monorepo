@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { SetRoleSelfAssignableRequestBody } from "juicer-shared/dist/types/index.js";
 import {
 	getRoleInServerInDbByRoleIds,
-	setRoleSelfAssignable,
+	updateRoleInfo,
 } from "../../../functions/db.js";
 import {
 	assignRolesToUser,
@@ -97,10 +97,11 @@ app.post(
 			true,
 		);
 		if (manageGuildPermission) {
-			const role = await setRoleSelfAssignable({
+			const role = await updateRoleInfo({
 				roleId: roleId as string,
 				serverId: serverId as string,
 				selfAssignable: body.selfAssignable as boolean | null,
+				description: body.description as string | null | undefined,
 			});
 			return c.json(role, 200);
 		}

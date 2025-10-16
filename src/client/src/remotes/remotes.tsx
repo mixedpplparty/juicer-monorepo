@@ -346,14 +346,15 @@ export const _assignRoleCategoryToRole = async (
 	return _res.data;
 };
 
-export const _setRoleSelfAssignable = async (
+export const _updateRoleInfo = async (
 	serverId: string,
 	roleId: string,
 	selfAssignable: boolean | null,
+	description: string | null | undefined,
 ): Promise<Role> => {
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/update`,
-		{ selfAssignable },
+		{ selfAssignable, description },
 	);
 	return _res.data;
 };

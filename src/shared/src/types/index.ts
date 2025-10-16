@@ -322,6 +322,7 @@ export const AssignRoleCategoryToRoleRequestBody = z.object({
 
 export const SetRoleSelfAssignableRequestBody = z.object({
 	selfAssignable: z.boolean().optional().nullable(),
+	description: z.string().nullable().optional(),
 });
 
 export type GuildMember = DiscordJSGuildMember & {

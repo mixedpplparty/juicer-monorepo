@@ -581,21 +581,23 @@ export const getGameThumbnail = async ({
 		.then((res) => res?.thumbnail ?? null);
 };
 
-export const setRoleSelfAssignable = async ({
+export const updateRoleInfo = async ({
 	roleId,
 	serverId,
 	selfAssignable,
+	description,
 }: {
 	roleId: string;
 	serverId: string;
 	selfAssignable?: boolean | null;
+	description?: string | null | undefined;
 }): Promise<(typeof roles.$inferInsert)[]> => {
 	if (selfAssignable === undefined || selfAssignable === null) {
 		selfAssignable = false;
 	}
 	return await db
 		.update(roles)
-		.set({ selfAssignable })
+		.set({ selfAssignable, description })
 		.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
 		.returning();
 };

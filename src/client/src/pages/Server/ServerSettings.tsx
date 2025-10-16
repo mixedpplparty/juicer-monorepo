@@ -3,7 +3,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type { Category, RoleCategory, Tag } from "juicer-shared";
+import type { Category, RoleCategory } from "juicer-shared";
 import { Suspense, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "../../hooks/useLoading";
@@ -17,14 +17,12 @@ import {
 	_deleteRoleCategory,
 	_deleteTag,
 	_fetchServerData,
-	_setRoleSelfAssignable,
+	_updateRoleInfo,
 } from "../../remotes/remotes";
 import { Button, InlineButton } from "../../ui/components/Button";
-import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { DragDropZone } from "../../ui/components/DragDropZone";
-import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
@@ -53,6 +51,7 @@ export const ServerSettings = () => {
 		roleCategoryId: number | null;
 		roleCategoryName?: string | undefined | null;
 		selfAssignable: boolean;
+		description: string | null;
 	} | null>(null);
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
@@ -93,6 +92,7 @@ export const ServerSettings = () => {
 						? roleCategoriesObj?.[dbRole.roleCategoryId]?.name
 						: null,
 					selfAssignable: dbRole.selfAssignable,
+					description: dbRole.description,
 				};
 			})
 			.filter((role) => role.name !== "@everyone"); // without @everyone
@@ -222,6 +222,7 @@ export const ServerSettings = () => {
 			roleCategoryId: number | null;
 			roleCategoryName?: string | undefined | null;
 			selfAssignable: boolean;
+			description: string | null;
 		}) =>
 		() => {
 			setRoleSettingsModalRole(role);
@@ -238,6 +239,10 @@ export const ServerSettings = () => {
 			formData.get("role-category-id") === ""
 				? null
 				: Number(formData.get("role-category-id"));
+		const description = formData.get("role-description") as
+			| string
+			| null
+			| undefined;
 		const selfAssignable = formData.get("self-assignable") === "on";
 		try {
 			await startTransition(
@@ -248,10 +253,11 @@ export const ServerSettings = () => {
 				),
 			);
 			await startTransition(
-				_setRoleSelfAssignable(
+				_updateRoleInfo(
 					serverId as string,
 					roleSettingsModalRole?.roleId as string,
 					selfAssignable,
+					description,
 				),
 			);
 			showToast("Role updated", "success");
@@ -739,6 +745,15 @@ export const ServerSettings = () => {
 									),
 								)}
 							</Select>
+							<label htmlFor="role-description">역할 설명</label>
+							<Input
+								id="role-description"
+								name="role-description"
+								defaultValue={roleSettingsModalRole?.description || undefined}
+								required
+								aria-required
+								placeholder="역할 설명"
+							/>
 							<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
 								<input
 									type="checkbox"

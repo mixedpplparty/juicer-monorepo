@@ -242,7 +242,9 @@ export const GameInfo = () => {
 													{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
 												</h3>
 											</div>
-											<div css={{ flex: 1 }}>PLACEHOLDER: Description</div>
+											<div css={{ flex: 1 }}>
+												{rolesCombined[role.roleId]?.description}
+											</div>
 											<Button
 												onClick={() => toggleRoleAssign(role.roleId)}
 												css={{
