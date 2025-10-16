@@ -2,7 +2,6 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -291,7 +290,7 @@ export const Server = () => {
 					</div>
 				</div>
 			</div>
-			{_serverData.serverDataDb && (
+			{_serverData.serverDataDb && _serverData.admin && (
 				<div
 					css={{
 						display: "flex",
