@@ -98,7 +98,11 @@ export const GameSettings = () => {
 			showToast("Game thumbnail deleted", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await _serverDataQuery.refetch();
@@ -127,7 +131,11 @@ export const GameSettings = () => {
 			}
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		try {
@@ -146,7 +154,11 @@ export const GameSettings = () => {
 			showToast("Game updated", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -162,7 +174,11 @@ export const GameSettings = () => {
 			showToast("Game deleted", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await _serverDataQuery.refetch();
@@ -172,14 +188,14 @@ export const GameSettings = () => {
 	const nav = (
 		<Nav>
 			<div
-			css={{
-				display: "flex",
-				flexDirection: "row",
-				gap: "inherit",
-				alignItems: "center",
-				flex: "1",
-				flexWrap: "wrap",
-			}}
+				css={{
+					display: "flex",
+					flexDirection: "row",
+					gap: "inherit",
+					alignItems: "center",
+					flex: "1",
+					flexWrap: "wrap",
+				}}
 			>
 				<Button
 					css={{ background: "none", alignItems: "center" }}

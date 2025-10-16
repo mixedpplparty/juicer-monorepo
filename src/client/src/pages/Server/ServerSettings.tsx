@@ -116,7 +116,11 @@ export const ServerSettings = () => {
 			showToast("Category created", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -133,7 +137,11 @@ export const ServerSettings = () => {
 			showToast("Role category created", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -146,7 +154,11 @@ export const ServerSettings = () => {
 			showToast("Tag created", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -161,7 +173,11 @@ export const ServerSettings = () => {
 				showToast("Role category deleted", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
-					showToast(error.response?.data.detail as string, "error");
+					if (error.response?.data?.detail) {
+						showToast(error.response?.data.detail as string, "error");
+					} else {
+						showToast(error.response?.data as string, "error");
+					}
 				}
 			}
 			await startTransition(_serverDataQuery.refetch());
@@ -173,7 +189,11 @@ export const ServerSettings = () => {
 				showToast("Category deleted", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
-					showToast(error.response?.data.detail as string, "error");
+					if (error.response?.data?.detail) {
+						showToast(error.response?.data.detail as string, "error");
+					} else {
+						showToast(error.response?.data as string, "error");
+					}
 				}
 			}
 			await startTransition(_serverDataQuery.refetch());
@@ -184,7 +204,11 @@ export const ServerSettings = () => {
 			showToast("Tag deleted", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());

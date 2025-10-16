@@ -160,7 +160,11 @@ export const Server = () => {
 			showToast("Roles synced with server", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -184,7 +188,11 @@ export const Server = () => {
 			}
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 		await startTransition(_serverDataQuery.refetch());
@@ -196,7 +204,11 @@ export const Server = () => {
 			showToast("Roles synced with server", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
-				showToast(error.response?.data.detail as string, "error");
+				if (error.response?.data?.detail) {
+					showToast(error.response?.data.detail as string, "error");
+				} else {
+					showToast(error.response?.data as string, "error");
+				}
 			}
 		}
 
@@ -343,6 +355,7 @@ export const Server = () => {
 									display: "flex",
 									flexDirection: "column",
 									gap: "4px",
+									flex: 1,
 								}}
 							>
 								<div
@@ -352,7 +365,9 @@ export const Server = () => {
 										gap: "4px",
 									}}
 								>
-									<h2 css={{ margin: 0, flex: 1 }}>{_myDataInServer.displayName}</h2>
+									<h2 css={{ margin: 0, flex: 1 }}>
+										{_myDataInServer.displayName}
+									</h2>
 									<Chip
 										css={{
 											display: "flex",
@@ -361,14 +376,13 @@ export const Server = () => {
 										}}
 										onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
 									>
-										{areMyRolesSorted ? 
-										<FilterAltOffIcon
-											css={{ width: "16px", height: "16px" }}
-										/>
-									:
-										<FilterAltIcon
-											css={{ width: "16px", height: "16px" }}
-										/>}
+										{areMyRolesSorted ? (
+											<FilterAltOffIcon
+												css={{ width: "16px", height: "16px" }}
+											/>
+										) : (
+											<FilterAltIcon css={{ width: "16px", height: "16px" }} />
+										)}
 									</Chip>
 								</div>
 								<div>
@@ -382,7 +396,7 @@ export const Server = () => {
 											}}
 										>
 											{_myDataInServer.roles.map((role: string) => {
-												if(role !== serverId) {
+												if (role !== serverId) {
 													return (
 														<RoleChip
 															variant="unclickable"
@@ -504,7 +518,7 @@ export const Server = () => {
 														})}
 												</div>
 												<div css={{ display: "flex" }}>
-													<div/>
+													<div />
 												</div>
 											</div>
 										</div>
