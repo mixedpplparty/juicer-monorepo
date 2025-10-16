@@ -345,11 +345,6 @@ export const Server = () => {
 								gap: "12px",
 							}}
 						>
-							<img
-								src={_myDataInServer.displayAvatarURL || serverPlaceholderIcon}
-								alt={_myDataInServer.displayName}
-								css={{ width: "48px", height: "48px", borderRadius: "50%" }}
-							/>
 							<div
 								css={{
 									display: "flex",
@@ -362,9 +357,17 @@ export const Server = () => {
 									css={{
 										display: "flex",
 										flexDirection: "row",
-										gap: "4px",
+										gap: "12px",
+										alignItems: "center",
 									}}
 								>
+									<img
+										src={
+											_myDataInServer.displayAvatarURL || serverPlaceholderIcon
+										}
+										alt={_myDataInServer.displayName}
+										css={{ width: "36px", height: "36px", borderRadius: "50%" }}
+									/>
 									<h2 css={{ margin: 0, flex: 1 }}>
 										{_myDataInServer.displayName}
 									</h2>

@@ -21,7 +21,7 @@ import {
 	_unassignRoleByIdFromUser,
 } from "../../remotes/remotes";
 import { Button } from "../../ui/components/Button";
-import { Chip } from "../../ui/components/Chip";
+import { Card } from "../../ui/components/Card";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
@@ -208,40 +208,43 @@ export const GameInfo = () => {
 						<div
 							css={{
 								display: "flex",
-								flexDirection: "row",
-								gap: "6px",
-								flexWrap: "wrap",
+								flexDirection: "column",
+								gap: "12px",
 								paddingBottom: "16px",
 							}}
 						>
 							{currentGame?.gamesRoles &&
 								currentGame.gamesRoles.length > 0 &&
 								currentGame.gamesRoles.map((role: RoleRelationToGame) => (
-									<Chip
-										key={role.roleId}
-										css={{
-											display: "flex",
-											flexDirection: "row",
-											gap: "4px",
-											alignItems: "center",
-											cursor: "pointer",
-											...(_iHaveRole(_serverData, role.roleId) && {
-												border: "1px solid black",
-												background: "rgba(255, 255, 255, 1)",
-												color: "rgba(0, 0, 0, 1)",
-											}),
-										}}
-										onClick={() => toggleRoleAssign(role.roleId)}
-									>
-										<_8pxCircle
+									<Card key={role.roleId}>
+										<div
 											css={{
-												backgroundColor: `${
-													rolesCombined[role.roleId]?.color || "#ffffff"
-												}`,
+												display: "flex",
+												flexDirection: "row",
+												gap: "12px",
+												alignItems: "center",
 											}}
-										/>
-										{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
-									</Chip>
+										>
+											<div
+												css={{
+													display: "flex",
+													flexDirection: "row",
+													gap: "4px",
+													alignItems: "center",
+												}}
+											>
+												<_8pxCircle
+													css={{
+														backgroundColor: `${rolesCombined[role.roleId]?.color || "#ffffff"}`,
+													}}
+												/>
+												<h3 css={{ margin: 0, display: "block" }}>
+													{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
+												</h3>
+											</div>
+											<div>PLACEHOLDER: Description</div>
+										</div>
+									</Card>
 								))}
 						</div>
 					</div>
