@@ -745,13 +745,11 @@ export const ServerSettings = () => {
 									),
 								)}
 							</Select>
-							<label htmlFor="role-description">역할 설명</label>
+							<label htmlFor="role-description">역할 설명(선택)</label>
 							<Input
 								id="role-description"
 								name="role-description"
 								defaultValue={roleSettingsModalRole?.description || undefined}
-								required
-								aria-required
 								placeholder="역할 설명"
 							/>
 							<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>

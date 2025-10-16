@@ -575,181 +575,172 @@ export const Server = () => {
 							{_searchGamesInServerQuery?.data?.map(
 								(game: Game, idx: number) => {
 									return (
-										<Card
-											css={{
-												border: "1px solid rgb(255, 255, 255)",
-												alignItems: "center",
-												display: "flex",
-												flexDirection: "row",
-											}}
+										<LinkNoStyle
+											to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
+											css={{ cursor: "pointer" }}
 											key={game.gameId}
 										>
-											{_gameThumbnailQueries[idx].isLoading ? (
-												<Skeleton css={{ width: "64px", height: "64px" }} />
-											) : (
-												<img
-													src={
-														_gameThumbnailQueries[idx].data ||
-														serverPlaceholderIcon
-													}
-													alt={game.name}
-													css={{
-														width: "64px",
-														height: "64px",
-														borderRadius: "16px",
-													}}
-												/>
-											)}
-											<div
+											<Card
 												css={{
+													border: "1px solid rgb(255, 255, 255)",
+													alignItems: "center",
 													display: "flex",
 													flexDirection: "row",
-													gap: "8px",
-													width: "100%",
-													alignItems: "stretch",
 												}}
 											>
+												{_gameThumbnailQueries[idx].isLoading ? (
+													<Skeleton css={{ width: "64px", height: "64px" }} />
+												) : (
+													<img
+														src={
+															_gameThumbnailQueries[idx].data ||
+															serverPlaceholderIcon
+														}
+														alt={game.name}
+														css={{
+															width: "64px",
+															height: "64px",
+															borderRadius: "16px",
+														}}
+													/>
+												)}
 												<div
 													css={{
 														display: "flex",
-														flexDirection: "column",
+														flexDirection: "row",
+														gap: "8px",
 														width: "100%",
-														gap: "4px",
-														flex: 1,
+														alignItems: "stretch",
 													}}
 												>
 													<div
 														css={{
 															display: "flex",
-															flexDirection: "row",
+															flexDirection: "column",
+															width: "100%",
 															gap: "4px",
+															flex: 1,
 														}}
 													>
-														<h2 css={{ margin: 0, display: "inline" }}>
-															{game.name}
-														</h2>
 														<div
 															css={{
 																display: "flex",
 																flexDirection: "row",
 																gap: "4px",
-																alignItems: "center",
 															}}
 														>
-															{game.categoryId &&
-																(categoriesObj?.[game.categoryId]?.name ||
-																	"카테고리 이름 없음")}
+															<h2 css={{ margin: 0, display: "inline" }}>
+																{game.name}
+															</h2>
+															<div
+																css={{
+																	display: "flex",
+																	flexDirection: "row",
+																	gap: "4px",
+																	alignItems: "center",
+																}}
+															>
+																{game.categoryId &&
+																	(categoriesObj?.[game.categoryId]?.name ||
+																		"카테고리 이름 없음")}
+															</div>
 														</div>
-													</div>
-													<div
-														css={{
-															display: "flex",
-															flexDirection: "row",
-															gap: "4px",
-															flexWrap: "wrap",
-														}}
-													>
-														{game.channels &&
-															game.channels.length > 0 &&
-															game.channels.map((channelId: string) => (
-																<div
-																	css={{
-																		display: "flex",
-																		flexDirection: "row",
-																		gap: "4px",
-																		alignItems: "center",
-																	}}
-																	key={channelId}
-																>
-																	#
-																	{channelsObj?.[channelId]?.name ||
-																		"채널 이름 없음"}
-																</div>
-															))}
-													</div>
-													<div
-														css={{
-															display: "flex",
-															flexDirection: "row",
-															gap: "4px",
-															flexWrap: "wrap",
-														}}
-													>
-														{game.gamesRoles &&
-															game.gamesRoles.length > 0 &&
-															game.gamesRoles.map(
-																(role: RoleRelationToGame) => (
-																	<Chip
-																		key={role.roleId}
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "row",
+																gap: "4px",
+																flexWrap: "wrap",
+															}}
+														>
+															{game.channels &&
+																game.channels.length > 0 &&
+																game.channels.map((channelId: string) => (
+																	<div
 																		css={{
 																			display: "flex",
 																			flexDirection: "row",
 																			gap: "4px",
 																			alignItems: "center",
-																			cursor: "pointer",
-																			...(_iHaveRole(
-																				_serverData,
-																				role.roleId,
-																			) && {
-																				border: "1px solid black",
-																				background: "rgba(255, 255, 255, 1)",
-																				color: "rgba(0, 0, 0, 1)",
-																			}),
 																		}}
-																		onClick={() =>
-																			toggleRoleAssign(role.roleId)
-																		}
+																		key={channelId}
 																	>
-																		<_8pxCircle
+																		#
+																		{channelsObj?.[channelId]?.name ||
+																			"채널 이름 없음"}
+																	</div>
+																))}
+														</div>
+														<div
+															css={{
+																display: "flex",
+																flexDirection: "row",
+																gap: "4px",
+																flexWrap: "wrap",
+															}}
+														>
+															{game.gamesRoles &&
+																game.gamesRoles.length > 0 &&
+																game.gamesRoles.map(
+																	(role: RoleRelationToGame) => (
+																		<Chip
+																			key={role.roleId}
 																			css={{
-																				backgroundColor: `${
-																					rolesCombined[role.roleId]?.color ||
-																					"#ffffff"
-																				}`,
+																				display: "flex",
+																				flexDirection: "row",
+																				gap: "4px",
+																				alignItems: "center",
+																				...(_iHaveRole(
+																					_serverData,
+																					role.roleId,
+																				) && {
+																					border: "1px solid black",
+																					background: "rgba(255, 255, 255, 1)",
+																					color: "rgba(0, 0, 0, 1)",
+																				}),
+																				...(isOnTransition && {
+																					opacity: "0.5",
+																					cursor: "not-allowed",
+																				}),
 																			}}
-																		/>
-																		{rolesCombined[role.roleId]?.name ||
-																			"역할 이름 없음"}
-																	</Chip>
-																),
-															)}
+																		>
+																			<_8pxCircle
+																				css={{
+																					backgroundColor: `${
+																						rolesCombined[role.roleId]?.color ||
+																						"#ffffff"
+																					}`,
+																				}}
+																			/>
+																			{rolesCombined[role.roleId]?.name ||
+																				"역할 이름 없음"}
+																		</Chip>
+																	),
+																)}
+														</div>
 													</div>
-												</div>
-												{_serverData.admin && (
-													<div css={{ alignSelf: "stretch" }}>
-														<LinkNoStyle
-															to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
-															css={{ cursor: "pointer" }}
-														>
-															<InlineButton
-																css={{
-																	height: "100%",
-																	alignItems: "center",
-																}}
+													{_serverData.admin && (
+														<div css={{ alignSelf: "stretch" }}>
+															<LinkNoStyle
+																to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
+																css={{ cursor: "pointer" }}
 															>
-																<SettingsIcon
-																	css={{ width: "20px", height: "20px" }}
-																/>
-															</InlineButton>
-														</LinkNoStyle>
-													</div>
-												)}
-												<div css={{ alignSelf: "stretch" }}>
-													<LinkNoStyle
-														to={`/server/game?gameId=${game.gameId}&serverId=${serverId}`}
-														css={{ cursor: "pointer" }}
-													>
-														<InlineButton
-															css={{ height: "100%", alignItems: "center" }}
-														>
-															<NavigateNextIcon
-																css={{ width: "20px", height: "20px" }}
-															/>
-														</InlineButton>
-													</LinkNoStyle>
+																<InlineButton
+																	css={{
+																		height: "100%",
+																		alignItems: "center",
+																	}}
+																>
+																	<SettingsIcon
+																		css={{ width: "20px", height: "20px" }}
+																	/>
+																</InlineButton>
+															</LinkNoStyle>
+														</div>
+													)}
 												</div>
-											</div>
-										</Card>
+											</Card>
+										</LinkNoStyle>
 									);
 								},
 							)}
@@ -788,8 +779,12 @@ export const Server = () => {
 								alignItems: "center",
 								justifyContent: "center",
 								gap: "8px",
+								...(isOnTransition && {
+									opacity: "0.5",
+									cursor: "not-allowed",
+								}),
 							}}
-							onClick={createServerAction}
+							onClick={isOnTransition ? undefined : createServerAction}
 						>
 							<AddIcon css={{ width: "16px", height: "16px" }} />
 							juicer DB에 서버 추가

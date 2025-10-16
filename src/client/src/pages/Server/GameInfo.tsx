@@ -1,4 +1,5 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckIcon from "@mui/icons-material/Check";
 import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
@@ -7,7 +8,7 @@ import type {
 	ServerDataDiscordChannel,
 	Tag,
 } from "juicer-shared";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { _iHaveRole } from "../../functions/ServerFunctions";
@@ -26,9 +27,11 @@ import { _8pxCircle } from "../../ui/components/Circle";
 import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Skeleton } from "../../ui/components/Skeleton";
+import { Spinner } from "../../ui/components/Spinner";
 import { Loading } from "../Loading/Loading";
-
 export const GameInfo = () => {
+	const clickedRoleId = useRef<string | null>(null);
+
 	const [isOnTransition, startTransition] = useLoading();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -116,6 +119,7 @@ export const GameInfo = () => {
 	}, [_serverData, gameId]);
 
 	const toggleRoleAssign = async (roleId: string) => {
+		clickedRoleId.current = roleId;
 		try {
 			if (_iHaveRole(_serverData, roleId)) {
 				await startTransition(
@@ -216,7 +220,28 @@ export const GameInfo = () => {
 							{currentGame?.gamesRoles &&
 								currentGame.gamesRoles.length > 0 &&
 								currentGame.gamesRoles.map((role: RoleRelationToGame) => (
-									<Card key={role.roleId}>
+									<Card
+										onClick={
+											isOnTransition
+												? undefined
+												: () => toggleRoleAssign(role.roleId)
+										}
+										key={role.roleId}
+										css={{
+											border: "1px solid rgb(255, 255, 255)",
+											padding: "8px",
+											...(isOnTransition
+												? { opacity: "0.5", cursor: "not-allowed" }
+												: {
+														cursor: "pointer",
+													}),
+											...(_iHaveRole(_serverData, role.roleId) && {
+												border: "1px solid black",
+												background: "rgba(255, 255, 255, 1)",
+												color: "rgba(0, 0, 0, 1)",
+											}),
+										}}
+									>
 										<div
 											css={{
 												display: "flex",
@@ -225,6 +250,31 @@ export const GameInfo = () => {
 												alignItems: "center",
 											}}
 										>
+											{isOnTransition &&
+											clickedRoleId.current === role.roleId ? (
+												<Spinner
+													css={{
+														width: "24px",
+														height: "24px",
+														border: "4px solid rgba(122, 122, 122, 1)",
+														borderTopColor: "rgba(255, 255, 255, 1)",
+													}}
+												/>
+											) : _iHaveRole(_serverData, role.roleId) ? (
+												<CheckIcon
+													css={{
+														width: "24px",
+														height: "24px",
+													}}
+												/>
+											) : (
+												<div
+													css={{
+														width: "24px",
+														height: "24px",
+													}}
+												/>
+											)}
 											<div
 												css={{
 													display: "flex",
@@ -245,20 +295,6 @@ export const GameInfo = () => {
 											<div css={{ flex: 1 }}>
 												{rolesCombined[role.roleId]?.description}
 											</div>
-											<Button
-												onClick={() => toggleRoleAssign(role.roleId)}
-												css={{
-													background: "none",
-													alignItems: "center",
-													...(_iHaveRole(_serverData, role.roleId) && {
-														border: "1px solid black",
-														background: "rgba(255, 255, 255, 1)",
-														color: "rgba(0, 0, 0, 1)",
-													}),
-												}}
-											>
-												Toggle
-											</Button>
 										</div>
 									</Card>
 								))}
