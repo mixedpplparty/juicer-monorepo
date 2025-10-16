@@ -84,6 +84,7 @@ export type Role = {
 	roleId: string;
 	roleCategoryId: number | null;
 	selfAssignable: boolean;
+	description: string | null;
 };
 
 export type RoleRelationToGame = {
@@ -153,7 +154,6 @@ export type ServerDataDiscordRole2 = {
 	icon: string | null;
 	managed: boolean;
 	meInRole: boolean;
-	description: string | null;
 };
 
 export type ServerDataDiscordRole = {
