@@ -35,13 +35,11 @@ import {
 } from "../../remotes/remotes";
 import { LinkNoStyle } from "../../ui/components/Anchor";
 import { Button, InlineButton } from "../../ui/components/Button";
-import { Card, ResponsiveCard } from "../../ui/components/Card";
+import { Card } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
-import { FullPageBase } from "../../ui/components/FullPageBase";
 import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
-import { Main } from "../../ui/components/Main";
 import { Modal } from "../../ui/components/Modal";
 import { ModalPortal } from "../../ui/components/ModalPortal";
 import { Nav } from "../../ui/components/Nav";
@@ -271,6 +269,7 @@ export const Server = () => {
 						display: "flex",
 						flexDirection: "column",
 						width: "100%",
+						flex: 1,
 					}}
 				>
 					<h1 css={{ margin: 0 }}>{_serverData.serverDataDiscord.name}</h1>
@@ -353,7 +352,24 @@ export const Server = () => {
 										gap: "4px",
 									}}
 								>
-									<h2 css={{ margin: 0 }}>{_myDataInServer.displayName}</h2>
+									<h2 css={{ margin: 0, flex: 1 }}>{_myDataInServer.displayName}</h2>
+									<Chip
+										css={{
+											display: "flex",
+											alignItems: "center",
+											cursor: "pointer",
+										}}
+										onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
+									>
+										{areMyRolesSorted ? 
+										<FilterAltOffIcon
+											css={{ width: "16px", height: "16px" }}
+										/>
+									:
+										<FilterAltIcon
+											css={{ width: "16px", height: "16px" }}
+										/>}
+									</Chip>
 								</div>
 								<div>
 									{!areMyRolesSorted ? (
@@ -366,30 +382,20 @@ export const Server = () => {
 											}}
 										>
 											{_myDataInServer.roles.map((role: string) => {
-												return (
-													<RoleChip
-														variant="unclickable"
-														key={role}
-														name={
-															rolesCombined[role]?.name ||
-															`이름없음 (ID ${role})`
-														}
-														color={rolesCombined[role]?.color || "#ffffff"}
-													/>
-												);
+												if(role !== serverId) {
+													return (
+														<RoleChip
+															variant="unclickable"
+															key={role}
+															name={
+																rolesCombined[role]?.name ||
+																`이름없음 (ID ${role})`
+															}
+															color={rolesCombined[role]?.color || "#ffffff"}
+														/>
+													);
+												}
 											})}
-											<Chip
-												css={{
-													display: "flex",
-													alignItems: "center",
-													cursor: "pointer",
-												}}
-												onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
-											>
-												<FilterAltIcon
-													css={{ width: "16px", height: "16px" }}
-												/>
-											</Chip>
 										</div>
 									) : (
 										<div
@@ -426,6 +432,7 @@ export const Server = () => {
 																		display: "flex",
 																		flexDirection: "row",
 																		gap: "4px",
+																		flexWrap: "wrap",
 																	}}
 																>
 																	{_myDataInServer.roles
@@ -471,6 +478,7 @@ export const Server = () => {
 														display: "flex",
 														flexDirection: "row",
 														gap: "4px",
+														flexWrap: "wrap",
 													}}
 												>
 													{_myDataInServer.roles
@@ -496,22 +504,7 @@ export const Server = () => {
 														})}
 												</div>
 												<div css={{ display: "flex" }}>
-													<Chip
-														css={{
-															display: "flex",
-															alignItems: "center",
-															cursor: "pointer",
-															flexGrow: 0,
-														}}
-														onClick={() =>
-															setAreMyRolesSorted(!areMyRolesSorted)
-														}
-													>
-														<FilterAltOffIcon
-															css={{ width: "16px", height: "16px" }}
-														/>
-													</Chip>
-													<div></div>
+													<div/>
 												</div>
 											</div>
 										</div>

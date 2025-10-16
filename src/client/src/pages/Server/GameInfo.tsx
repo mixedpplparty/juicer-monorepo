@@ -21,11 +21,8 @@ import {
 	_unassignRoleByIdFromUser,
 } from "../../remotes/remotes";
 import { Button } from "../../ui/components/Button";
-import { ResponsiveCard } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
-import { Footer } from "../../ui/components/Footer";
-import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Skeleton } from "../../ui/components/Skeleton";
@@ -172,75 +169,77 @@ export const GameInfo = () => {
 	return (
 		<Suspense fallback={<Loading />}>
 			<PageTemplate nav={nav}>
-				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-					<h2 css={{ margin: 0 }}>설명</h2>
-					<span>{currentGame?.description || "설명 없음"}</span>
-				</div>
-				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-					<h2 css={{ margin: 0 }}>카테고리</h2>
-					<span>
-						{currentGame?.categoryId
-							? categoriesObj?.[currentGame.categoryId]?.name ||
-								"카테고리 이름 없음"
-							: "카테고리 없음"}
-					</span>
-				</div>
-				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-					<h2 css={{ margin: 0 }}>연관 채널</h2>
-					<span>
-						{currentGame?.channels
-							?.map((channel) => `#${channelsObj?.[channel]?.name}`)
-							.join(", ") || "채널 없음"}
-					</span>
-				</div>
-				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-					<h2 css={{ margin: 0 }}>태그</h2>
-					<span>
-						{currentGame?.gamesTags
-							?.map((tag) => `#${tagsObj?.[tag.tagId]?.name}`)
-							.join(", ") || "태그 없음"}
-					</span>
-				</div>
-				<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-					<h2 css={{ margin: 0 }}>역할</h2>
-					<div
-						css={{
-							display: "flex",
-							flexDirection: "row",
-							gap: "6px",
-							flexWrap: "wrap",
-							paddingBottom: "16px",
-						}}
-					>
-						{currentGame?.gamesRoles &&
-							currentGame.gamesRoles.length > 0 &&
-							currentGame.gamesRoles.map((role: RoleRelationToGame) => (
-								<Chip
-									key={role.roleId}
-									css={{
-										display: "flex",
-										flexDirection: "row",
-										gap: "4px",
-										alignItems: "center",
-										cursor: "pointer",
-										...(_iHaveRole(_serverData, role.roleId) && {
-											border: "1px solid black",
-											background: "rgba(255, 255, 255, 1)",
-											color: "rgba(0, 0, 0, 1)",
-										}),
-									}}
-									onClick={() => toggleRoleAssign(role.roleId)}
-								>
-									<_8pxCircle
+				<div css={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+					<div css={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<h2 css={{ margin: 0 }}>설명</h2>
+						<span>{currentGame?.description || "설명 없음"}</span>
+					</div>
+					<div css={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<h2 css={{ margin: 0 }}>카테고리</h2>
+						<span>
+							{currentGame?.categoryId
+								? categoriesObj?.[currentGame.categoryId]?.name ||
+									"카테고리 이름 없음"
+								: "카테고리 없음"}
+						</span>
+					</div>
+					<div css={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<h2 css={{ margin: 0 }}>연관 채널</h2>
+						<span>
+							{currentGame?.channels
+								?.map((channel) => `#${channelsObj?.[channel]?.name}`)
+								.join(", ") || "채널 없음"}
+						</span>
+					</div>
+					<div css={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<h2 css={{ margin: 0 }}>태그</h2>
+						<span>
+							{currentGame?.gamesTags
+								?.map((tag) => `#${tagsObj?.[tag.tagId]?.name}`)
+								.join(", ") || "태그 없음"}
+						</span>
+					</div>
+					<div css={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+						<h2 css={{ margin: 0 }}>역할</h2>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+								gap: "6px",
+								flexWrap: "wrap",
+								paddingBottom: "16px",
+							}}
+						>
+							{currentGame?.gamesRoles &&
+								currentGame.gamesRoles.length > 0 &&
+								currentGame.gamesRoles.map((role: RoleRelationToGame) => (
+									<Chip
+										key={role.roleId}
 										css={{
-											backgroundColor: `${
-												rolesCombined[role.roleId]?.color || "#ffffff"
-											}`,
+											display: "flex",
+											flexDirection: "row",
+											gap: "4px",
+											alignItems: "center",
+											cursor: "pointer",
+											...(_iHaveRole(_serverData, role.roleId) && {
+												border: "1px solid black",
+												background: "rgba(255, 255, 255, 1)",
+												color: "rgba(0, 0, 0, 1)",
+											}),
 										}}
-									/>
-									{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
-								</Chip>
-							))}
+										onClick={() => toggleRoleAssign(role.roleId)}
+									>
+										<_8pxCircle
+											css={{
+												backgroundColor: `${
+													rolesCombined[role.roleId]?.color || "#ffffff"
+												}`,
+											}}
+										/>
+										{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
+									</Chip>
+								))}
+						</div>
 					</div>
 				</div>
 			</PageTemplate>

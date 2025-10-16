@@ -21,7 +21,7 @@ export const Modal = ({
 				width: "100vw",
 				height: "100vh",
 				backgroundColor: "rgba(0, 0, 0, 0.75)",
-				position: "absolute",
+				position: "fixed",
 				zIndex: 3,
 				display: "flex",
 				justifyContent: "center",

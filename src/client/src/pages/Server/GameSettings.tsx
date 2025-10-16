@@ -24,11 +24,9 @@ import {
 } from "../../remotes/remotes";
 import { AnchorNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
-import { ResponsiveCard } from "../../ui/components/Card";
 import { CheckableChip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { Footer } from "../../ui/components/Footer";
-import { FullPageBase } from "../../ui/components/FullPageBase";
 import { Input } from "../../ui/components/Input";
 import { Main } from "../../ui/components/Main";
 import { Nav } from "../../ui/components/Nav";
@@ -173,38 +171,50 @@ export const GameSettings = () => {
 
 	const nav = (
 		<Nav>
-			<Button
-				css={{ background: "none", alignItems: "center" }}
-				onClick={() => navigate(`/server?serverId=${serverId}`)}
-				type="button"
-			>
-				<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
-			</Button>
 			<div
-				css={{
-					display: "flex",
-					flexDirection: "column",
-					width: "100%",
-					flex: 1,
-				}}
+			css={{
+				display: "flex",
+				flexDirection: "row",
+				gap: "inherit",
+				alignItems: "center",
+				flex: "1",
+				flexWrap: "wrap",
+			}}
 			>
-				<h1 css={{ margin: 0 }}>
-					{gamesObj?.[Number(gameId as string)]?.name}
-				</h1>
-				<div>주제 설정</div>
+				<Button
+					css={{ background: "none", alignItems: "center" }}
+					onClick={() => navigate(`/server?serverId=${serverId}`)}
+					type="button"
+				>
+					<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
+				</Button>
+				<div
+					css={{
+						display: "flex",
+						flexDirection: "column",
+						width: "auto",
+					}}
+				>
+					<h1 css={{ margin: 0 }}>
+						{gamesObj?.[Number(gameId as string)]?.name}
+					</h1>
+					<div>주제 설정</div>
+				</div>
+				<div css={{ flexShrink: 0, marginLeft: "auto" }}>
+					<Button
+						css={{
+							background: "#ed5555",
+							alignItems: "center",
+							gap: "8px",
+							display: "flex",
+						}}
+						onClick={handleDeleteGame}
+					>
+						<DeleteIcon css={{ width: "20px", height: "20px" }} />
+						주제 삭제
+					</Button>
+				</div>
 			</div>
-			<Button
-				css={{
-					background: "#ed5555",
-					alignItems: "center",
-					gap: "8px",
-					display: "flex",
-				}}
-				onClick={handleDeleteGame}
-			>
-				<DeleteIcon css={{ width: "20px", height: "20px" }} />
-				주제 삭제
-			</Button>
 		</Nav>
 	);
 

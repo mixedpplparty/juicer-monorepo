@@ -21,6 +21,7 @@ export const Chip = styled.div(
 			props.variant === "loading"
 				? "1px solid rgba(255, 255, 255, 0.66)"
 				: "1px solid rgba(255, 255, 255, 0.15)",
+		userSelect: "none" as const,
 	}),
 );
 

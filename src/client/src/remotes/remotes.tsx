@@ -290,6 +290,9 @@ export const _assignRoleByIdToUser = async (
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/assign`,
 	);
+	if (_res.status === 400) {
+		throw new Error("봇에 해당 역할을 부여할 권한이 없을 가능성이 높습니다.");
+	}
 	return _res.data;
 };
 

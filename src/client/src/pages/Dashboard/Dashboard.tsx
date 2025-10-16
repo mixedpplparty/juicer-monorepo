@@ -8,8 +8,7 @@ import { useLoading } from "../../hooks/useLoading";
 import { _fetchMyInfo, _signOut } from "../../remotes/remotes";
 import { AnchorNoStyle, LinkNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
-import { Card, ResponsiveCard } from "../../ui/components/Card";
-import { FullPageBase } from "../../ui/components/FullPageBase";
+import { Card } from "../../ui/components/Card";
 import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Loading } from "../Loading/Loading";
@@ -38,7 +37,7 @@ export const Dashboard = () => {
 				<h1 css={{ margin: 0 }}>juicer</h1>
 				<div>봇과 나 자신 모두가 있는 서버만 표시됩니다.</div>
 			</div>
-			<Button css={{ background: "#ed5555" }} onClick={signOut}>
+			<Button css={{ background: "#ed5555", whiteSpace: "nowrap" }} onClick={signOut}>
 				로그아웃
 			</Button>
 		</Nav>
@@ -96,7 +95,7 @@ export const Dashboard = () => {
 						</Card>
 					</AnchorNoStyle>
 				</div>
-				<div></div>
+				<div/>
 			</PageTemplate>
 		</Suspense>
 	);
