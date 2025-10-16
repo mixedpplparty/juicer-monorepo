@@ -242,7 +242,21 @@ export const GameInfo = () => {
 													{rolesCombined[role.roleId]?.name || "역할 이름 없음"}
 												</h3>
 											</div>
-											<div>PLACEHOLDER: Description</div>
+											<div css={{ flex: 1 }}>PLACEHOLDER: Description</div>
+											<Button
+												onClick={() => toggleRoleAssign(role.roleId)}
+												css={{
+													background: "none",
+													alignItems: "center",
+													...(_iHaveRole(_serverData, role.roleId) && {
+														border: "1px solid black",
+														background: "rgba(255, 255, 255, 1)",
+														color: "rgba(0, 0, 0, 1)",
+													}),
+												}}
+											>
+												Toggle
+											</Button>
 										</div>
 									</Card>
 								))}
