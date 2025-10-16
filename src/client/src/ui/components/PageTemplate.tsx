@@ -57,6 +57,10 @@ export const PageTemplate = ({
 						ref={topRef}
 						css={{
 							position: "sticky",
+							marginRight: "-16px",
+							marginLeft: "-16px",
+							paddingRight: "16px",
+							paddingLeft: "16px",
 							top: "-1px",
 							zIndex: 2,
 							...(isTopIntersecting && intersectingCss),
@@ -72,6 +76,10 @@ export const PageTemplate = ({
 						ref={bottomRef}
 						css={{
 							position: "sticky",
+							marginRight: "-16px",
+							marginLeft: "-16px",
+							paddingRight: "16px",
+							paddingLeft: "16px",
 							bottom: "-1px",
 							zIndex: 2,
 							...(isBottomIntersecting && intersectingCss),
