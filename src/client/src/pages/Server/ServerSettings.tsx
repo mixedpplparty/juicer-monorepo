@@ -31,6 +31,7 @@ import { PageTemplate } from "../../ui/components/PageTemplate";
 import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
+import { NoAdminPerms } from "../Auth/NoAdminPerms";
 export const ServerSettings = () => {
 	const draggedFrom = useRef<number | null>(null);
 	const draggedRoleId = useRef<string | null>(null);
@@ -328,6 +329,11 @@ export const ServerSettings = () => {
 			</div>
 		</Nav>
 	);
+
+	if (!_serverData.admin) {
+		return (<Suspense fallback={<Loading />}><NoAdminPerms/></Suspense>)
+	}
+
 	return (
 		<Suspense fallback={<Loading />}>
 			<PageTemplate nav={nav}>

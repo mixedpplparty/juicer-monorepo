@@ -33,6 +33,7 @@ import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Option, Select } from "../../ui/components/Select";
 import { Loading } from "../Loading/Loading";
+import { NoAdminPerms } from "../Auth/NoAdminPerms";
 export const GameSettings = () => {
 	const { showToast } = useToast();
 	const [isOnTransition, startTransition] = useLoading();
@@ -43,6 +44,8 @@ export const GameSettings = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+
+	
 	const rolesCombined = useMemo(() => {
 		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
@@ -253,6 +256,11 @@ export const GameSettings = () => {
 			</Button>
 		</Footer>
 	);
+
+	
+	if (!_serverData.admin) {
+		return (<Suspense fallback={<Loading />}><NoAdminPerms/></Suspense>)
+	}
 
 	return (
 		<Suspense fallback={<Loading />}>
