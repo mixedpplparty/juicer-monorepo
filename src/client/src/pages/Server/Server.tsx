@@ -349,7 +349,7 @@ export const Server = () => {
 								css={{
 									display: "flex",
 									flexDirection: "column",
-									gap: "4px",
+									gap: "16px",
 									flex: 1,
 								}}
 							>
@@ -419,7 +419,7 @@ export const Server = () => {
 											css={{
 												display: "flex",
 												flexDirection: "column",
-												gap: "4px",
+												gap: "12px",
 											}}
 										>
 											{_serverData.serverDataDb?.roleCategories?.map(

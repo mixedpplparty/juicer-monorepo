@@ -428,9 +428,7 @@ export const GameSettings = () => {
 									>
 										<_8pxCircle
 											css={{
-												backgroundColor: role.selfAssignable
-													? role.color || "#ffffff"
-													: "#999999",
+												backgroundColor: role.color || "#ffffff"
 											}}
 										/>
 										{role.name}
