@@ -1,5 +1,5 @@
+import type { APIUser } from "discord-api-types/v10";
 import type { GuildMember as DiscordJSGuildMember } from "discord.js";
-import type { APIUser, ChannelType } from "discord-api-types/v10";
 import * as z from "zod";
 
 export const ThumbnailImage = z
@@ -19,18 +19,7 @@ export const ThumbnailImage = z
 	.max(1_048_576)
 	.optional()
 	.nullable();
-
-export type Guild = {
-	id: string;
-	name: string;
-	icon: string | null;
-	owner_id: string;
-	owner_name: string;
-	owner_nick: string | null; // nick is server-specific. optional
-	member_count: number;
-};
-
-// new type for hono
+	
 export type FilteredGuild = {
 	id: string;
 	name: string;
@@ -96,19 +85,6 @@ export type Channel = {
 	id: string;
 };
 
-// updated id to gameId
-// updated category to categoryId
-export type Game = {
-	gameId: number;
-	serverId: string;
-	name: string;
-	description?: string | null;
-	categoryId?: number | null;
-	thumbnail: Buffer | null;
-	gamesTags: TagRelationToGame[] | null;
-	gamesRoles: RoleRelationToGame[] | null;
-	channels: string[] | null;
-};
 export type GameWithoutRelations = {
 	gameId: number;
 	serverId: string;
@@ -118,17 +94,13 @@ export type GameWithoutRelations = {
 	thumbnail: Buffer | null;
 	channels: string[] | null;
 };
-// // deprecated
-// export type ServerDataDiscord = {
-// 	id: string;
-// 	name: string;
-// 	icon: string | null;
-// 	owner_id: string;
-// 	owner_name: string;
-// 	owner_nick: string | null;
-// 	member_count: number;
-// 	roles: ServerDataDiscordRole[] | null;
-// };
+
+// updated id to gameId
+// updated category to categoryId
+export type Game = GameWithoutRelations & {
+	gamesTags: TagRelationToGame[] | null;
+	gamesRoles: RoleRelationToGame[] | null;
+};
 
 export type FilteredServerDataDiscord = {
 	id: string;
@@ -154,16 +126,6 @@ export type ServerDataDiscordRole2 = {
 	icon: string | null;
 	managed: boolean;
 	meInRole: boolean;
-};
-
-export type ServerDataDiscordRole = {
-	id: string;
-	name: string;
-	color: number[]; // [r, g, b]
-	display_icon: string | null;
-	mention: string;
-	icon: string | null;
-	me_in_role: boolean;
 };
 
 export type ServerData = {
