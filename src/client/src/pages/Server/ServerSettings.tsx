@@ -15,9 +15,9 @@ import {
 	_createTag,
 	_deleteCategory,
 	_deleteRoleCategory,
-	_deleteTag,
 	_fetchServerData,
 	_updateRoleInfo,
+	_updateServerVerificationRequired,
 } from "../../remotes/remotes";
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Chip } from "../../ui/components/Chip";
@@ -30,8 +30,8 @@ import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
-import { Loading } from "../Loading/Loading";
 import { NoAdminPerms } from "../Auth/NoAdminPerms";
+import { Loading } from "../Loading/Loading";
 export const ServerSettings = () => {
 	const draggedFrom = useRef<number | null>(null);
 	const draggedRoleId = useRef<string | null>(null);
@@ -64,6 +64,22 @@ export const ServerSettings = () => {
 		_fetchServerData.query(serverId as string),
 	);
 	const _serverData = _serverDataQuery.data;
+
+	const [verificationRequiredChecked, setVerificationRequiredChecked] =
+		useState<boolean>(_serverData.serverDataDb?.verificationRequired || false);
+
+	const updateVerificationRequirement = async (checked: boolean) => {
+		try {
+			await startTransition(
+				_updateServerVerificationRequired(serverId as string, checked),
+			);
+			showToast("Verification requirement updated", "success");
+		} catch (error: unknown) {
+			if (isAxiosError(error)) {
+				showToast(error.response?.data.detail as string, "error");
+			}
+		}
+	};
 
 	const roleCategoriesObj = useMemo(() => {
 		return _serverData.serverDataDb?.roleCategories?.reduce(
@@ -199,21 +215,6 @@ export const ServerSettings = () => {
 			}
 			await startTransition(_serverDataQuery.refetch());
 		};
-	const deleteTagAction = (tagId: number) => async (): Promise<void> => {
-		try {
-			await startTransition(_deleteTag(serverId as string, tagId));
-			showToast("Tag deleted", "success");
-		} catch (error: unknown) {
-			if (isAxiosError(error)) {
-				if (error.response?.data?.detail) {
-					showToast(error.response?.data.detail as string, "error");
-				} else {
-					showToast(error.response?.data as string, "error");
-				}
-			}
-		}
-		await startTransition(_serverDataQuery.refetch());
-	};
 
 	const handleRoleSettingsModalOpen =
 		(role: {
@@ -331,7 +332,11 @@ export const ServerSettings = () => {
 	);
 
 	if (!_serverData.admin) {
-		return (<Suspense fallback={<Loading />}><NoAdminPerms/></Suspense>)
+		return (
+			<Suspense fallback={<Loading />}>
+				<NoAdminPerms />
+			</Suspense>
+		);
 	}
 
 	return (
@@ -345,6 +350,36 @@ export const ServerSettings = () => {
 						gap: "12px",
 					}}
 				>
+					<div
+						css={{
+							display: "flex",
+							flexDirection: "column",
+							width: "100%",
+							gap: "12px",
+						}}
+					>
+						<h2 css={{ margin: 0, flex: 1 }}>서버 이용 인증</h2>
+						<div
+							css={{
+								display: "flex",
+								flexDirection: "row",
+							}}
+						>
+							<input
+								type="checkbox"
+								name="verification-required"
+								id="verification-required"
+								defaultChecked={
+									_serverData.serverDataDb?.verificationRequired || false
+								}
+								onChange={(e) =>
+									updateVerificationRequirement(e.target.checked)
+								}
+								disabled={isOnTransition}
+							/>
+							<label htmlFor="verification-required">서버 이용 인증 필요</label>
+						</div>
+					</div>
 					<div
 						css={{
 							display: "flex",
@@ -447,24 +482,26 @@ export const ServerSettings = () => {
 													alignItems: "center",
 												}}
 											>
-												<InlineButton
-													css={{
-														height: "100%",
-														alignItems: "center",
-														justifyContent: "center",
-													}}
-													onClick={deleteRoleCategoryAction(
-														roleCategory.roleCategoryId,
-													)}
-												>
-													<DeleteIcon
+												{roleCategory.roleCategoryId !== 1 && (
+													<InlineButton
 														css={{
-															width: "16px",
-															height: "16px",
-															color: "#FFF",
+															height: "100%",
+															alignItems: "center",
+															justifyContent: "center",
 														}}
-													/>
-												</InlineButton>
+														onClick={deleteRoleCategoryAction(
+															roleCategory.roleCategoryId,
+														)}
+													>
+														<DeleteIcon
+															css={{
+																width: "16px",
+																height: "16px",
+																color: "#FFF",
+															}}
+														/>
+													</InlineButton>
+												)}
 												<h3 css={{ margin: 0 }}>{roleCategory.name}</h3>
 											</div>
 											<DragDropZone

@@ -28,6 +28,7 @@ import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Skeleton } from "../../ui/components/Skeleton";
 import { Spinner } from "../../ui/components/Spinner";
+import { NotVerified } from "../Auth/NotVerified";
 import { Loading } from "../Loading/Loading";
 export const GameInfo = () => {
 	const clickedRoleId = useRef<string | null>(null);
@@ -145,6 +146,29 @@ export const GameInfo = () => {
 		}
 		await startTransition(_serverDataQuery.refetch());
 	};
+
+	const iAmVerified = useMemo(() => {
+		// if verification is not required, I am verified
+		if (!_serverData.serverDataDb?.verificationRequired) {
+			return true;
+		}
+		// if verification is required, check if I have the verification role
+		for (const role of Object.values(rolesCombined)) {
+			if (role.roleCategoryId === 1 && !_iHaveRole(_serverData, role.roleId)) {
+				// verification role category is always ID 1
+				return false;
+			}
+		}
+		return true;
+	}, [_serverData, rolesCombined]);
+
+	if (!iAmVerified) {
+		return (
+			<Suspense fallback={<Loading />}>
+				<NotVerified />
+			</Suspense>
+		);
+	}
 
 	const nav = (
 		<Nav>

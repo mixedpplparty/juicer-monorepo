@@ -1,8 +1,15 @@
 import "dotenv/config";
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { createServer, getServerDataInDb } from "../../../functions/db.js";
+import { UpdateServerVerificationRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import {
+	createRoleCategory,
+	createServer,
+	getServerDataInDb,
+	updateServerVerificationRequired,
+} from "../../../functions/db.js";
 import {
 	authenticateAndAuthorizeUser,
 	getGuildAndMemberData,
@@ -45,7 +52,12 @@ app.post("/:serverId/create", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const serverDataDb = await createServer(serverId);
-		if (serverDataDb) {
+		//verification is always ID 1
+		const verificationRoleCategory = await createRoleCategory({
+			serverId,
+			name: "verification",
+		});
+		if (serverDataDb && verificationRoleCategory) {
 			return c.json(
 				{
 					message: "Server created. Roles need to be synced.",
@@ -54,7 +66,7 @@ app.post("/:serverId/create", async (c) => {
 			);
 		}
 		throw new HTTPException(500, {
-			message: "Server already exists.",
+			message: "Failed to create server or verification role category.",
 		});
 	}
 	throw new HTTPException(403, {
@@ -91,6 +103,31 @@ app.get("/:serverId/sync-roles", async (c) => {
 		message: "User does not have manage server permission.",
 	});
 });
+
+app.put(
+	"/:serverId",
+	zValidator("json", UpdateServerVerificationRequiredRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const body = await c.req.valid("json");
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId,
+			accessToken as string,
+			true,
+		);
+		if (manageGuildPermission) {
+			const server = await updateServerVerificationRequired({
+				serverId: serverId as string,
+				verificationRequired: body.verificationRequired,
+			});
+			return c.json(server, 200);
+		}
+		throw new HTTPException(403, {
+			message: "User does not have manage server permission.",
+		});
+	},
+);
 
 app.route("/:serverId/categories", categoriesRoutes);
 app.route("/:serverId/games", gamesRoutes);

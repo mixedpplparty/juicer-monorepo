@@ -122,16 +122,6 @@ export const Server = () => {
 		);
 	}, [_serverData]);
 
-	const tagsObj = useMemo(() => {
-		return _serverData.serverDataDb?.tags?.reduce(
-			(obj, tag: Tag) => {
-				obj[tag.tagId] = tag;
-				return obj;
-			},
-			{} as Record<number, Tag>,
-		);
-	}, [_serverData]);
-
 	const channelsObj = useMemo(() => {
 		return _serverData.serverDataDiscord.channels?.reduce(
 			(obj, channel: ServerDataDiscordChannel) => {
@@ -151,6 +141,21 @@ export const Server = () => {
 		),
 	});
 
+	const iAmVerified = useMemo(() => {
+		// if verification is not required, I am verified
+		if (!_serverData.serverDataDb?.verificationRequired) {
+			return true;
+		}
+		// if verification is required, check if I have the verification role
+		for (const role of Object.values(rolesCombined)) {
+			if (role.roleCategoryId === 1 && !_iHaveRole(_serverData, role.roleId)) {
+				// verification role category is always ID 1
+				return false;
+			}
+		}
+		return true;
+	}, [_serverData, rolesCombined]);
+
 	const createServerAction = async () => {
 		try {
 			await startTransition(_createServer(serverId as string));
@@ -168,33 +173,6 @@ export const Server = () => {
 		}
 		await startTransition(_serverDataQuery.refetch());
 		await startTransition(_searchGamesInServerQuery.refetch());
-	};
-
-	const toggleRoleAssign = async (roleId: string) => {
-		try {
-			if (_iHaveRole(_serverData, roleId)) {
-				await startTransition(
-					_unassignRoleByIdFromUser(serverId as string, roleId),
-				);
-				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Role unassigned", "success");
-			} else {
-				await startTransition(
-					_assignRoleByIdToUser(serverId as string, roleId),
-				);
-				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Role assigned", "success");
-			}
-		} catch (error: unknown) {
-			if (isAxiosError(error)) {
-				if (error.response?.data?.detail) {
-					showToast(error.response?.data.detail as string, "error");
-				} else {
-					showToast(error.response?.data as string, "error");
-				}
-			}
-		}
-		await startTransition(_serverDataQuery.refetch());
 	};
 
 	const syncServerDataAction = async () => {
@@ -539,14 +517,16 @@ export const Server = () => {
 					}}
 				>
 					<h2 css={{ margin: 0, flex: 1 }}>주제</h2>
-					<Input
-						placeholder="이름/카테고리/태그 검색"
-						value={query || ""}
-						onChange={(e) => setQuery(e.target.value)}
-					/>
+					{iAmVerified && (
+						<Input
+							placeholder="이름/카테고리/태그 검색"
+							value={query || ""}
+							onChange={(e) => setQuery(e.target.value)}
+						/>
+					)}
 				</div>
 
-				{_searchGamesInServerQuery.isLoading && (
+				{_searchGamesInServerQuery.isLoading && iAmVerified && (
 					<div css={{ display: "flex", flexDirection: "column", gap: "12px" }}>
 						<GameCardSkeleton />
 						<GameCardSkeleton />
@@ -556,14 +536,19 @@ export const Server = () => {
 
 				{_searchGamesInServerQuery?.data &&
 					!!_searchGamesInServerQuery?.data?.length === false &&
-					query && <div>검색 결과가 없습니다.</div>}
+					query &&
+					iAmVerified && <div>검색 결과가 없습니다.</div>}
+
+				{!iAmVerified && <div>서버 이용을 위한 인증이 필요합니다.</div>}
 
 				{_searchGamesInServerQuery?.data &&
 					!!_searchGamesInServerQuery?.data?.length === false &&
+					iAmVerified &&
 					!query && <div>주제가 없습니다.</div>}
 
 				{_searchGamesInServerQuery?.data &&
-					!!_searchGamesInServerQuery?.data?.length === true && (
+					!!_searchGamesInServerQuery?.data?.length === true &&
+					iAmVerified && (
 						<div
 							css={{
 								display: "flex",
@@ -745,7 +730,7 @@ export const Server = () => {
 							)}
 						</div>
 					)}
-				{_serverData.serverDataDb && _serverData.admin && (
+				{_serverData.serverDataDb && _serverData.admin && iAmVerified && (
 					<Card
 						css={{
 							border: "1px solid rgba(255, 255, 255, 0.66)",

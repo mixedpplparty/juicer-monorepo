@@ -39,7 +39,6 @@ export type ServerDataDb = {
 	serverId: string;
 	createdAt: Date;
 	verificationRequired: boolean;
-	verificationRoleId: string | null;
 	games: Game[] | null;
 	roles: Role[] | null;
 	categories: Category[] | null;
@@ -173,7 +172,6 @@ export type CreateServerResponse = {
 	serverId: string;
 	createdAt: Date;
 	verificationRequired: boolean;
-	verificationRoleId: string | null;
 };
 
 export type CreateGameDBParams = {
@@ -299,3 +297,7 @@ export type GuildMember = DiscordJSGuildMember & {
 	avatarDecorationURL: string | null;
 	roles: string[];
 };
+
+export const UpdateServerVerificationRequiredRequestBody = z.object({
+	verificationRequired: z.boolean(),
+});

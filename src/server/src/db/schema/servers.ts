@@ -11,10 +11,6 @@ export const servers = pgTable("servers", {
 	verificationRequired: boolean("verification_required")
 		.notNull()
 		.default(false),
-	verificationRoleId: text("verification_role_id").references(
-		() => roles.roleId,
-		{ onDelete: "set null" },
-	),
 });
 
 // server -> games, categories, tags, roles, role categories

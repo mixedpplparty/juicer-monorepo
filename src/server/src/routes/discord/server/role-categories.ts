@@ -45,6 +45,12 @@ app.delete("/:roleCategoryId", async (c) => {
 		accessToken as string,
 		true,
 	);
+	//verification role category is always ID 1
+	if (Number(roleCategoryId) === 1) {
+		throw new HTTPException(400, {
+			message: "Cannot delete verification role category.",
+		});
+	}
 	if (manageGuildPermission) {
 		const roleCategory = await deleteRoleCategory({
 			roleCategoryId: Number(roleCategoryId),

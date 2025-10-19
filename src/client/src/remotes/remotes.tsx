@@ -8,6 +8,7 @@ import type {
 	Role,
 	RoleCategory,
 	ServerData,
+	ServerDataDb,
 	SyncRolesResponse,
 } from "juicer-shared";
 
@@ -355,6 +356,17 @@ export const _updateRoleInfo = async (
 	const _res = await axios.post(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/roles/${roleId}/update`,
 		{ selfAssignable, description },
+	);
+	return _res.data;
+};
+
+export const _updateServerVerificationRequired = async (
+	serverId: string,
+	verificationRequired: boolean,
+): Promise<ServerDataDb> => {
+	const _res = await axios.put(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}`,
+		{ verificationRequired },
 	);
 	return _res.data;
 };

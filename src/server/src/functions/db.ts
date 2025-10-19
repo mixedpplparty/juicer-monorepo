@@ -22,6 +22,7 @@ import type {
 	Tag,
 	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
+	UpdateServerVerificationRequiredRequestBody,
 } from "juicer-shared/dist/types/index.js";
 import { DatabaseError } from "pg";
 import type * as z from "zod";
@@ -599,5 +600,19 @@ export const updateRoleInfo = async ({
 		.update(roles)
 		.set({ selfAssignable, description })
 		.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
+		.returning();
+};
+
+export const updateServerVerificationRequired = async ({
+	serverId,
+	verificationRequired,
+}: {
+	serverId: string;
+	verificationRequired: boolean;
+}): Promise<(typeof servers.$inferInsert)[]> => {
+	return await db
+		.update(servers)
+		.set({ verificationRequired })
+		.where(eq(servers.serverId, serverId))
 		.returning();
 };
