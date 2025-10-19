@@ -49,6 +49,8 @@ export type MyInfo = {
 export type ServerDataDb = {
 	serverId: string;
 	createdAt: Date;
+	verificationRequired: boolean;
+	verificationRoleId: string | null;
 	games: Game[] | null;
 	roles: Role[] | null;
 	categories: Category[] | null;
@@ -118,17 +120,6 @@ export type GameWithoutRelations = {
 	thumbnail: Buffer | null;
 	channels: string[] | null;
 };
-// // deprecated
-// export type ServerDataDiscord = {
-// 	id: string;
-// 	name: string;
-// 	icon: string | null;
-// 	owner_id: string;
-// 	owner_name: string;
-// 	owner_nick: string | null;
-// 	member_count: number;
-// 	roles: ServerDataDiscordRole[] | null;
-// };
 
 export type FilteredServerDataDiscord = {
 	id: string;
@@ -208,6 +199,8 @@ export type SyncRolesResponse = {
 export type CreateServerResponse = {
 	serverId: string;
 	createdAt: Date;
+	verificationRequired: boolean;
+	verificationRoleId: string | null;
 };
 
 export type CreateGameDBParams = {
