@@ -193,7 +193,7 @@ export const GameInfo = () => {
 			)}
 			<div css={{ display: "flex", flexDirection: "column", width: "100%" }}>
 				<h1 css={{ margin: 0 }}>{currentGame?.name}</h1>
-				<div>게임 정보</div>
+				<div>정보</div>
 			</div>
 		</Nav>
 	);
