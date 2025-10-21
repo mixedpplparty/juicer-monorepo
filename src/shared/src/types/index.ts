@@ -20,166 +20,208 @@ export const ThumbnailImage = z
 	.optional()
 	.nullable();
 
-export type FilteredGuild = {
-	id: string;
-	name: string;
-	icon: string | null;
-	ownerId: string;
-	ownerName: string;
-	ownerNick?: string;
-	memberCount: number;
-};
+const FilteredGuild = z.object({
+	id: z.string(),
+	name: z.string(),
+	icon: z.string().nullable(),
+	ownerId: z.string(),
+	ownerName: z.string(),
+	ownerNick: z.string().optional(),
+	memberCount: z.number(),
+});
+
+export type FilteredGuild = z.infer<typeof FilteredGuild>;
 
 export type MyInfo = {
 	userData: APIUser;
 	guilds: FilteredGuild[];
 };
 
-export type ServerDataDb = {
-	serverId: string;
-	createdAt: Date;
-	verificationRequired: boolean;
-	games: Game[] | null;
-	roles: Role[] | null;
-	categories: Category[] | null;
-	roleCategories: RoleCategory[] | null;
-	tags: Tag[] | null;
-};
+const Category = z.object({
+	categoryId: z.number(),
+	serverId: z.string(),
+	name: z.string(),
+});
+export type Category = z.infer<typeof Category>;
 
-export type Category = {
-	categoryId: number;
-	serverId: string;
-	name: string;
-};
+const RoleCategory = z.object({
+	roleCategoryId: z.number(),
+	serverId: z.string(),
+	name: z.string(),
+});
+export type RoleCategory = z.infer<typeof RoleCategory>;
 
-export type RoleCategory = {
-	roleCategoryId: number;
-	serverId: string;
-	name: string;
-};
+const Tag = z.object({
+	tagId: z.number(),
+	name: z.string(),
+	serverId: z.string().nullable(),
+});
+export type Tag = z.infer<typeof Tag>;
 
-export type Tag = {
-	tagId: number;
-	name: string;
-	serverId: string | null;
-};
+const TagRelationToGame = z.object({
+	gameId: z.number(),
+	tagId: z.number(),
+});
+export type TagRelationToGame = z.infer<typeof TagRelationToGame>;
 
-export type TagRelationToGame = {
-	gameId: number;
-	tagId: number;
-};
+const Role = z.object({
+	serverId: z.string(),
+	roleId: z.string(),
+	roleCategoryId: z.number().nullable(),
+	selfAssignable: z.boolean(),
+	description: z.string().nullable(),
+});
 
-export type Role = {
-	serverId: string;
-	roleId: string;
-	roleCategoryId: number | null;
-	selfAssignable: boolean;
-	description: string | null;
-};
+export type Role = z.infer<typeof Role>;
 
-export type RoleRelationToGame = {
-	gameId: number;
-	roleId: string;
-};
+const RoleRelationToGame = z.object({
+	gameId: z.number(),
+	roleId: z.string(),
+});
 
-export type Channel = {
-	id: string;
-};
+export type RoleRelationToGame = z.infer<typeof RoleRelationToGame>;
 
-export type GameWithoutRelations = {
-	gameId: number;
-	serverId: string;
-	name: string;
-	description?: string | null;
-	categoryId?: number | null;
-	thumbnail: Buffer | null;
-	channels: string[] | null;
-};
+const Channel = z.object({
+	id: z.string(),
+});
 
-// updated id to gameId
-// updated category to categoryId
-export type Game = GameWithoutRelations & {
-	gamesTags: TagRelationToGame[] | null;
-	gamesRoles: RoleRelationToGame[] | null;
-};
+export type Channel = z.infer<typeof Channel>;
 
-export type FilteredServerDataDiscord = {
-	id: string;
-	name: string;
-	icon: string | null;
-	ownerId: string;
-	ownerName: string;
-	ownerNick: string | null;
-	memberCount: number;
-	roles: ServerDataDiscordRole2[] | null;
-	channels: ServerDataDiscordChannel[] | null;
-};
+const GameWithoutRelations = z.object({
+	gameId: z.number(),
+	serverId: z.string(),
+	name: z.string(),
+	description: z.string().nullable().optional(),
+	categoryId: z.number().nullable().optional(),
+	thumbnail: z.instanceof(Buffer).nullable(),
+	channels: z.array(z.string()).nullable(),
+});
 
-export type ServerDataDiscordChannel = {
-	id: string;
-	name: string;
-};
+export type GameWithoutRelations = z.infer<typeof GameWithoutRelations>;
 
-export type ServerDataDiscordRole2 = {
-	id: string;
-	name: string;
-	color: `#${string}`; // hex color
-	icon: string | null;
-	managed: boolean;
-	meInRole: boolean;
-};
+const Game = z.object({
+	gamesTags: z.array(z.object(TagRelationToGame)).nullable(),
+	gamesRoles: z.array(z.object(RoleRelationToGame)).nullable(),
+});
 
-export type ServerData = {
-	admin: boolean;
-	serverDataDb: ServerDataDb | null;
-	serverDataDiscord: FilteredServerDataDiscord;
-};
+export type Game = GameWithoutRelations & z.infer<typeof Game>;
 
-export type MyDataInServer = {
-	id: string;
-	name: string;
-	nick: string | null;
-	avatar: string | null;
-	roles: Role[] | null;
-	joined_at: string;
-};
+const ServerDataDiscordRole2 = z.object({
+	id: z.string(),
+	name: z.string(),
+	color: z.string(), // hex color in #ABCDEF
+	icon: z.string().nullable(),
+	managed: z.boolean(),
+	meInRole: z.boolean(),
+});
 
-export type AuthData = {
-	discord_access_token: string;
-	discord_refresh_token: string;
-};
+export type FilteredServerDataDiscord = z.infer<
+	typeof FilteredServerDataDiscord
+>;
 
-export type ToastProps = {
-	type: "error" | "success" | "info" | null;
-};
+const ServerDataDiscordChannel = z.object({
+	id: z.string(),
+	name: z.string(),
+});
 
-export type ToastObject = {
-	idx: number;
-	message: string;
-	type: ToastProps["type"];
-};
+export type ServerDataDiscordChannel = z.infer<typeof ServerDataDiscordChannel>;
 
-export type MessageOnSuccess = {
-	detail: string;
-};
+export type ServerDataDiscordRole2 = z.infer<typeof ServerDataDiscordRole2>;
 
-export type SyncRolesResponse = {
-	roles_created: string[];
-	roles_deleted: string[];
-};
+const FilteredServerDataDiscord = z.object({
+	id: z.string(),
+	name: z.string(),
+	icon: z.string().nullable(),
+	ownerId: z.string(),
+	ownerName: z.string(),
+	ownerNick: z.string().nullable(),
+	memberCount: z.number(),
+	roles: z.array(ServerDataDiscordRole2).nullable(),
+	channels: z.array(ServerDataDiscordChannel).nullable(),
+});
 
-export type CreateServerResponse = {
-	serverId: string;
-	createdAt: Date;
-	verificationRequired: boolean;
-};
+const ServerDataDb = z.object({
+	serverId: z.string(),
+	createdAt: z.date(),
+	verificationRequired: z.boolean(),
+	games: z.array(Game).nullable(),
+	roles: z.array(Role).nullable(),
+	categories: z.array(Category).nullable(),
+	roleCategories: z.array(RoleCategory).nullable(),
+	tags: z.array(Tag).nullable(),
+});
 
-export type CreateGameDBParams = {
-	serverId: string;
-	name: string;
-	description: string | null;
-	categoryId: number | null;
-};
+export type ServerDataDb = z.infer<typeof ServerDataDb>;
+
+const ServerData = z.object({
+	admin: z.boolean(),
+	serverDataDb: ServerDataDb.nullable(),
+	serverDataDiscord: z.object(FilteredServerDataDiscord),
+});
+
+export type ServerData = z.infer<typeof ServerData>;
+
+const MyDataInServer = z.object({
+	id: z.string(),
+	name: z.string(),
+	nick: z.string().nullable(),
+	avatar: z.string().nullable(),
+	roles: z.array(Role).nullable(),
+	joined_at: z.string(),
+});
+
+export type MyDataInServer = z.infer<typeof MyDataInServer>;
+
+const AuthData = z.object({
+	discord_access_token: z.string(),
+	discord_refresh_token: z.string(),
+});
+
+export type AuthData = z.infer<typeof AuthData>;
+
+const ToastProps = z.object({
+	type: z.enum(["error", "success", "info"]).nullable(),
+});
+
+export type ToastProps = z.infer<typeof ToastProps>;
+
+const ToastObject = z.object({
+	idx: z.number(),
+	message: z.string(),
+	type: ToastProps.type,
+});
+
+export type ToastObject = z.infer<typeof ToastObject>;
+
+const MessageOnSuccess = z.object({
+	detail: z.string(),
+});
+
+export type MessageOnSuccess = z.infer<typeof MessageOnSuccess>;
+
+const SyncRolesResponse = z.object({
+	roles_created: z.array(z.string()),
+	roles_deleted: z.array(z.string()),
+});
+
+export type SyncRolesResponse = z.infer<typeof SyncRolesResponse>;
+
+const CreateServerResponse = z.object({
+	serverId: z.string(),
+	createdAt: z.date(),
+	verificationRequired: z.boolean(),
+});
+
+export type CreateServerResponse = z.infer<typeof CreateServerResponse>;
+
+const CreateGameDBParams = z.object({
+	serverId: z.string(),
+	name: z.string(),
+	description: z.string().nullable().optional(),
+	categoryId: z.number().nullable().optional(),
+});
+
+export type CreateGameDBParams = z.infer<typeof CreateGameDBParams>;
 
 export const CreateGameRequestBody = z.object({
 	name: z.string(),
@@ -187,15 +229,17 @@ export const CreateGameRequestBody = z.object({
 	categoryId: z.number().nullable().optional(),
 });
 
-export type CreateGameResponse = {
-	gameId: number;
-	name: string;
-	description: string | null;
-	categoryId: number | null;
-	serverId: string;
-	thumbnail: Buffer | null;
-	channels: string[] | null;
-};
+const CreateGameResponse = z.object({
+	gameId: z.number(),
+	name: z.string(),
+	description: z.string().nullable(),
+	categoryId: z.number().nullable(),
+	serverId: z.string(),
+	thumbnail: z.instanceof(Buffer).nullable(),
+	channels: z.array(z.string()).nullable(),
+});
+
+export type CreateGameResponse = z.infer<typeof CreateGameResponse>;
 
 export const UpdateGameRequestBody = z.object({
 	name: z.string().nullable().optional(),
@@ -217,18 +261,19 @@ export const UpdateGameRequestBodyWithImageAsBuffer = z.object({
 	roleIds: z.array(z.string()).nullable().optional(),
 });
 
-export type UpdateGameResponse = {
-	updatedGame: GameWithoutRelations | null;
-	tags: {
-		added: TagRelationToGame[] | null;
-		removed: TagRelationToGame[] | null;
-	};
-	roles: {
-		added: RoleRelationToGame[] | null;
-		removed: RoleRelationToGame[] | null;
-	};
-};
+export const UpdateGameResponse = z.object({
+	updatedGame: z.object(GameWithoutRelations).nullable(),
+	tags: z.object({
+		added: z.array(TagRelationToGame).nullable(),
+		removed: z.array(TagRelationToGame).nullable(),
+	}),
+	roles: z.object({
+		added: z.array(RoleRelationToGame).nullable(),
+		removed: z.array(RoleRelationToGame).nullable(),
+	}),
+});
 
+export type UpdateGameResponse = z.infer<typeof UpdateGameResponse>;
 export const DeleteGameRequestBody = z.object({
 	gameId: z.number(),
 	serverId: z.string(),
@@ -289,14 +334,16 @@ export const SetRoleSelfAssignableRequestBody = z.object({
 	description: z.string().nullable().optional(),
 });
 
-export type GuildMember = DiscordJSGuildMember & {
-	avatarURL: string | null;
-	bannerURL: string | null;
-	displayAvatarURL: string | null;
-	displayBannerURL: string | null;
-	avatarDecorationURL: string | null;
-	roles: string[];
-};
+export const GuildMember = z.object({
+	avatarURL: z.string().nullable(),
+	bannerURL: z.string().nullable(),
+	displayAvatarURL: z.string().nullable(),
+	displayBannerURL: z.string().nullable(),
+	avatarDecorationURL: z.string().nullable(),
+	roles: z.array(z.string()),
+});
+
+export type GuildMember = z.infer<typeof GuildMember> & DiscordJSGuildMember;
 
 export const UpdateServerVerificationRequiredRequestBody = z.object({
 	verificationRequired: z.boolean(),
