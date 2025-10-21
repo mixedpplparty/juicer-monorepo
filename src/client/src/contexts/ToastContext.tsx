@@ -28,7 +28,10 @@ const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 			{children}
 			<ToastContainer>
 				{toasts.map((toast) => (
-					<Toast key={toast.idx} type={toast.type}>
+					<Toast
+						key={toast.idx}
+						type={(toast.type as ToastProps["type"]) ?? "info"}
+					>
 						<span css={{ flex: 1 }}>{toast.message}</span>
 						<CloseIcon
 							onClick={() => removeToast(toast.idx)}
