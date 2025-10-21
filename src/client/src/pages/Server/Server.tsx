@@ -112,6 +112,12 @@ export const Server = () => {
 		return mergedRolesObj;
 	}, [_serverData, roleCategoriesObj]);
 
+	const rolesWithoutRoleCategory = useMemo(() => {
+		return _myDataInServer.roles.filter((roleId: string) => {
+			return rolesCombined[roleId]?.roleCategoryId === null;
+		});
+	}, [_myDataInServer, rolesCombined]);
+
 	const categoriesObj = useMemo(() => {
 		return _serverData.serverDataDb?.categories?.reduce(
 			(obj, category: Category) => {
@@ -459,29 +465,24 @@ export const Server = () => {
 													}
 												},
 											)}
-											<div
-												css={{
-													display: "flex",
-													flexDirection: "column",
-													gap: "4px",
-												}}
-											>
-												<h3 css={{ margin: 0, fontWeight: 500 }}>미분류</h3>
+											{rolesWithoutRoleCategory.length > 0 && (
 												<div
 													css={{
 														display: "flex",
-														flexDirection: "row",
+														flexDirection: "column",
 														gap: "4px",
-														flexWrap: "wrap",
 													}}
 												>
-													{_myDataInServer.roles
-														.filter((roleId: string) => {
-															return (
-																rolesCombined[roleId]?.roleCategoryId === null
-															);
-														})
-														.map((role: string) => {
+													<h3 css={{ margin: 0, fontWeight: 500 }}>미분류</h3>
+													<div
+														css={{
+															display: "flex",
+															flexDirection: "row",
+															gap: "4px",
+															flexWrap: "wrap",
+														}}
+													>
+														{rolesWithoutRoleCategory.map((role: string) => {
 															return (
 																<RoleChip
 																	variant="unclickable"
@@ -496,11 +497,12 @@ export const Server = () => {
 																/>
 															);
 														})}
+													</div>
+													<div css={{ display: "flex" }}>
+														<div />
+													</div>
 												</div>
-												<div css={{ display: "flex" }}>
-													<div />
-												</div>
-											</div>
+											)}
 										</div>
 									)}
 								</div>
