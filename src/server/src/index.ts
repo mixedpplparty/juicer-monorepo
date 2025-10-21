@@ -41,7 +41,7 @@ const csrfMiddleware = csrf({
 
 const rateLimiterMiddleware = rateLimiter({
 	windowMs: 60 * 1000, // 1 minute
-	limit: 100, // Limit each IP to 1 requests per `window` (here, per 1 minute).
+	limit: 250, // Limit each IP to 250 requests per `window` (here, per 1 minute).
 	standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
 	keyGenerator: (c) =>
 		getCookie(c, "discord_access_token") ??
