@@ -99,12 +99,15 @@ const GameWithoutRelations = z.object({
 
 export type GameWithoutRelations = z.infer<typeof GameWithoutRelations>;
 
-const Game = z.object({
-	gamesTags: z.array(z.object(TagRelationToGame)).nullable(),
-	gamesRoles: z.array(z.object(RoleRelationToGame)).nullable(),
-});
+const Game = z.intersection(
+	GameWithoutRelations,
+	z.object({
+		gamesTags: z.array(TagRelationToGame).nullable(),
+		gamesRoles: z.array(RoleRelationToGame).nullable(),
+	}),
+);
 
-export type Game = GameWithoutRelations & z.infer<typeof Game>;
+export type Game = z.infer<typeof Game>;
 
 const ServerDataDiscordRole2 = z.object({
 	id: z.string(),
@@ -156,7 +159,7 @@ export type ServerDataDb = z.infer<typeof ServerDataDb>;
 const ServerData = z.object({
 	admin: z.boolean(),
 	serverDataDb: ServerDataDb.nullable(),
-	serverDataDiscord: z.object(FilteredServerDataDiscord),
+	serverDataDiscord: FilteredServerDataDiscord,
 });
 
 export type ServerData = z.infer<typeof ServerData>;
@@ -262,7 +265,7 @@ export const UpdateGameRequestBodyWithImageAsBuffer = z.object({
 });
 
 export const UpdateGameResponse = z.object({
-	updatedGame: z.object(GameWithoutRelations).nullable(),
+	updatedGame: GameWithoutRelations.nullable(),
 	tags: z.object({
 		added: z.array(TagRelationToGame).nullable(),
 		removed: z.array(TagRelationToGame).nullable(),
