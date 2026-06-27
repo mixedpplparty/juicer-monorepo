@@ -20,7 +20,7 @@ import {
 	_updateServerVerificationRequired,
 } from "../../remotes/remotes";
 import { Button, InlineButton } from "../../ui/components/Button";
-import { Chip } from "../../ui/components/Chip";
+import { CheckableChip, Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { ConfirmModal } from "../../ui/components/ConfirmModal";
 import { DragDropZone } from "../../ui/components/DragDropZone";
@@ -302,6 +302,7 @@ export const ServerSettings = () => {
 					),
 				);
 				await startTransition(_serverDataQuery.refetch());
+				showToast("역할을 옮겼어요", "success");
 			}
 			draggedRoleId.current = null;
 		}
@@ -358,26 +359,21 @@ export const ServerSettings = () => {
 						}}
 					>
 						<h2 css={{ margin: 0, flex: 1 }}>서버 이용 인증</h2>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "row",
+						<CheckableChip
+							checked={verificationRequiredChecked}
+							disabled={isOnTransition}
+							onChange={(checked) => {
+								setVerificationRequiredChecked(checked);
+								updateVerificationRequirement(checked);
 							}}
 						>
-							<input
-								type="checkbox"
-								name="verification-required"
-								id="verification-required"
-								defaultChecked={
-									_serverData.serverDataDb?.verificationRequired || false
-								}
-								onChange={(e) =>
-									updateVerificationRequirement(e.target.checked)
-								}
-								disabled={isOnTransition}
-							/>
-							<label htmlFor="verification-required">서버 이용 인증 필요</label>
-						</div>
+							인증 필요
+						</CheckableChip>
+					</div>
+					<div
+						css={{ color: "rgba(255, 255, 255, 0.66)", fontSize: "0.875rem" }}
+					>
+						켜면 인증 역할을 가진 멤버만 주제를 보고 역할을 받을 수 있어요.
 					</div>
 					<div
 						css={{
@@ -401,7 +397,11 @@ export const ServerSettings = () => {
 							</div>
 						)}
 						{!!_serverData.serverDataDiscord.roles?.length && (
-							<DragDropZone id="unassigned" onDrop={handleOnDrop}>
+							<DragDropZone
+								id="unassigned"
+								onDrop={handleOnDrop}
+								emptyLabel="미분류 역할이 없어요"
+							>
 								{Object.values(rolesCombined)
 									.filter((role) => role.roleCategoryId === null)
 									.map((role) => {
@@ -448,6 +448,11 @@ export const ServerSettings = () => {
 								<AddIcon css={{ width: "16px", height: "16px" }} />
 								역할 분류 추가
 							</Button>
+						</div>
+						<div
+							css={{ color: "rgba(255, 255, 255, 0.66)", fontSize: "0.875rem" }}
+						>
+							역할을 분류로 묶으면 회원이 역할을 받을 때 그룹으로 볼 수 있어요.
 						</div>
 						{!!_serverData.serverDataDb?.roleCategories?.length || (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
@@ -512,6 +517,7 @@ export const ServerSettings = () => {
 											<DragDropZone
 												id={roleCategory.roleCategoryId}
 												onDrop={handleOnDrop}
+												emptyLabel="역할을 여기로 끌어다 놓으세요"
 											>
 												{Object.values(rolesCombined)
 													.filter(
@@ -801,6 +807,14 @@ export const ServerSettings = () => {
 									),
 								)}
 							</Select>
+							<div
+								css={{
+									color: "rgba(255, 255, 255, 0.66)",
+									fontSize: "0.875rem",
+								}}
+							>
+								분류에 넣으면 회원이 역할을 받을 때 그룹으로 보여요.
+							</div>
 							<label htmlFor="role-description">역할 설명(선택)</label>
 							<Input
 								id="role-description"
@@ -808,16 +822,20 @@ export const ServerSettings = () => {
 								defaultValue={roleSettingsModalRole?.description || undefined}
 								placeholder="역할 설명"
 							/>
-							<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
-								<input
-									type="checkbox"
-									id="self-assignable"
-									name="self-assignable"
-									defaultChecked={roleSettingsModalRole?.selfAssignable}
-								/>
-								<label htmlFor="self-assignable">
-									누구나 이 역할 할당 가능
-								</label>
+							<CheckableChip
+								name="self-assignable"
+								defaultChecked={roleSettingsModalRole?.selfAssignable}
+							>
+								누구나 이 역할 할당 가능
+							</CheckableChip>
+							<div
+								css={{
+									color: "rgba(255, 255, 255, 0.66)",
+									fontSize: "0.875rem",
+								}}
+							>
+								켜면 회원이 이 역할을 직접 받을 수 있어요. 끄면 관리자만 부여할
+								수 있어요.
 							</div>
 							<Button
 								css={{
