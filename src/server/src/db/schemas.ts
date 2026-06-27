@@ -1,3 +1,4 @@
+export * from "./schema/birthdays.js";
 export * from "./schema/categories.js";
 export * from "./schema/games.js";
 export * from "./schema/roles.js";
