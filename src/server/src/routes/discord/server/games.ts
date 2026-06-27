@@ -251,6 +251,10 @@ app.get("/:gameId/thumbnail", async (c) => {
 		serverId: serverId as string,
 	});
 	if (thumbnail) {
+		// Let the browser cache thumbnails so it stops refetching them on every
+		// navigation. private (responses are per-user/behind auth) + a short max-age
+		// so an updated thumbnail goes stale for at most a few minutes.
+		c.header("Cache-Control", "private, max-age=300");
 		return c.body(Buffer.from(thumbnail), 200);
 	}
 	throw new HTTPException(404, { message: "Thumbnail not found." });
