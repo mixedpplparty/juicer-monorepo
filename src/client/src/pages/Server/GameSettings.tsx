@@ -25,6 +25,7 @@ import {
 import { AnchorNoStyle } from "../../ui/components/Anchor";
 import { Button } from "../../ui/components/Button";
 import { CheckableChip } from "../../ui/components/Chip";
+import { ConfirmModal } from "../../ui/components/ConfirmModal";
 import { _8pxCircle } from "../../ui/components/Circle";
 import { Footer } from "../../ui/components/Footer";
 import { Input } from "../../ui/components/Input";
@@ -45,7 +46,6 @@ export const GameSettings = () => {
 	);
 	const _serverData = _serverDataQuery.data;
 
-	
 	const rolesCombined = useMemo(() => {
 		const dbRoles = _serverData.serverDataDb?.roles || [];
 		const discordRoles = _serverData.serverDataDiscord.roles || [];
@@ -92,13 +92,14 @@ export const GameSettings = () => {
 		) || [],
 	);
 	const navigate = useNavigate();
+	const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
 	const onDeleteThumbnailAction = async () => {
 		try {
 			await startTransition(
 				_deleteThumbnailFromGame(serverId as string, gameId as string),
 			);
-			showToast("Game thumbnail deleted", "success");
+			showToast("썸네일을 삭제했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -128,7 +129,7 @@ export const GameSettings = () => {
 					),
 				);
 				showToast(
-					"Game thumbnail uploaded. Trying to update other info...",
+					"썸네일을 올렸어요. 나머지 정보도 저장 중이에요...",
 					"success",
 				);
 			}
@@ -154,7 +155,7 @@ export const GameSettings = () => {
 					selectedChannels as string[],
 				),
 			);
-			showToast("Game updated", "success");
+			showToast("주제를 저장했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -174,7 +175,7 @@ export const GameSettings = () => {
 			await startTransition(
 				_deleteGame(serverId as string, Number(gameId as string)),
 			);
-			showToast("Game deleted", "success");
+			showToast("주제를 삭제했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -201,9 +202,10 @@ export const GameSettings = () => {
 				}}
 			>
 				<Button
+					type="button"
+					aria-label="뒤로 가기"
 					css={{ background: "none", alignItems: "center" }}
 					onClick={() => navigate(`/server?serverId=${serverId}`)}
-					type="button"
 				>
 					<ArrowBackIcon css={{ width: "24px", height: "24px" }} />
 				</Button>
@@ -227,7 +229,8 @@ export const GameSettings = () => {
 							gap: "8px",
 							display: "flex",
 						}}
-						onClick={handleDeleteGame}
+						type="button"
+						onClick={() => setIsConfirmDeleteOpen(true)}
 					>
 						<DeleteIcon css={{ width: "20px", height: "20px" }} />
 						주제 삭제
@@ -257,9 +260,12 @@ export const GameSettings = () => {
 		</Footer>
 	);
 
-	
 	if (!_serverData.admin) {
-		return (<Suspense fallback={<Loading />}><NoAdminPerms/></Suspense>)
+		return (
+			<Suspense fallback={<Loading />}>
+				<NoAdminPerms />
+			</Suspense>
+		);
 	}
 
 	return (
@@ -436,7 +442,7 @@ export const GameSettings = () => {
 									>
 										<_8pxCircle
 											css={{
-												backgroundColor: role.color || "#ffffff"
+												backgroundColor: role.color || "#ffffff",
 											}}
 										/>
 										{role.name}
@@ -452,6 +458,21 @@ export const GameSettings = () => {
 					</Main>
 				</PageTemplate>
 			</form>
+			{isConfirmDeleteOpen && (
+				<ConfirmModal
+					title="주제를 삭제할까요?"
+					description={`'${
+						gamesObj?.[Number(gameId as string)]?.name ?? "이 주제"
+					}' 주제와 연결된 역할·태그·채널 맵핑이 모두 사라져요. 이 작업은 되돌릴 수 없어요.`}
+					confirmLabel="주제 삭제"
+					loading={isOnTransition}
+					onClose={() => setIsConfirmDeleteOpen(false)}
+					onConfirm={async () => {
+						await handleDeleteGame();
+						setIsConfirmDeleteOpen(false);
+					}}
+				/>
+			)}
 		</Suspense>
 	);
 };

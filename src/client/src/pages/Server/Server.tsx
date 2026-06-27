@@ -2,7 +2,11 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+import LockIcon from "@mui/icons-material/Lock";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
@@ -37,6 +41,7 @@ import { Button, InlineButton } from "../../ui/components/Button";
 import { Card } from "../../ui/components/Card";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { EmptyState } from "../../ui/components/EmptyState";
 import { GameCardSkeleton } from "../../ui/components/GameCardSkeleton";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -165,9 +170,9 @@ export const Server = () => {
 	const createServerAction = async () => {
 		try {
 			await startTransition(_createServer(serverId as string));
-			showToast("Server created", "success");
+			showToast("서버를 등록했어요", "success");
 			await startTransition(_syncServerData(serverId as string));
-			showToast("Roles synced with server", "success");
+			showToast("역할을 동기화했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -184,7 +189,7 @@ export const Server = () => {
 	const syncServerDataAction = async () => {
 		try {
 			await startTransition(_syncServerData(serverId as string));
-			showToast("Roles synced with server", "success");
+			showToast("역할을 동기화했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -210,7 +215,6 @@ export const Server = () => {
 		if (gameCategory === "" || gameCategory === null || gameCategory === "0") {
 			gameCategory = null;
 		}
-		console.log(gameName, gameDescription, gameCategory);
 		try {
 			await startTransition(
 				_createGame(
@@ -220,7 +224,7 @@ export const Server = () => {
 					gameCategory as string | null | undefined,
 				),
 			);
-			showToast("Game created", "success");
+			showToast("주제를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -249,6 +253,8 @@ export const Server = () => {
 				}}
 			>
 				<Button
+					type="button"
+					aria-label="뒤로 가기"
 					css={{ background: "none", alignItems: "center" }}
 					onClick={() => navigate("/")}
 				>
@@ -286,6 +292,8 @@ export const Server = () => {
 					}}
 				>
 					<Button
+						type="button"
+						aria-label="역할 동기화"
 						css={{
 							background: "#5865F2",
 							display: "flex",
@@ -297,6 +305,8 @@ export const Server = () => {
 						<SyncIcon css={{ width: "20px", height: "20px" }} />
 					</Button>
 					<Button
+						type="button"
+						aria-label="서버 설정"
 						css={{
 							background: "rgba(255, 255, 255, 0.25)",
 							display: "flex",
@@ -354,13 +364,24 @@ export const Server = () => {
 									<h2 css={{ margin: 0, flex: 1 }}>
 										{_myDataInServer.displayName}
 									</h2>
+									{/* biome-ignore lint/a11y/useSemanticElements: Chip is a styled div; role + tabIndex + onKeyDown + aria-pressed give it full button semantics */}
 									<Chip
+										role="button"
+										tabIndex={0}
+										aria-label="역할 분류별 보기 전환"
+										aria-pressed={areMyRolesSorted}
 										css={{
 											display: "flex",
 											alignItems: "center",
 											cursor: "pointer",
 										}}
 										onClick={() => setAreMyRolesSorted(!areMyRolesSorted)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault();
+												setAreMyRolesSorted(!areMyRolesSorted);
+											}
+										}}
 									>
 										{areMyRolesSorted ? (
 											<FilterAltOffIcon
@@ -539,14 +560,47 @@ export const Server = () => {
 				{_searchGamesInServerQuery?.data &&
 					!!_searchGamesInServerQuery?.data?.length === false &&
 					query &&
-					iAmVerified && <div>검색 결과가 없습니다.</div>}
+					iAmVerified && (
+						<EmptyState
+							icon={<SearchOffIcon css={{ width: "28px", height: "28px" }} />}
+							title="검색 결과가 없어요"
+							description="다른 키워드로 찾아보거나, 검색어를 비우고 전체 주제를 둘러보세요."
+							action={
+								<Button
+									type="button"
+									css={{ background: "rgba(255, 255, 255, 0.1)" }}
+									onClick={() => setQuery(null)}
+								>
+									검색 비우기
+								</Button>
+							}
+						/>
+					)}
 
-				{!iAmVerified && <div>서버 이용을 위한 인증이 필요합니다.</div>}
+				{!iAmVerified && (
+					<EmptyState
+						icon={<LockIcon css={{ width: "28px", height: "28px" }} />}
+						title="인증이 필요해요 🔒"
+						description="이 서버는 인증된 멤버만 주제를 볼 수 있어요. 서버 관리자에게 인증 역할을 요청해 주세요."
+					/>
+				)}
 
 				{_searchGamesInServerQuery?.data &&
 					!!_searchGamesInServerQuery?.data?.length === false &&
 					iAmVerified &&
-					!query && <div>주제가 없습니다.</div>}
+					!query && (
+						<EmptyState
+							icon={
+								<SportsEsportsIcon css={{ width: "28px", height: "28px" }} />
+							}
+							title="아직 주제가 없어요 🎮"
+							description={
+								_serverData.admin
+									? "첫 주제를 추가해서 멤버들이 역할을 받을 수 있게 해보세요."
+									: "관리자가 주제를 추가하면 여기에서 역할을 받을 수 있어요."
+							}
+						/>
+					)}
 
 				{_searchGamesInServerQuery?.data &&
 					!!_searchGamesInServerQuery?.data?.length === true &&
@@ -692,10 +746,7 @@ export const Server = () => {
 																		>
 																			<_8pxCircle
 																				css={{
-																					backgroundColor: `${
-																						rolesCombined[role.roleId]?.color ||
-																						"#ffffff"
-																					}`,
+																					backgroundColor: `${rolesCombined[role.roleId]?.color || "#ffffff"}`,
 																				}}
 																			/>
 																			{rolesCombined[role.roleId]?.name ||
@@ -710,6 +761,7 @@ export const Server = () => {
 															<LinkNoStyle
 																to={`/server/game/settings?gameId=${game.gameId}&serverId=${serverId}`}
 																css={{ cursor: "pointer" }}
+																aria-label="주제 설정"
 															>
 																<InlineButton
 																	css={{
@@ -733,15 +785,29 @@ export const Server = () => {
 						</div>
 					)}
 				{_serverData.serverDataDb && _serverData.admin && iAmVerified && (
+					// biome-ignore lint/a11y/useSemanticElements: Card is a styled div; role + tabIndex + onKeyDown give it full button semantics
 					<Card
+						role="button"
+						tabIndex={0}
+						aria-label="주제 추가하기"
 						css={{
 							border: "1px solid rgba(255, 255, 255, 0.66)",
 							alignItems: "center",
 							cursor: "pointer",
 							display: "flex",
 							flexDirection: "row",
+							"&:focus-visible": {
+								outline: "2px solid #8567D6",
+								outlineOffset: "2px",
+							},
 						}}
 						onClick={() => setIsAddGameModalOpen(true)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								setIsAddGameModalOpen(true);
+							}
+						}}
 					>
 						<AddIcon css={{ width: "16px", height: "16px" }} />
 						주제 추가하기
@@ -749,33 +815,30 @@ export const Server = () => {
 				)}
 
 				{!_serverData.serverDataDb && (
-					<div
-						css={{
-							display: "flex",
-							flexDirection: "column",
-							gap: "12px",
-							alignItems: "center",
-						}}
-					>
-						<div>서버 데이터가 없습니다. juicer DB에 서버를 추가해 주세요.</div>
-						<Button
-							css={{
-								background: "#5865F2",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								gap: "8px",
-								...(isOnTransition && {
-									opacity: "0.5",
-									cursor: "not-allowed",
-								}),
-							}}
-							onClick={isOnTransition ? undefined : createServerAction}
-						>
-							<AddIcon css={{ width: "16px", height: "16px" }} />
-							juicer DB에 서버 추가
-						</Button>
-					</div>
+					<EmptyState
+						icon={<RocketLaunchIcon css={{ width: "28px", height: "28px" }} />}
+						title="서버를 juicer에 등록해 주세요"
+						description="juicer DB에 이 서버를 추가하면 주제와 역할을 관리할 수 있어요."
+						action={
+							<Button
+								css={{
+									background: "#5865F2",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									gap: "8px",
+									...(isOnTransition && {
+										opacity: "0.5",
+										cursor: "not-allowed",
+									}),
+								}}
+								onClick={isOnTransition ? undefined : createServerAction}
+							>
+								<AddIcon css={{ width: "16px", height: "16px" }} />
+								juicer DB에 서버 추가
+							</Button>
+						}
+					/>
 				)}
 				<div></div>
 			</PageTemplate>

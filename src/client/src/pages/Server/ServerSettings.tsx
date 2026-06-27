@@ -20,8 +20,9 @@ import {
 	_updateServerVerificationRequired,
 } from "../../remotes/remotes";
 import { Button, InlineButton } from "../../ui/components/Button";
-import { Chip } from "../../ui/components/Chip";
+import { CheckableChip, Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { ConfirmModal } from "../../ui/components/ConfirmModal";
 import { DragDropZone } from "../../ui/components/DragDropZone";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -57,6 +58,11 @@ export const ServerSettings = () => {
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const { showToast } = useToast();
+	const [pendingDelete, setPendingDelete] = useState<{
+		kind: "roleCategory" | "category";
+		id: number;
+		name: string;
+	} | null>(null);
 
 	const navigate = useNavigate();
 
@@ -73,7 +79,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_updateServerVerificationRequired(serverId as string, checked),
 			);
-			showToast("Verification requirement updated", "success");
+			showToast("인증 설정을 변경했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -130,7 +136,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_createCategory(serverId as string, categoryName as string),
 			);
-			showToast("Category created", "success");
+			showToast("주제 분류를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -151,7 +157,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_createRoleCategory(serverId as string, roleCategoryName as string),
 			);
-			showToast("Role category created", "success");
+			showToast("역할 분류를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -168,7 +174,7 @@ export const ServerSettings = () => {
 		const tagName = formData.get("tag-name");
 		try {
 			await startTransition(_createTag(serverId as string, tagName as string));
-			showToast("Tag created", "success");
+			showToast("태그를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -187,7 +193,7 @@ export const ServerSettings = () => {
 				await startTransition(
 					_deleteRoleCategory(serverId as string, roleCategoryId),
 				);
-				showToast("Role category deleted", "success");
+				showToast("역할 분류를 삭제했어요", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
 					if (error.response?.data?.detail) {
@@ -203,7 +209,7 @@ export const ServerSettings = () => {
 		(categoryId: number) => async (): Promise<void> => {
 			try {
 				await startTransition(_deleteCategory(serverId as string, categoryId));
-				showToast("Category deleted", "success");
+				showToast("주제 분류를 삭제했어요", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
 					if (error.response?.data?.detail) {
@@ -262,7 +268,7 @@ export const ServerSettings = () => {
 					description,
 				),
 			);
-			showToast("Role updated", "success");
+			showToast("역할 정보를 저장했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -279,15 +285,6 @@ export const ServerSettings = () => {
 
 	const handleOnDrop = async (e: React.DragEvent<HTMLElement>) => {
 		if (draggedRoleId.current) {
-			console.log(
-				"drop",
-				draggedRoleId.current,
-				"from",
-				draggedFrom.current,
-				"to",
-				(e.currentTarget as HTMLElement).id,
-			);
-
 			if (
 				Number((e.currentTarget as HTMLElement).id) !== draggedFrom.current &&
 				!(
@@ -305,6 +302,7 @@ export const ServerSettings = () => {
 					),
 				);
 				await startTransition(_serverDataQuery.refetch());
+				showToast("역할을 옮겼어요", "success");
 			}
 			draggedRoleId.current = null;
 		}
@@ -319,6 +317,8 @@ export const ServerSettings = () => {
 			}}
 		>
 			<Button
+				type="button"
+				aria-label="뒤로 가기"
 				css={{ background: "none", alignItems: "center" }}
 				onClick={() => navigate(`/server?serverId=${serverId}`)}
 			>
@@ -359,26 +359,21 @@ export const ServerSettings = () => {
 						}}
 					>
 						<h2 css={{ margin: 0, flex: 1 }}>서버 이용 인증</h2>
-						<div
-							css={{
-								display: "flex",
-								flexDirection: "row",
+						<CheckableChip
+							checked={verificationRequiredChecked}
+							disabled={isOnTransition}
+							onChange={(checked) => {
+								setVerificationRequiredChecked(checked);
+								updateVerificationRequirement(checked);
 							}}
 						>
-							<input
-								type="checkbox"
-								name="verification-required"
-								id="verification-required"
-								defaultChecked={
-									_serverData.serverDataDb?.verificationRequired || false
-								}
-								onChange={(e) =>
-									updateVerificationRequirement(e.target.checked)
-								}
-								disabled={isOnTransition}
-							/>
-							<label htmlFor="verification-required">서버 이용 인증 필요</label>
-						</div>
+							인증 필요
+						</CheckableChip>
+					</div>
+					<div
+						css={{ color: "rgba(255, 255, 255, 0.66)", fontSize: "0.875rem" }}
+					>
+						켜면 인증 역할을 가진 멤버만 주제를 보고 역할을 받을 수 있어요.
 					</div>
 					<div
 						css={{
@@ -402,7 +397,11 @@ export const ServerSettings = () => {
 							</div>
 						)}
 						{!!_serverData.serverDataDiscord.roles?.length && (
-							<DragDropZone id="unassigned" onDrop={handleOnDrop}>
+							<DragDropZone
+								id="unassigned"
+								onDrop={handleOnDrop}
+								emptyLabel="미분류 역할이 없어요"
+							>
 								{Object.values(rolesCombined)
 									.filter((role) => role.roleCategoryId === null)
 									.map((role) => {
@@ -450,6 +449,11 @@ export const ServerSettings = () => {
 								역할 분류 추가
 							</Button>
 						</div>
+						<div
+							css={{ color: "rgba(255, 255, 255, 0.66)", fontSize: "0.875rem" }}
+						>
+							역할을 분류로 묶으면 회원이 역할을 받을 때 그룹으로 볼 수 있어요.
+						</div>
 						{!!_serverData.serverDataDb?.roleCategories?.length || (
 							<div css={{ color: "rgba(255, 255, 255, 0.5)" }}>
 								서버에 역할 카테고리가 없습니다.
@@ -489,9 +493,15 @@ export const ServerSettings = () => {
 															alignItems: "center",
 															justifyContent: "center",
 														}}
-														onClick={deleteRoleCategoryAction(
-															roleCategory.roleCategoryId,
-														)}
+														type="button"
+														aria-label="역할 분류 삭제"
+														onClick={() =>
+															setPendingDelete({
+																kind: "roleCategory",
+																id: roleCategory.roleCategoryId,
+																name: roleCategory.name,
+															})
+														}
 													>
 														<DeleteIcon
 															css={{
@@ -507,6 +517,7 @@ export const ServerSettings = () => {
 											<DragDropZone
 												id={roleCategory.roleCategoryId}
 												onDrop={handleOnDrop}
+												emptyLabel="역할을 여기로 끌어다 놓으세요"
 											>
 												{Object.values(rolesCombined)
 													.filter(
@@ -599,7 +610,15 @@ export const ServerSettings = () => {
 													alignItems: "center",
 													justifyContent: "center",
 												}}
-												onClick={deleteCategoryAction(category.categoryId)}
+												type="button"
+												aria-label="주제 분류 삭제"
+												onClick={() =>
+													setPendingDelete({
+														kind: "category",
+														id: category.categoryId,
+														name: category.name,
+													})
+												}
 											>
 												<DeleteIcon
 													css={{
@@ -788,6 +807,14 @@ export const ServerSettings = () => {
 									),
 								)}
 							</Select>
+							<div
+								css={{
+									color: "rgba(255, 255, 255, 0.66)",
+									fontSize: "0.875rem",
+								}}
+							>
+								분류에 넣으면 회원이 역할을 받을 때 그룹으로 보여요.
+							</div>
 							<label htmlFor="role-description">역할 설명(선택)</label>
 							<Input
 								id="role-description"
@@ -795,16 +822,20 @@ export const ServerSettings = () => {
 								defaultValue={roleSettingsModalRole?.description || undefined}
 								placeholder="역할 설명"
 							/>
-							<div css={{ display: "flex", flexDirection: "row", gap: "4px" }}>
-								<input
-									type="checkbox"
-									id="self-assignable"
-									name="self-assignable"
-									defaultChecked={roleSettingsModalRole?.selfAssignable}
-								/>
-								<label htmlFor="self-assignable">
-									누구나 이 역할 할당 가능
-								</label>
+							<CheckableChip
+								name="self-assignable"
+								defaultChecked={roleSettingsModalRole?.selfAssignable}
+							>
+								누구나 이 역할 할당 가능
+							</CheckableChip>
+							<div
+								css={{
+									color: "rgba(255, 255, 255, 0.66)",
+									fontSize: "0.875rem",
+								}}
+							>
+								켜면 회원이 이 역할을 직접 받을 수 있어요. 끄면 관리자만 부여할
+								수 있어요.
 							</div>
 							<Button
 								css={{
@@ -823,6 +854,26 @@ export const ServerSettings = () => {
 						</form>
 					</Modal>
 				</ModalPortal>
+			)}
+			{pendingDelete && (
+				<ConfirmModal
+					title={
+						pendingDelete.kind === "roleCategory"
+							? "역할 분류를 삭제할까요?"
+							: "주제 분류를 삭제할까요?"
+					}
+					description={`'${pendingDelete.name}' 분류가 사라지고, 이 분류에 속한 항목은 미분류로 돌아가요. 이 작업은 되돌릴 수 없어요.`}
+					loading={isOnTransition}
+					onClose={() => setPendingDelete(null)}
+					onConfirm={async () => {
+						if (pendingDelete.kind === "roleCategory") {
+							await deleteRoleCategoryAction(pendingDelete.id)();
+						} else {
+							await deleteCategoryAction(pendingDelete.id)();
+						}
+						setPendingDelete(null);
+					}}
+				/>
 			)}
 		</Suspense>
 	);

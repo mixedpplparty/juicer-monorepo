@@ -1,18 +1,22 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckIcon from "@mui/icons-material/Check";
-import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useQueries,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import type {
 	Category,
 	RoleRelationToGame,
+	ServerData,
 	ServerDataDiscordChannel,
 	Tag,
 } from "juicer-shared";
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import serverPlaceholderIcon from "../../assets/server_icon_placeholder.png";
 import { _iHaveRole } from "../../functions/ServerFunctions";
-import { useLoading } from "../../hooks/useLoading";
 import { useToast } from "../../hooks/useToast";
 import {
 	_assignRoleByIdToUser,
@@ -31,9 +35,8 @@ import { Spinner } from "../../ui/components/Spinner";
 import { NotVerified } from "../Auth/NotVerified";
 import { Loading } from "../Loading/Loading";
 export const GameInfo = () => {
-	const clickedRoleId = useRef<string | null>(null);
-
-	const [isOnTransition, startTransition] = useLoading();
+	const queryClient = useQueryClient();
+	const [pendingRoleIds, setPendingRoleIds] = useState<Set<string>>(new Set());
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
@@ -119,23 +122,51 @@ export const GameInfo = () => {
 		);
 	}, [_serverData, gameId]);
 
+	// Flip a role's membership directly in the cached server data so the UI
+	// reflects it without waiting on a refetch. The checkmark reads meInRole.
+	const setRoleMembershipInCache = (roleId: string, meInRole: boolean) => {
+		queryClient.setQueryData<ServerData>(
+			_fetchServerData.query(serverId as string).queryKey,
+			(prev) =>
+				prev
+					? {
+							...prev,
+							serverDataDiscord: {
+								...prev.serverDataDiscord,
+								roles: prev.serverDataDiscord.roles
+									? prev.serverDataDiscord.roles.map((r) =>
+											r.id === roleId ? { ...r, meInRole } : r,
+										)
+									: prev.serverDataDiscord.roles,
+							},
+						}
+					: prev,
+		);
+	};
+
 	const toggleRoleAssign = async (roleId: string) => {
-		clickedRoleId.current = roleId;
+		if (pendingRoleIds.has(roleId)) return;
+		const currentlyHasRole = _iHaveRole(_serverData, roleId);
+		// Optimistic: flip immediately, run the request in the background, and
+		// reconcile via invalidation. No blocking server-data refetch in the click
+		// path, and only this role is marked pending — the rest stays interactive.
+		setRoleMembershipInCache(roleId, !currentlyHasRole);
+		setPendingRoleIds((prev) => new Set(prev).add(roleId));
 		try {
-			if (_iHaveRole(_serverData, roleId)) {
-				await startTransition(
-					_unassignRoleByIdFromUser(serverId as string, roleId),
-				);
-				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Role unassigned", "success");
+			if (currentlyHasRole) {
+				await _unassignRoleByIdFromUser(serverId as string, roleId);
+				showToast("역할을 해제했어요", "success");
 			} else {
-				await startTransition(
-					_assignRoleByIdToUser(serverId as string, roleId),
-				);
-				await startTransition(_myDataInServerQuery.refetch());
-				showToast("Role assigned", "success");
+				await _assignRoleByIdToUser(serverId as string, roleId);
+				showToast("역할을 받았어요", "success");
 			}
+			queryClient.invalidateQueries({ queryKey: ["myDataInServer", serverId] });
+			queryClient.invalidateQueries({
+				queryKey: _fetchServerData.query(serverId as string).queryKey,
+			});
 		} catch (error: unknown) {
+			// Roll back the optimistic flip on failure.
+			setRoleMembershipInCache(roleId, currentlyHasRole);
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
 					showToast(error.response?.data.detail as string, "error");
@@ -143,8 +174,13 @@ export const GameInfo = () => {
 					showToast(error.response?.data as string, "error");
 				}
 			}
+		} finally {
+			setPendingRoleIds((prev) => {
+				const next = new Set(prev);
+				next.delete(roleId);
+				return next;
+			});
 		}
-		await startTransition(_serverDataQuery.refetch());
 	};
 
 	const iAmVerified = useMemo(() => {
@@ -173,6 +209,8 @@ export const GameInfo = () => {
 	const nav = (
 		<Nav>
 			<Button
+				type="button"
+				aria-label="뒤로 가기"
 				css={{ background: "none", alignItems: "center" }}
 				onClick={() => navigate(`/server?serverId=${serverId}`)}
 			>
@@ -244,17 +282,37 @@ export const GameInfo = () => {
 							{currentGame?.gamesRoles &&
 								currentGame.gamesRoles.length > 0 &&
 								currentGame.gamesRoles.map((role: RoleRelationToGame) => (
+									// biome-ignore lint/a11y/useSemanticElements: Card is a styled div; role + tabIndex + onKeyDown + aria-pressed give it full toggle-button semantics
 									<Card
+										role="button"
+										tabIndex={pendingRoleIds.has(role.roleId) ? -1 : 0}
+										aria-pressed={_iHaveRole(_serverData, role.roleId)}
+										aria-label={rolesCombined[role.roleId]?.name || "역할"}
 										onClick={
-											isOnTransition
+											pendingRoleIds.has(role.roleId)
 												? undefined
 												: () => toggleRoleAssign(role.roleId)
 										}
+										onKeyDown={(e) => {
+											if (
+												!pendingRoleIds.has(role.roleId) &&
+												(e.key === "Enter" || e.key === " ")
+											) {
+												e.preventDefault();
+												toggleRoleAssign(role.roleId);
+											}
+										}}
 										key={role.roleId}
 										css={{
 											border: "1px solid rgb(255, 255, 255)",
 											padding: "8px",
-											...(isOnTransition
+											// violet ring stays visible on both the dark default and the
+											// white selected state.
+											"&:focus-visible": {
+												outline: "2px solid #8567D6",
+												outlineOffset: "2px",
+											},
+											...(pendingRoleIds.has(role.roleId)
 												? { opacity: "0.5", cursor: "not-allowed" }
 												: {
 														cursor: "pointer",
@@ -274,8 +332,7 @@ export const GameInfo = () => {
 												alignItems: "center",
 											}}
 										>
-											{isOnTransition &&
-											clickedRoleId.current === role.roleId ? (
+											{pendingRoleIds.has(role.roleId) ? (
 												<Spinner
 													css={{
 														width: "24px",
