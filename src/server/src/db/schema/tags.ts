@@ -1,15 +1,19 @@
 import { relations } from "drizzle-orm";
-import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { index, pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 import { gamesTags } from "./games.js";
 import { servers } from "./servers.js";
 
-export const tags = pgTable("tags", {
-	tagId: serial("tag_id").primaryKey(),
-	serverId: text("server_id")
-		.notNull()
-		.references(() => servers.serverId, { onDelete: "cascade" }),
-	name: varchar("name", { length: 50 }).notNull(),
-});
+export const tags = pgTable(
+	"tags",
+	{
+		tagId: serial("tag_id").primaryKey(),
+		serverId: text("server_id")
+			.notNull()
+			.references(() => servers.serverId, { onDelete: "cascade" }),
+		name: varchar("name", { length: 50 }).notNull(),
+	},
+	(table) => [index("tags_server_id_idx").on(table.serverId)],
+);
 
 // tags -> games
 export const tagsRelations = relations(tags, ({ one, many }) => ({
