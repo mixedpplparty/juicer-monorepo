@@ -4,7 +4,7 @@ import {
 	PG_NOT_NULL_VIOLATION,
 	PG_UNIQUE_VIOLATION,
 } from "@drdgvhbh/postgres-error-codes";
-import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
+import { and, DrizzleQueryError, eq, ilike, inArray, isNotNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type {
 	CreateCategoryRequestBody,
@@ -27,7 +27,10 @@ import type {
 import { DatabaseError } from "pg";
 import type * as z from "zod";
 import { db } from "../db/index.js";
+import { isBirthdayEditable } from "./birthday-core.js";
 import {
+	birthdayAnnouncements,
+	birthdays,
 	categories,
 	games,
 	gamesRoles,
@@ -620,4 +623,136 @@ export const updateServerVerificationRequired = async ({
 		.set({ verificationRequired })
 		.where(eq(servers.serverId, serverId))
 		.returning();
+};
+
+// ── Birthdays ───────────────────────────────────────────────────────────
+
+export type ServerRow = typeof servers.$inferSelect;
+export type BirthdayRow = typeof birthdays.$inferSelect;
+export type BirthdayLedgerRow = typeof birthdayAnnouncements.$inferSelect;
+
+export const getBirthday = async (
+	userId: string,
+): Promise<BirthdayRow | null> => {
+	const row = await db.query.birthdays.findFirst({
+		where: eq(birthdays.userId, userId),
+	});
+	return row ?? null;
+};
+
+export const upsertBirthday = async ({
+	userId,
+	month,
+	day,
+}: {
+	userId: string;
+	month: number;
+	day: number;
+}): Promise<BirthdayRow> => {
+	const existing = await db.query.birthdays.findFirst({
+		where: eq(birthdays.userId, userId),
+	});
+	if (existing && !isBirthdayEditable(existing.createdAt, Date.now())) {
+		throw new HTTPException(403, {
+			message: "Birthday can no longer be changed (edit window closed).",
+		});
+	}
+	// createdAt stays the original first-set time (not in the update set), so it
+	// remains the edit-window anchor across edits.
+	const [row] = await db
+		.insert(birthdays)
+		.values({ userId, month, day })
+		.onConflictDoUpdate({ target: birthdays.userId, set: { month, day } })
+		.returning();
+	return row;
+};
+
+export const updateServerBirthdayConfig = async ({
+	serverId,
+	channelId,
+	timezone,
+	messageTemplate,
+	eventNameTemplate,
+	eventDescriptionTemplate,
+}: {
+	serverId: string;
+	channelId: string | null;
+	timezone: string | null;
+	messageTemplate?: string | null;
+	eventNameTemplate?: string | null;
+	eventDescriptionTemplate?: string | null;
+}): Promise<ServerRow> => {
+	const [row] = await db
+		.update(servers)
+		.set({
+			birthdayChannelId: channelId,
+			birthdayTimezone: timezone,
+			birthdayMessageTemplate: messageTemplate ?? null,
+			birthdayEventNameTemplate: eventNameTemplate ?? null,
+			birthdayEventDescriptionTemplate: eventDescriptionTemplate ?? null,
+		})
+		.where(eq(servers.serverId, serverId))
+		.returning();
+	return row;
+};
+
+export const getEnabledBirthdayServers = async (): Promise<ServerRow[]> => {
+	return await db.query.servers.findMany({
+		where: isNotNull(servers.birthdayChannelId),
+	});
+};
+
+export const getAllBirthdays = async (): Promise<BirthdayRow[]> => {
+	return await db.query.birthdays.findMany();
+};
+
+export const getBirthdayAnnouncements = async (
+	serverId: string,
+	years: number[],
+): Promise<BirthdayLedgerRow[]> => {
+	if (years.length === 0) return [];
+	return await db.query.birthdayAnnouncements.findMany({
+		where: and(
+			eq(birthdayAnnouncements.serverId, serverId),
+			inArray(birthdayAnnouncements.year, years),
+		),
+	});
+};
+
+export const markBirthdayEventCreated = async (
+	serverId: string,
+	userId: string,
+	year: number,
+	discordEventId: string,
+): Promise<void> => {
+	await db
+		.insert(birthdayAnnouncements)
+		.values({ serverId, userId, year, discordEventId })
+		.onConflictDoUpdate({
+			target: [
+				birthdayAnnouncements.serverId,
+				birthdayAnnouncements.userId,
+				birthdayAnnouncements.year,
+			],
+			set: { discordEventId },
+		});
+};
+
+export const markBirthdayAnnounced = async (
+	serverId: string,
+	userId: string,
+	year: number,
+): Promise<void> => {
+	const announcedAt = new Date();
+	await db
+		.insert(birthdayAnnouncements)
+		.values({ serverId, userId, year, announcedAt })
+		.onConflictDoUpdate({
+			target: [
+				birthdayAnnouncements.serverId,
+				birthdayAnnouncements.userId,
+				birthdayAnnouncements.year,
+			],
+			set: { announcedAt },
+		});
 };
