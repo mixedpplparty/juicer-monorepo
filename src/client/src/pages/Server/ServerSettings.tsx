@@ -22,6 +22,7 @@ import {
 import { Button, InlineButton } from "../../ui/components/Button";
 import { Chip } from "../../ui/components/Chip";
 import { _8pxCircle } from "../../ui/components/Circle";
+import { ConfirmModal } from "../../ui/components/ConfirmModal";
 import { DragDropZone } from "../../ui/components/DragDropZone";
 import { Input } from "../../ui/components/Input";
 import { Modal } from "../../ui/components/Modal";
@@ -57,6 +58,11 @@ export const ServerSettings = () => {
 	const [searchParams] = useSearchParams();
 	const serverId = searchParams.get("serverId");
 	const { showToast } = useToast();
+	const [pendingDelete, setPendingDelete] = useState<{
+		kind: "roleCategory" | "category";
+		id: number;
+		name: string;
+	} | null>(null);
 
 	const navigate = useNavigate();
 
@@ -73,7 +79,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_updateServerVerificationRequired(serverId as string, checked),
 			);
-			showToast("Verification requirement updated", "success");
+			showToast("인증 설정을 변경했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -130,7 +136,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_createCategory(serverId as string, categoryName as string),
 			);
-			showToast("Category created", "success");
+			showToast("주제 분류를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -151,7 +157,7 @@ export const ServerSettings = () => {
 			await startTransition(
 				_createRoleCategory(serverId as string, roleCategoryName as string),
 			);
-			showToast("Role category created", "success");
+			showToast("역할 분류를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -168,7 +174,7 @@ export const ServerSettings = () => {
 		const tagName = formData.get("tag-name");
 		try {
 			await startTransition(_createTag(serverId as string, tagName as string));
-			showToast("Tag created", "success");
+			showToast("태그를 추가했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				if (error.response?.data?.detail) {
@@ -187,7 +193,7 @@ export const ServerSettings = () => {
 				await startTransition(
 					_deleteRoleCategory(serverId as string, roleCategoryId),
 				);
-				showToast("Role category deleted", "success");
+				showToast("역할 분류를 삭제했어요", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
 					if (error.response?.data?.detail) {
@@ -203,7 +209,7 @@ export const ServerSettings = () => {
 		(categoryId: number) => async (): Promise<void> => {
 			try {
 				await startTransition(_deleteCategory(serverId as string, categoryId));
-				showToast("Category deleted", "success");
+				showToast("주제 분류를 삭제했어요", "success");
 			} catch (error: unknown) {
 				if (isAxiosError(error)) {
 					if (error.response?.data?.detail) {
@@ -262,7 +268,7 @@ export const ServerSettings = () => {
 					description,
 				),
 			);
-			showToast("Role updated", "success");
+			showToast("역할 정보를 저장했어요", "success");
 		} catch (error: unknown) {
 			if (isAxiosError(error)) {
 				showToast(error.response?.data.detail as string, "error");
@@ -279,15 +285,6 @@ export const ServerSettings = () => {
 
 	const handleOnDrop = async (e: React.DragEvent<HTMLElement>) => {
 		if (draggedRoleId.current) {
-			console.log(
-				"drop",
-				draggedRoleId.current,
-				"from",
-				draggedFrom.current,
-				"to",
-				(e.currentTarget as HTMLElement).id,
-			);
-
 			if (
 				Number((e.currentTarget as HTMLElement).id) !== draggedFrom.current &&
 				!(
@@ -319,6 +316,8 @@ export const ServerSettings = () => {
 			}}
 		>
 			<Button
+				type="button"
+				aria-label="뒤로 가기"
 				css={{ background: "none", alignItems: "center" }}
 				onClick={() => navigate(`/server?serverId=${serverId}`)}
 			>
@@ -489,9 +488,15 @@ export const ServerSettings = () => {
 															alignItems: "center",
 															justifyContent: "center",
 														}}
-														onClick={deleteRoleCategoryAction(
-															roleCategory.roleCategoryId,
-														)}
+														type="button"
+														aria-label="역할 분류 삭제"
+														onClick={() =>
+															setPendingDelete({
+																kind: "roleCategory",
+																id: roleCategory.roleCategoryId,
+																name: roleCategory.name,
+															})
+														}
 													>
 														<DeleteIcon
 															css={{
@@ -599,7 +604,15 @@ export const ServerSettings = () => {
 													alignItems: "center",
 													justifyContent: "center",
 												}}
-												onClick={deleteCategoryAction(category.categoryId)}
+												type="button"
+												aria-label="주제 분류 삭제"
+												onClick={() =>
+													setPendingDelete({
+														kind: "category",
+														id: category.categoryId,
+														name: category.name,
+													})
+												}
 											>
 												<DeleteIcon
 													css={{
@@ -823,6 +836,26 @@ export const ServerSettings = () => {
 						</form>
 					</Modal>
 				</ModalPortal>
+			)}
+			{pendingDelete && (
+				<ConfirmModal
+					title={
+						pendingDelete.kind === "roleCategory"
+							? "역할 분류를 삭제할까요?"
+							: "주제 분류를 삭제할까요?"
+					}
+					description={`'${pendingDelete.name}' 분류가 사라지고, 이 분류에 속한 항목은 미분류로 돌아가요. 이 작업은 되돌릴 수 없어요.`}
+					loading={isOnTransition}
+					onClose={() => setPendingDelete(null)}
+					onConfirm={async () => {
+						if (pendingDelete.kind === "roleCategory") {
+							await deleteRoleCategoryAction(pendingDelete.id)();
+						} else {
+							await deleteCategoryAction(pendingDelete.id)();
+						}
+						setPendingDelete(null);
+					}}
+				/>
 			)}
 		</Suspense>
 	);

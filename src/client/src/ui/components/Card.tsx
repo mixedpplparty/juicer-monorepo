@@ -9,7 +9,7 @@ export const Card = styled.div({
 	color: "white",
 	display: "flex",
 	flexDirection: "column",
-	gap: " 8px",
+	gap: "8px",
 	padding: "16px",
 	maxHeight: "100%",
 	maxWidth: "100%",

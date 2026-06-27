@@ -10,6 +10,14 @@ export const Select = styled.select({
 	outline: "none",
 	WebkitAppearance: "none",
 	color: "#fff",
+	transition:
+		"background 0.15s ease-out, border-color 0.15s ease-out, box-shadow 0.15s ease-out",
+	"&:focus": {
+		borderBottomColor: "#fff",
+		background: "rgba(255, 255, 255, 0.16)",
+		boxShadow: "0 1px 0 0 rgba(255, 255, 255, 0.5)",
+	},
+	"@media (prefers-reduced-motion: reduce)": { transition: "none" },
 });
 
 export const Option = styled.option({
