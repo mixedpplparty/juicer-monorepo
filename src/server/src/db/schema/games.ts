@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
 	check,
 	customType,
+	index,
 	integer,
 	pgTable,
 	primaryKey,
@@ -41,6 +42,9 @@ export const games = pgTable(
 	},
 	(table) => [
 		check("thumbnail_size", sql`octet_length(${table.thumbnail}) <= 1048576`),
+		// Hot filter columns: games are queried by server and by category.
+		index("games_server_id_idx").on(table.serverId),
+		index("games_category_id_idx").on(table.categoryId),
 	],
 );
 
@@ -55,7 +59,11 @@ export const gamesRoles = pgTable(
 			.notNull()
 			.references(() => roles.roleId, { onDelete: "cascade" }),
 	},
-	(table) => [primaryKey({ columns: [table.gameId, table.roleId] })],
+	(table) => [
+		primaryKey({ columns: [table.gameId, table.roleId] }),
+		// Reverse lookup: the PK leads with gameId, so role-keyed deletes/joins need this.
+		index("games_roles_role_id_idx").on(table.roleId),
+	],
 );
 
 // Junction table for games(many) - tags(many)
@@ -69,7 +77,11 @@ export const gamesTags = pgTable(
 			.notNull()
 			.references(() => tags.tagId, { onDelete: "cascade" }),
 	},
-	(table) => [primaryKey({ columns: [table.gameId, table.tagId] })],
+	(table) => [
+		primaryKey({ columns: [table.gameId, table.tagId] }),
+		// Reverse lookup by tag (findGamesByTags filters gamesTags.tagId).
+		index("games_tags_tag_id_idx").on(table.tagId),
+	],
 );
 
 // Relations for games table

@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
 	boolean,
+	index,
 	integer,
 	pgTable,
 	serial,
@@ -10,27 +11,37 @@ import {
 import { gamesRoles } from "./games.js";
 import { servers } from "./servers.js";
 
-export const roles = pgTable("roles", {
-	roleId: text("role_id").notNull().primaryKey(),
-	serverId: text("server_id")
-		.notNull()
-		.references(() => servers.serverId, { onDelete: "cascade" }),
-	roleCategoryId: integer("role_category_id").references(
-		() => roleCategories.roleCategoryId,
-		{ onDelete: "set null" },
-	),
-	selfAssignable: boolean("self_assignable").notNull().default(false),
-	description: text("description"),
-});
+export const roles = pgTable(
+	"roles",
+	{
+		roleId: text("role_id").notNull().primaryKey(),
+		serverId: text("server_id")
+			.notNull()
+			.references(() => servers.serverId, { onDelete: "cascade" }),
+		roleCategoryId: integer("role_category_id").references(
+			() => roleCategories.roleCategoryId,
+			{
+				onDelete: "set null",
+			},
+		),
+		selfAssignable: boolean("self_assignable").notNull().default(false),
+		description: text("description"),
+	},
+	(table) => [index("roles_server_id_idx").on(table.serverId)],
+);
 
 // Category for roles. One role can have one category.
-export const roleCategories = pgTable("roles_categories", {
-	roleCategoryId: serial("role_category_id").primaryKey(),
-	serverId: text("server_id")
-		.notNull()
-		.references(() => servers.serverId),
-	name: varchar("name", { length: 100 }).notNull(),
-});
+export const roleCategories = pgTable(
+	"roles_categories",
+	{
+		roleCategoryId: serial("role_category_id").primaryKey(),
+		serverId: text("server_id")
+			.notNull()
+			.references(() => servers.serverId),
+		name: varchar("name", { length: 100 }).notNull(),
+	},
+	(table) => [index("role_categories_server_id_idx").on(table.serverId)],
+);
 
 // roles -> server, role category, games
 export const rolesRelations = relations(roles, ({ one, many }) => ({
