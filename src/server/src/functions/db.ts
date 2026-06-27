@@ -46,6 +46,9 @@ export const getServerDataInDb = async (
 		where: eq(servers.serverId, serverId),
 		with: {
 			games: {
+				// Exclude the heavy thumbnail bytea — the client fetches thumbnails
+				// lazily via the dedicated endpoint, never from this payload.
+				columns: { thumbnail: false },
 				with: {
 					gamesTags: true,
 					gamesRoles: true,
@@ -199,8 +202,6 @@ export const updateGame = async ({
 				.where(and(eq(games.gameId, gameId), eq(games.serverId, serverId)))
 				.returning();
 			res.updatedGame = updatedGame[0];
-		} else {
-			console.log("DEBUG: no fields to update");
 		}
 
 		// update tags table
@@ -469,7 +470,7 @@ export const findGamesByCategoryName = async ({
 }: {
 	serverId: string;
 	categoryName: string;
-}): Promise<(typeof games.$inferSelect)[]> => {
+}) => {
 	const categoryId = await db.query.categories.findFirst({
 		where: and(
 			eq(categories.serverId, serverId),
@@ -480,6 +481,7 @@ export const findGamesByCategoryName = async ({
 		return [];
 	}
 	return await db.query.games.findMany({
+		columns: { thumbnail: false },
 		where: and(
 			eq(games.serverId, serverId),
 			eq(games.categoryId, categoryId.categoryId),
@@ -497,7 +499,7 @@ export const findGamesByTags = async ({
 }: {
 	serverId: string;
 	tagNames: string[];
-}): Promise<(typeof games.$inferSelect)[]> => {
+}) => {
 	const tagIds = await db.query.tags.findMany({
 		where: and(eq(tags.serverId, serverId), inArray(tags.name, tagNames)),
 	});
@@ -505,6 +507,7 @@ export const findGamesByTags = async ({
 		return [];
 	}
 	return await db.query.games.findMany({
+		columns: { thumbnail: false },
 		where: and(
 			eq(games.serverId, serverId),
 			inArray(
@@ -525,8 +528,9 @@ export const findGamesByName = async ({
 }: {
 	serverId: string;
 	name: string;
-}): Promise<(typeof games.$inferSelect)[]> => {
+}) => {
 	return await db.query.games.findMany({
+		columns: { thumbnail: false },
 		where: and(eq(games.serverId, serverId), ilike(games.name, `%${name}%`)),
 		with: {
 			gamesTags: true,
@@ -539,8 +543,9 @@ export const getAllGamesInServer = async ({
 	serverId,
 }: {
 	serverId: string;
-}): Promise<(typeof games.$inferSelect)[]> => {
+}) => {
 	return await db.query.games.findMany({
+		columns: { thumbnail: false },
 		where: eq(games.serverId, serverId),
 		with: {
 			gamesTags: true,

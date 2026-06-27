@@ -22,18 +22,18 @@ app.get("/all", async (c) => {
 		});
 		return c.json(games, 200);
 	}
-	const gamesByName = await findGamesByName({
-		serverId: serverId as string,
-		name: query as string,
-	});
-	const gamesByTags = await findGamesByTags({
-		serverId: serverId as string,
-		tagNames: [query as string],
-	});
-	const gamesByCategories = await findGamesByCategoryName({
-		serverId: serverId as string,
-		categoryName: query as string,
-	});
+	// The three lookups are independent — run them concurrently.
+	const [gamesByName, gamesByTags, gamesByCategories] = await Promise.all([
+		findGamesByName({ serverId: serverId as string, name: query as string }),
+		findGamesByTags({
+			serverId: serverId as string,
+			tagNames: [query as string],
+		}),
+		findGamesByCategoryName({
+			serverId: serverId as string,
+			categoryName: query as string,
+		}),
+	]);
 	const games = [...gamesByName, ...gamesByTags, ...gamesByCategories];
 	const seenIds = new Set();
 	const uniqueGames = games.filter((game) => {

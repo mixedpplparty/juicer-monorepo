@@ -28,11 +28,11 @@ const app = new Hono();
 app.get("/:serverId", async (c) => {
 	const serverId = c.req.param("serverId");
 	const accessToken = getCookie(c, "discord_access_token");
-	const { guild, manageGuildPermission } = await getGuildAndMemberData(
-		serverId,
-		accessToken as string,
-	);
-	const serverDataDb = await getServerDataInDb(serverId);
+	// The Discord aggregation and the DB read are independent — run concurrently.
+	const [{ guild, manageGuildPermission }, serverDataDb] = await Promise.all([
+		getGuildAndMemberData(serverId, accessToken as string),
+		getServerDataInDb(serverId),
+	]);
 	return c.json({
 		admin: manageGuildPermission,
 		serverDataDb,

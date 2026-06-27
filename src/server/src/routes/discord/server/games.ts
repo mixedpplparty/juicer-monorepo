@@ -156,7 +156,6 @@ app.post(
 			const tagIds = [...existingTagIds, ...body.tagIds];
 			// remove duplicates
 			const uniqueTagIds = [...new Set(tagIds)];
-			console.log("DEBUG: uniqueTagIds", uniqueTagIds);
 			const tag = await updateGame({
 				gameId: Number(gameId),
 				serverId: serverId as string,
@@ -185,7 +184,6 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 		const existingGameTags = serverDataInDb?.games?.find(
 			(game) => game.gameId === Number(gameId),
 		)?.gamesTags;
-		console.log("DEBUG: existingGameTags", existingGameTags);
 		const existingGameTagIds: number[] =
 			existingGameTags?.map((tag) => tag.tagId) ?? [];
 
@@ -200,7 +198,6 @@ app.post("/:gameId/tags/:tagId/untag", async (c) => {
 		const newTagIds = existingGameTagIds.filter(
 			(existingTagId) => existingTagId !== Number(tagId),
 		);
-		console.log("DEBUG: newTagIds", newTagIds);
 		const tag = await updateGame({
 			gameId: Number(gameId),
 			serverId: serverId as string,
@@ -245,7 +242,15 @@ app.get("/:gameId/thumbnail", async (c) => {
 	const serverId = c.req.param("serverId");
 	const gameId = c.req.param("gameId");
 	const accessToken = getCookie(c, "discord_access_token");
-	await authenticateAndAuthorizeUser(serverId as string, accessToken as string);
+	// Read-only image fetch hit once per game on the list — don't force a member
+	// re-fetch (reuse cache) and don't require manage permission. The forced
+	// Discord round-trip here is what made even a 404 take ~10s under load.
+	await authenticateAndAuthorizeUser(
+		serverId as string,
+		accessToken as string,
+		false,
+		false,
+	);
 	const thumbnail = await getGameThumbnail({
 		gameId: Number(gameId),
 		serverId: serverId as string,

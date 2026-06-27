@@ -93,7 +93,9 @@ const GameWithoutRelations = z.object({
 	name: z.string(),
 	description: z.string().nullable().optional(),
 	categoryId: z.number().nullable().optional(),
-	thumbnail: z.instanceof(Buffer).nullable(),
+	// Optional: list/serverData endpoints omit the heavy bytea blob; the client
+	// fetches thumbnails lazily via the dedicated /games/:id/thumbnail endpoint.
+	thumbnail: z.instanceof(Buffer).nullable().optional(),
 	channels: z.array(z.string()).nullable(),
 });
 
