@@ -1,6 +1,7 @@
 import type {
 	Collection,
 	Client as DiscordClient,
+	Guild,
 	GuildMember,
 	Role,
 	Snowflake,
@@ -11,6 +12,8 @@ import {
 	DiscordAPIError,
 	Events,
 	GatewayIntentBits,
+	GuildScheduledEventEntityType,
+	GuildScheduledEventPrivacyLevel,
 	PermissionFlagsBits,
 } from "discord.js";
 import "dotenv/config";
@@ -314,4 +317,94 @@ export const getMyDataInServerInDiscordApi = async (
 	});
 	const member = await guild.members.fetch(userId);
 	return member;
+};
+
+// ── Birthday operations ─────────────────────────────────────────────────
+
+export const getGuildForBirthday = async (
+	serverId: string,
+): Promise<Guild | undefined> => {
+	return await resolveGuild(serverId);
+};
+
+export const fetchMemberIfPresent = async (
+	serverId: string,
+	userId: string,
+): Promise<GuildMember | null> => {
+	const guild = await resolveGuild(serverId);
+	if (!guild) return null;
+	try {
+		return await guild.members.fetch({ user: userId });
+	} catch {
+		// User is no longer in the guild (or fetch failed) — treat as absent.
+		return null;
+	}
+};
+
+export const createBirthdayScheduledEvent = async (
+	serverId: string,
+	name: string,
+	description: string | null,
+	start: Date,
+	end: Date,
+): Promise<string | null> => {
+	const guild = await resolveGuild(serverId);
+	if (!guild) return null;
+	const event = await guild.scheduledEvents.create({
+		name,
+		description: description ?? undefined,
+		scheduledStartTime: start,
+		scheduledEndTime: end,
+		privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+		entityType: GuildScheduledEventEntityType.External,
+		entityMetadata: { location: "🎉" },
+	});
+	return event.id;
+};
+
+export const postBirthdayMessage = async (
+	serverId: string,
+	channelId: string,
+	content: string,
+): Promise<boolean> => {
+	const guild = await resolveGuild(serverId);
+	if (!guild) return false;
+	const channel =
+		guild.channels.cache.get(channelId) ??
+		(await guild.channels.fetch(channelId));
+	if (!channel || channel.type !== ChannelType.GuildText) return false;
+	await channel.send(content);
+	return true;
+};
+
+// Used by the admin config endpoint to fail fast if the chosen channel is
+// unusable, before the feature is enabled.
+export const assertBirthdayChannelSendable = async (
+	serverId: string,
+	channelId: string,
+): Promise<void> => {
+	const guild = await resolveGuild(serverId);
+	if (!guild) {
+		throw new HTTPException(404, {
+			message: "Server not found. Bot may not be in that server.",
+		});
+	}
+	const channel =
+		guild.channels.cache.get(channelId) ??
+		(await guild.channels.fetch(channelId));
+	if (!channel || channel.type !== ChannelType.GuildText) {
+		throw new HTTPException(400, {
+			message: "Announcement channel must be a text channel.",
+		});
+	}
+	const me = await guild.members.fetchMe();
+	const perms = channel.permissionsFor(me);
+	if (
+		!perms?.has(PermissionFlagsBits.ViewChannel) ||
+		!perms?.has(PermissionFlagsBits.SendMessages)
+	) {
+		throw new HTTPException(400, {
+			message: "Bot cannot send messages in that channel.",
+		});
+	}
 };
