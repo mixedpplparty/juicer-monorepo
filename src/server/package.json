@@ -7,7 +7,8 @@
 		"start": "bun run src/index.js",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@drdgvhbh/postgres-error-codes": "^0.0.6",
@@ -19,17 +20,23 @@
 		"discord.js": "^14.22.1",
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.44.5",
+		"handlebars": "^4.7.9",
 		"hono": "^4.9.8",
 		"hono-rate-limiter": "^0.4.2",
 		"juicer-shared": "workspace:*",
+		"luxon": "^3.7.2",
+		"node-cron": "^4.5.0",
 		"pg": "^8.16.3",
 		"zod": "^4.1.11"
 	},
 	"devDependencies": {
+		"@types/luxon": "^3.7.2",
 		"@types/node": "^20.11.17",
+		"@types/node-cron": "^3.0.11",
 		"@types/pg": "^8.15.5",
 		"drizzle-kit": "^0.31.4",
 		"tsx": "^4.20.5",
-		"typescript": "^5.8.3"
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.9"
 	}
 }

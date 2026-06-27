@@ -154,6 +154,11 @@ const ServerDataDb = z.object({
 	categories: z.array(Category).nullable(),
 	roleCategories: z.array(RoleCategory).nullable(),
 	tags: z.array(Tag).nullable(),
+	birthdayChannelId: z.string().nullable(),
+	birthdayTimezone: z.string().nullable(),
+	birthdayMessageTemplate: z.string().nullable(),
+	birthdayEventNameTemplate: z.string().nullable(),
+	birthdayEventDescriptionTemplate: z.string().nullable(),
 });
 
 export type ServerDataDb = z.infer<typeof ServerDataDb>;
@@ -353,3 +358,50 @@ export type GuildMember = z.infer<typeof GuildMember> & DiscordJSGuildMember;
 export const UpdateServerVerificationRequiredRequestBody = z.object({
 	verificationRequired: z.boolean(),
 });
+
+// ── Birthday announcements ──────────────────────────────────────────────
+
+// Max day per month with Feb 29 allowed (leap-agnostic). Rejects Feb 30/31,
+// Apr/Jun/Sep/Nov 31, etc. Year is intentionally not stored.
+const _MAX_DAY_PER_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+export function isValidMonthDay(month: number, day: number): boolean {
+	if (!Number.isInteger(month) || !Number.isInteger(day)) return false;
+	if (month < 1 || month > 12) return false;
+	if (day < 1) return false;
+	return day <= _MAX_DAY_PER_MONTH[month - 1]!;
+}
+
+export const UpdateBirthdayRequestBody = z
+	.object({
+		month: z.number().int().min(1).max(12),
+		day: z.number().int().min(1).max(31),
+	})
+	.refine((b) => isValidMonthDay(b.month, b.day), {
+		message: "Invalid month/day combination.",
+	});
+
+export type UpdateBirthdayRequestBody = z.infer<typeof UpdateBirthdayRequestBody>;
+
+const GetBirthdayResponse = z
+	.object({
+		month: z.number(),
+		day: z.number(),
+		editable: z.boolean(),
+		editableUntil: z.string(),
+	})
+	.nullable();
+
+export type GetBirthdayResponse = z.infer<typeof GetBirthdayResponse>;
+
+export const UpdateServerBirthdayConfigRequestBody = z.object({
+	channelId: z.string().nullable(),
+	timezone: z.string().nullable(),
+	messageTemplate: z.string().nullable().optional(),
+	eventNameTemplate: z.string().nullable().optional(),
+	eventDescriptionTemplate: z.string().nullable().optional(),
+});
+
+export type UpdateServerBirthdayConfigRequestBody = z.infer<
+	typeof UpdateServerBirthdayConfigRequestBody
+>;

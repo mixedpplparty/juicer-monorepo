@@ -3,18 +3,25 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { UpdateServerVerificationRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import {
+	UpdateServerBirthdayConfigRequestBody,
+	UpdateServerVerificationRequiredRequestBody,
+} from "juicer-shared/dist/types/index.js";
 import {
 	createRoleCategory,
 	createServer,
 	getServerDataInDb,
+	updateServerBirthdayConfig,
 	updateServerVerificationRequired,
 } from "../../../functions/db.js";
 import {
+	assertBirthdayChannelSendable,
 	authenticateAndAuthorizeUser,
 	getGuildAndMemberData,
 	syncRolesWithDbAndDiscord,
 } from "../../../functions/discord-bot.js";
+import { isValidTimezone } from "../../../functions/birthday-core.js";
+import { validateTemplate } from "../../../functions/birthday-templates.js";
 import categoriesRoutes from "./categories.js";
 import gamesRoutes from "./games.js";
 import roleCategoriesRoutes from "./role-categories.js";
@@ -126,6 +133,64 @@ app.put(
 		throw new HTTPException(403, {
 			message: "User does not have manage server permission.",
 		});
+	},
+);
+
+app.put(
+	"/:serverId/birthday-config",
+	zValidator("json", UpdateServerBirthdayConfigRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const body = c.req.valid("json");
+		const accessToken = getCookie(c, "discord_access_token");
+		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+			serverId,
+			accessToken as string,
+			true,
+		);
+		if (!manageGuildPermission) {
+			throw new HTTPException(403, {
+				message: "User does not have manage server permission.",
+			});
+		}
+
+		// When enabling (channel set), require a valid timezone, a sendable
+		// channel, and valid templates. Clearing the channel disables the feature.
+		if (body.channelId) {
+			if (!body.timezone || !isValidTimezone(body.timezone)) {
+				throw new HTTPException(400, {
+					message: "A valid IANA timezone is required to enable birthday announcements.",
+				});
+			}
+			await assertBirthdayChannelSendable(serverId, body.channelId);
+			const checks: Array<
+				[string | null | undefined, "message" | "eventName" | "eventDescription"]
+			> = [
+				[body.messageTemplate, "message"],
+				[body.eventNameTemplate, "eventName"],
+				[body.eventDescriptionTemplate, "eventDescription"],
+			];
+			for (const [tpl, kind] of checks) {
+				if (tpl) {
+					const res = validateTemplate(tpl, kind);
+					if (!res.ok) {
+						throw new HTTPException(400, {
+							message: `Invalid ${kind} template: ${res.error}`,
+						});
+					}
+				}
+			}
+		}
+
+		const updated = await updateServerBirthdayConfig({
+			serverId,
+			channelId: body.channelId,
+			timezone: body.timezone,
+			messageTemplate: body.messageTemplate,
+			eventNameTemplate: body.eventNameTemplate,
+			eventDescriptionTemplate: body.eventDescriptionTemplate,
+		});
+		return c.json(updated, 200);
 	},
 );
 

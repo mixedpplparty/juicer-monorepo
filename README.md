@@ -65,3 +65,25 @@ or to run with Traefik, run in the project root:
 3. to shutdown:
 
 `docker compose down`
+
+## Birthday Announcements
+
+Users set their birthday (month + day) from the dashboard. It is editable for
+one month, then locked. Each server admin enables the feature in Server Settings
+by choosing an announcement channel and an IANA timezone (e.g. `Asia/Seoul`).
+
+On a member's birthday the bot, in every enabled server the member is in:
+
+- posts an admin-configured congrats message in the announcement channel, and
+- creates a Discord scheduled event ~7 days ahead.
+
+Messages and event text are admin-authored Handlebars templates. Available
+variables: `{{member.mention}}` (message only), `{{member.displayName}}`,
+`{{member.username}}`, `{{guild.name}}`, and more.
+
+### Required bot permissions
+
+Invite the bot with **Manage Events**, and ensure it has **View Channel** +
+**Send Messages** in the chosen announcement channel. Missing permissions are
+logged and skipped — the bot will not crash, but the affected message or event
+will not be created.

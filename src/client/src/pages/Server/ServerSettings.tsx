@@ -33,6 +33,7 @@ import { RoleChip } from "../../ui/components/RoleChip";
 import { Option, Select } from "../../ui/components/Select";
 import { NoAdminPerms } from "../Auth/NoAdminPerms";
 import { Loading } from "../Loading/Loading";
+import { BirthdayAnnouncementsSettings } from "./BirthdayAnnouncementsSettings";
 export const ServerSettings = () => {
 	const draggedFrom = useRef<number | null>(null);
 	const draggedRoleId = useRef<string | null>(null);
@@ -375,6 +376,11 @@ export const ServerSettings = () => {
 					>
 						켜면 인증 역할을 가진 멤버만 주제를 보고 역할을 받을 수 있어요.
 					</div>
+					<BirthdayAnnouncementsSettings
+						serverId={serverId as string}
+						channels={_serverData.serverDataDiscord.channels ?? []}
+						config={_serverData.serverDataDb}
+					/>
 					<div
 						css={{
 							display: "flex",

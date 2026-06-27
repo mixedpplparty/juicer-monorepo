@@ -2,6 +2,7 @@ import axios from "axios";
 import type { APIUser } from "discord-api-types/v10";
 import type {
 	Game,
+	GetBirthdayResponse,
 	GuildMember,
 	MessageOnSuccess,
 	MyInfo,
@@ -367,6 +368,54 @@ export const _updateServerVerificationRequired = async (
 	const _res = await axios.put(
 		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}`,
 		{ verificationRequired },
+	);
+	return _res.data;
+};
+
+export const _fetchMyBirthday = async (): Promise<GetBirthdayResponse> => {
+	const _res = await axios.get(_fetchMyBirthday.apiPath(), {
+		withCredentials: true,
+	});
+	return _res.data;
+};
+
+_fetchMyBirthday.apiPath = () => {
+	return `${import.meta.env.VITE_BACKEND_URI}/discord/user/me/birthday`;
+};
+
+_fetchMyBirthday.query = () => {
+	return {
+		queryKey: ["myBirthday"],
+		queryFn: _fetchMyBirthday,
+	};
+};
+
+export const _updateMyBirthday = async (
+	month: number,
+	day: number,
+): Promise<GetBirthdayResponse> => {
+	const _res = await axios.put(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/user/me/birthday`,
+		{ month, day },
+		{ withCredentials: true },
+	);
+	return _res.data;
+};
+
+export const _updateServerBirthdayConfig = async (
+	serverId: string,
+	config: {
+		channelId: string | null;
+		timezone: string | null;
+		messageTemplate?: string | null;
+		eventNameTemplate?: string | null;
+		eventDescriptionTemplate?: string | null;
+	},
+): Promise<ServerDataDb> => {
+	const _res = await axios.put(
+		`${import.meta.env.VITE_BACKEND_URI}/discord/servers/${serverId}/birthday-config`,
+		config,
+		{ withCredentials: true },
 	);
 	return _res.data;
 };

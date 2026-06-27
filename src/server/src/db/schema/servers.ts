@@ -11,6 +11,11 @@ export const servers = pgTable("servers", {
 	verificationRequired: boolean("verification_required")
 		.notNull()
 		.default(false),
+	birthdayChannelId: text("birthday_channel_id"),
+	birthdayTimezone: text("birthday_timezone"),
+	birthdayMessageTemplate: text("birthday_message_template"),
+	birthdayEventNameTemplate: text("birthday_event_name_template"),
+	birthdayEventDescriptionTemplate: text("birthday_event_description_template"),
 });
 
 // server -> games, categories, tags, roles, role categories
