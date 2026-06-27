@@ -12,6 +12,7 @@ import authRoutes from "./routes/discord/auth.js";
 import serverRoutes from "./routes/discord/server/index.js";
 import userRoutes from "./routes/discord/user.js";
 import swagger from "./routes/swagger.js";
+import { startBirthdayScheduler } from "./functions/birthday-scheduler.js";
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 
@@ -68,5 +69,6 @@ serve(
 	},
 	(info) => {
 		console.log(`Server is running on http://localhost:${info.port}`);
+		startBirthdayScheduler();
 	},
 );
