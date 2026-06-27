@@ -12,6 +12,7 @@ import { Card } from "../../ui/components/Card";
 import { Nav } from "../../ui/components/Nav";
 import { PageTemplate } from "../../ui/components/PageTemplate";
 import { Loading } from "../Loading/Loading";
+import { BirthdayCard } from "./BirthdayCard";
 export const Dashboard = () => {
 	const _myInfoQuery = useSuspenseQuery(_fetchMyInfo.query());
 	const _myInfo = _myInfoQuery.data;
@@ -54,6 +55,7 @@ export const Dashboard = () => {
 						maxHeight: "100%",
 					}}
 				>
+					<BirthdayCard />
 					{_myInfo.guilds.map((guild: FilteredGuild) => (
 						<LinkNoStyle to={`/server?serverId=${guild.id}`} key={guild.id}>
 							<Card
