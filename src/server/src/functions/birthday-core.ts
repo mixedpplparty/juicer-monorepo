@@ -48,11 +48,11 @@ export function actionKey(
 }
 
 export function isBirthdayEditable(createdAt: Date, nowMillis: number): boolean {
-	return nowMillis < DateTime.fromJSDate(createdAt).plus({ months: 1 }).toMillis();
+	return nowMillis < DateTime.fromJSDate(createdAt, { zone: "utc" }).plus({ months: 1 }).toMillis();
 }
 
 export function editableUntil(createdAt: Date): string {
-	return DateTime.fromJSDate(createdAt).plus({ months: 1 }).toISO() as string;
+	return DateTime.fromJSDate(createdAt, { zone: "utc" }).plus({ months: 1 }).toISO() as string;
 }
 
 export function computeBirthdayActions(

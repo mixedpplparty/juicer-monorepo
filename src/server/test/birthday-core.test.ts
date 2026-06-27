@@ -41,6 +41,10 @@ describe("birthdayOccursOn", () => {
 		const feb28Leap = DateTime.fromObject({ year: 2028, month: 2, day: 28 });
 		expect(birthdayOccursOn({ month: 2, day: 29 }, feb28Leap)).toBe(false);
 	});
+	it("returns false for a different day", () => {
+		const dt = DateTime.fromObject({ year: 2026, month: 6, day: 28 });
+		expect(birthdayOccursOn({ month: 6, day: 27 }, dt)).toBe(false);
+	});
 });
 
 describe("isBirthdayEditable / editableUntil", () => {
@@ -99,5 +103,17 @@ describe("computeBirthdayActions", () => {
 			JUNE_27_2PM_NY,
 		);
 		expect(actions).toHaveLength(0);
+	});
+
+	it("event action year crosses Dec→Jan boundary", () => {
+		// now = Dec 25, 2026 in New York → lead = Jan 1, 2027
+		const dec25NY = DateTime.fromObject(
+			{ year: 2026, month: 12, day: 25, hour: 10 },
+			{ zone: NY },
+		).toMillis();
+		const jan1Servers = [{ serverId: "s1", timezone: NY }];
+		const jan1Birthdays = [{ userId: "u2", month: 1, day: 1 }];
+		const actions = computeBirthdayActions(jan1Servers, jan1Birthdays, new Set(), dec25NY);
+		expect(actions).toContainEqual({ type: "event", serverId: "s1", userId: "u2", year: 2027 });
 	});
 });
