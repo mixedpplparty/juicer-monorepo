@@ -29,6 +29,8 @@ import {
 	postBirthdayMessage,
 } from "./discord-bot.js";
 
+let tickRunning = false;
+
 const executeAction = async (
 	action: BirthdayAction,
 	server: ServerRow,
@@ -88,6 +90,9 @@ const executeAction = async (
 
 export const runBirthdayTick = async (): Promise<void> => {
 	if (!discordClient.isReady()) return;
+	if (tickRunning) return;
+	tickRunning = true;
+	try {
 	const [servers, birthdays] = await Promise.all([
 		getEnabledBirthdayServers(),
 		getAllBirthdays(),
@@ -138,6 +143,9 @@ export const runBirthdayTick = async (): Promise<void> => {
 				e,
 			);
 		}
+	}
+	} finally {
+		tickRunning = false;
 	}
 };
 
