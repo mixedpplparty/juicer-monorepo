@@ -1,24 +1,34 @@
+# syntax=docker/dockerfile:1
 FROM node:lts-alpine AS base
+
+# Enable pnpm via corepack (uses the version pinned in package.json "packageManager")
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME/bin:$PATH"
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 FROM base AS builder
 
 # vulnerability mitigations
-RUN apk update
-RUN apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache
+RUN apk add --no-cache gcompat unzip
 
-RUN apk add --no-cache gcompat
-RUN apk add --no-cache unzip
 WORKDIR /app
 
-RUN npm install -g pnpm
-
+# Install dependencies first so this layer stays cached unless the manifests or
+# lockfile change. The pnpm content-addressable store lives in a BuildKit cache
+# mount (PNPM_HOME=/pnpm -> store at /pnpm/store), so packages are not
+# re-downloaded on every build.
 COPY package.json tsconfig.json pnpm*yaml ./
+COPY server/package.json ./server/
+COPY shared/package.json ./shared/
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --ignore-scripts
 
+# Copy the rest of the source code (after install so source edits don't bust the
+# dependency layer).
 # Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
 COPY server ./server
 COPY shared ./shared
-
-RUN pnpm install 
 
 RUN pnpm run build:shared
 #RUN pnpm run build:server
