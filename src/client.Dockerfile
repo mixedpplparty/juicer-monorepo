@@ -1,26 +1,33 @@
+# syntax=docker/dockerfile:1
 # ---- Stage 1: Build the application ----
 FROM node:24-alpine AS build
 
 # vulnurability mitigations
-RUN apk update
-RUN apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache
 
 # Set working directory
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable pnpm via corepack (uses the version pinned in package.json "packageManager")
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME/bin:$PATH"
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
-# Copy package files and install dependencies
+# Install dependencies first so this layer stays cached unless the manifests or
+# lockfile change. The pnpm content-addressable store lives in a BuildKit cache
+# mount (PNPM_HOME=/pnpm -> store at /pnpm/store), so packages are not
+# re-downloaded on every build.
 COPY package.json tsconfig.json pnpm*yaml ./
+COPY client/package.json ./client/
+COPY shared/package.json ./shared/
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --ignore-scripts
 
-# Copy the rest of the source code
+# Copy the rest of the source code (after install so source edits don't bust the
+# dependency layer).
 # Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
 COPY client ./client
 COPY shared ./shared
-
-RUN pnpm install 
-
 
 # Accept build arguments for environment variables
 ARG VITE_BACKEND_URI
@@ -44,8 +51,7 @@ RUN pnpm run build:client
 FROM nginx:alpine
 
 # vulnurability mitigations
-RUN apk update
-RUN apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache
 
 # Copy the built static files from the 'build' stage
 COPY --from=build /app/client/dist /usr/share/nginx/html
