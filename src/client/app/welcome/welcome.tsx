@@ -1,48 +1,146 @@
+import styled from "@emotion/styled";
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 
+const Main = styled.main`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4rem 0 1rem;
+`;
+
+const Content = styled.div`
+	display: flex;
+	min-height: 0;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	gap: 4rem;
+`;
+
+const Header = styled.header`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2.25rem;
+`;
+
+const LogoFrame = styled.div`
+	width: 500px;
+	max-width: 100vw;
+	padding: 1rem;
+`;
+
+const LightLogo = styled.img`
+	display: block;
+	width: 100%;
+
+	@media (prefers-color-scheme: dark) {
+		display: none;
+	}
+`;
+
+const DarkLogo = styled.img`
+	display: none;
+	width: 100%;
+
+	@media (prefers-color-scheme: dark) {
+		display: block;
+	}
+`;
+
+const Resources = styled.div`
+	width: 100%;
+	max-width: 300px;
+	padding: 0 1rem;
+`;
+
+const ResourceNav = styled.nav`
+	padding: 1.5rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 1.5rem;
+
+	@media (prefers-color-scheme: dark) {
+		border-color: #374151;
+	}
+`;
+
+const ResourceHeading = styled.p`
+	margin: 0 0 1rem;
+	color: #374151;
+	line-height: 1.5rem;
+	text-align: center;
+
+	@media (prefers-color-scheme: dark) {
+		color: #e5e7eb;
+	}
+`;
+
+const ResourceList = styled.ul`
+	padding: 0;
+	margin: 0;
+	list-style: none;
+`;
+
+const ResourceLink = styled.a`
+	display: flex;
+	align-items: center;
+	align-self: stretch;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	color: #1d4ed8;
+	line-height: 1.5;
+	text-decoration: none;
+
+	svg {
+		flex: none;
+		stroke: #4b5563;
+	}
+
+	&:hover {
+		text-decoration: underline;
+
+		svg {
+			stroke: currentColor;
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		color: #3b82f6;
+
+		svg {
+			stroke: #d1d5db;
+		}
+	}
+`;
+
 export function Welcome() {
 	return (
-		<main className="flex items-center justify-center pt-16 pb-4">
-			<div className="flex-1 flex flex-col items-center gap-16 min-h-0">
-				<header className="flex flex-col items-center gap-9">
-					<div className="w-[500px] max-w-[100vw] p-4">
-						<img
-							src={logoLight}
-							alt="React Router"
-							className="block w-full dark:hidden"
-						/>
-						<img
-							src={logoDark}
-							alt="React Router"
-							className="hidden w-full dark:block"
-						/>
-					</div>
-				</header>
-				<div className="max-w-[300px] w-full space-y-6 px-4">
-					<nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
-						<p className="leading-6 text-gray-700 dark:text-gray-200 text-center">
-							What&apos;s next?
-						</p>
-						<ul>
+		<Main>
+			<Content>
+				<Header>
+					<LogoFrame>
+						<LightLogo src={logoLight} alt="React Router" />
+						<DarkLogo src={logoDark} alt="React Router" />
+					</LogoFrame>
+				</Header>
+				<Resources>
+					<ResourceNav>
+						<ResourceHeading>What&apos;s next?</ResourceHeading>
+						<ResourceList>
 							{resources.map(({ href, text, icon }) => (
 								<li key={href}>
-									<a
-										className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-										href={href}
-										target="_blank"
-										rel="noreferrer"
-									>
+									<ResourceLink href={href} target="_blank" rel="noreferrer">
 										{icon}
 										{text}
-									</a>
+									</ResourceLink>
 								</li>
 							))}
-						</ul>
-					</nav>
-				</div>
-			</div>
-		</main>
+						</ResourceList>
+					</ResourceNav>
+				</Resources>
+			</Content>
+		</Main>
 	);
 }
 
@@ -57,7 +155,6 @@ const resources = [
 				height="20"
 				viewBox="0 0 20 20"
 				fill="none"
-				className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
 			>
 				<title>React Router</title>
 				<path
@@ -78,7 +175,6 @@ const resources = [
 				height="20"
 				viewBox="0 0 24 20"
 				fill="none"
-				className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
 			>
 				<title>Discord</title>
 				<path

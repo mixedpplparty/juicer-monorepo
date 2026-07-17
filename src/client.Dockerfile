@@ -53,8 +53,8 @@ FROM nginx:alpine
 # vulnurability mitigations
 RUN apk update && apk upgrade --no-cache
 
-# Copy the built static files from the 'build' stage
-COPY --from=build /app/client/dist /usr/share/nginx/html
+# Copy the React Router SPA build from the 'build' stage
+COPY --from=build /app/client/build/client /usr/share/nginx/html
 
 # Copy the custom Nginx configuration
 COPY --from=build /app/client/nginx.conf /etc/nginx/conf.d/default.conf

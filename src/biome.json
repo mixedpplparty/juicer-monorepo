@@ -33,17 +33,5 @@
 				"organizeImports": "on"
 			}
 		}
-	},
-	"overrides": [
-		{
-			"includes": ["client/**/*.css"],
-			"linter": {
-				"rules": {
-					"suspicious": {
-						"noUnknownAtRules": "off"
-					}
-				}
-			}
-		}
-	]
+	}
 }
