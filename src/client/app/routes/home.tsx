@@ -1,5 +1,5 @@
+import AppBar from "~/components/app-bar";
 import type { Route } from "./+types/home";
-
 export function meta(_args: Route.MetaArgs) {
 	return [
 		{ title: "New React Router App" },
@@ -8,5 +8,9 @@ export function meta(_args: Route.MetaArgs) {
 }
 
 export default function Home() {
-	return <div>test</div>;
+	return (
+		<div>
+			<AppBar showBackButton> appbar</AppBar>
+		</div>
+	);
 }
