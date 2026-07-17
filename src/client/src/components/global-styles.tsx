@@ -1,5 +1,5 @@
 import { css } from "@emotion/react";
-import { breakpoints } from "~/constants/breakpoints";
+import breakpoints from "../constants/breakpoints";
 
 export const _globalStyles = css`
 	:root {
