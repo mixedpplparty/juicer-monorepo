@@ -13,6 +13,8 @@ export const _globalStyles = css`
     --Schemes-Surface: #FFF8F6;
     --Schemes-Primary-Fixed: #FFDBCB;
     --Schemes-Surface-Container-Low: #FFF1EB;
+    --Schemes-Outline-Variant: #D7C2B9;
+    --Schemes-Surface-Container-Highest: #F0DFD8;
 
     background: 
       radial-gradient(
