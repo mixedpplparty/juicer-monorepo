@@ -1,4 +1,5 @@
 import AppBar from "~/components/app-bar";
+import Card from "~/components/card";
 import ClickableListItem from "~/components/clickable-list-item";
 import ServerListItem from "~/components/server-list-item";
 import type { Route } from "./+types/home";
@@ -35,6 +36,7 @@ export default function Home() {
 			<ClickableListItem as="a" href="https://google.com">
 				3
 			</ClickableListItem>
+			<Card>asdf</Card>
 		</div>
 	);
 }

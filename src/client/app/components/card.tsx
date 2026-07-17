@@ -9,7 +9,13 @@ export interface CardProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 const universalStyles = css`
-	box-sizing: border-box;
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 8px;
+
 `;
 
 const variantStyles: Record<CardVariant, ReturnType<typeof css>> = {
