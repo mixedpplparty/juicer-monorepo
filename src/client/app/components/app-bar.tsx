@@ -10,7 +10,6 @@ export interface AppBarProps extends ComponentPropsWithoutRef<"header"> {
 
 const Root = styled.header`
 	display: flex;
-	box-sizing: border-box;
 	width: 100%;
 	height: 64px;
 	align-items: center;

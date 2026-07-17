@@ -12,6 +12,7 @@ export const _globalStyles = css`
     --Schemes-Surface-Variant: #F4DED4;
     --Schemes-Surface: #FFF8F6;
     --Schemes-Primary-Fixed: #FFDBCB;
+    --Schemes-Surface-Container-Low: #FFF1EB;
 
     background: 
       radial-gradient(
