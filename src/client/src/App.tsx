@@ -1,48 +1,122 @@
-import { useQuery } from "@tanstack/react-query";
-import { Suspense } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router";
-import { SignInFailed } from "./pages/Auth/SignInFailed";
-import { Dashboard } from "./pages/Dashboard/Dashboard";
-import { Landing } from "./pages/Landing/Landing";
-import { Loading } from "./pages/Loading/Loading";
-import { GameInfo } from "./pages/Server/GameInfo";
-import { GameSettings } from "./pages/Server/GameSettings";
-import { Server } from "./pages/Server/Server";
-import { ServerSettings } from "./pages/Server/ServerSettings";
-import { _fetchMyTokens } from "./remotes/remotes";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from './assets/vite.svg'
+import heroImg from './assets/hero.png'
+import './App.css'
 
-const App = () => {
-	const _authQuery = useQuery(_fetchMyTokens.query());
+function App() {
+  const [count, setCount] = useState(0)
 
-	if (_authQuery.isLoading) {
-		return <Loading message="Authenticating..." />;
-	} // can't use suspense here
+  return (
+    <>
+      <section id="center">
+        <div className="hero">
+          <img src={heroImg} className="base" width="170" height="179" alt="" />
+          <img src={reactLogo} className="framework" alt="React logo" />
+          <img src={viteLogo} className="vite" alt="Vite logo" />
+        </div>
+        <div>
+          <h1>Get started</h1>
+          <p>
+            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+          </p>
+        </div>
+        <button
+          type="button"
+          className="counter"
+          onClick={() => setCount((count) => count + 1)}
+        >
+          Count is {count}
+        </button>
+      </section>
 
-	const isAuthenticated = _authQuery.data?.userData.id && !_authQuery.isError;
+      <div className="ticks"></div>
 
-	const router = createBrowserRouter([
-		...(isAuthenticated
-			? [
-					{ path: "*", element: <Dashboard /> },
-					{ path: "/server", element: <Server /> },
-					{ path: "/server/settings", element: <ServerSettings /> },
-					{ path: "/server/game", element: <GameInfo /> },
-					{ path: "/server/game/settings", element: <GameSettings /> },
-				]
-			: [
-					{ path: "*", element: <Landing /> },
-					{
-						path: "/sign-in-failed",
-						element: <SignInFailed />,
-					},
-				]),
-	]);
+      <section id="next-steps">
+        <div id="docs">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#documentation-icon"></use>
+          </svg>
+          <h2>Documentation</h2>
+          <p>Your questions, answered</p>
+          <ul>
+            <li>
+              <a href="https://vite.dev/" target="_blank">
+                <img className="logo" src={viteLogo} alt="" />
+                Explore Vite
+              </a>
+            </li>
+            <li>
+              <a href="https://react.dev/" target="_blank">
+                <img className="button-icon" src={reactLogo} alt="" />
+                Learn more
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div id="social">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#social-icon"></use>
+          </svg>
+          <h2>Connect with us</h2>
+          <p>Join the Vite community</p>
+          <ul>
+            <li>
+              <a href="https://github.com/vitejs/vite" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#github-icon"></use>
+                </svg>
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a href="https://chat.vite.dev/" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#discord-icon"></use>
+                </svg>
+                Discord
+              </a>
+            </li>
+            <li>
+              <a href="https://x.com/vite_js" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#x-icon"></use>
+                </svg>
+                X.com
+              </a>
+            </li>
+            <li>
+              <a href="https://bsky.app/profile/vite.dev" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#bluesky-icon"></use>
+                </svg>
+                Bluesky
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
 
-	return (
-		<Suspense fallback={<Loading />}>
-			<RouterProvider router={router} />
-		</Suspense>
-	);
-};
+      <div className="ticks"></div>
+      <section id="spacer"></section>
+    </>
+  )
+}
 
-export default App;
+export default App
