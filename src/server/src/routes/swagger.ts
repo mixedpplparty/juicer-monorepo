@@ -2,654 +2,886 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
+const json = (schema: object) => ({
+	"application/json": { schema },
+});
+
+const success = (description: string, schema: object = { type: "object" }) => ({
+	description,
+	content: json(schema),
+});
+
+const serverIdParameter = {
+	$ref: "#/components/parameters/ServerId",
+};
+
 const openApiDoc = {
-	openapi: "3.0.0", //required version field
+	openapi: "3.0.3",
 	info: {
-		title: "juicer",
+		title: "juicer API",
 		version: "0.0.1",
-		description: "juicer API",
+		description:
+			"Discord-integrated server, game, role, and tag management API.",
 	},
+	tags: [
+		{ name: "Auth" },
+		{ name: "Users" },
+		{ name: "Servers" },
+		{ name: "Categories" },
+		{ name: "Games" },
+		{ name: "Role categories" },
+		{ name: "Roles" },
+		{ name: "Search" },
+		{ name: "Tags" },
+	],
 	paths: {
-		"/discord": {
-			"/auth": {
-				"/callback": {
-					get: {
-						summary: "Callback for Discord OAuth2",
-						description:
-							"Callback page from to be redirected from https://discord.com/oauth2/authorize",
-						parameters: {
-							code: {
-								type: "string",
-								description:
-									"Code from Discord OAuth2(should be automatically filled in by Discord)",
-								required: true,
-							},
+		"/discord/auth/me": {
+			get: {
+				tags: ["Auth"],
+				operationId: "getAuthenticatedUser",
+				summary: "Get the authenticated Discord user",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Authenticated Discord user.", {
+						type: "object",
+						required: ["userData"],
+						properties: {
+							userData: { $ref: "#/components/schemas/DiscordUser" },
 						},
-						responses: {
-							"200": {
-								description:
-									"Access token and refresh token are set in cookies. Redirected to the page specified in .env.REDIRECT_AFTER_SIGN_IN_URI",
-							},
-						},
-					},
-				},
-				"/refresh": {
-					post: {
-						summary: "Refresh Discord OAuth2 token",
-						description: "Refresh Discord OAuth2 token",
-						responses: {
-							"200": {
-								description:
-									"New access token and refresh token are set in cookies. Redirected to the page specified in .env.REDIRECT_AFTER_SIGN_IN_URI",
-							},
-						},
-					},
-				},
-				"/revoke": {
-					post: {
-						summary: "Revoke Discord OAuth2 token('Sign Out')",
-						description: "Revoke Discord OAuth2 token('Sign Out')",
-						responses: {
-							"200": {
-								description:
-									"Access token and refresh token are deleted from cookies. Redirected to the page specified in .env.REDIRECT_AFTER_SIGN_IN_URI",
-							},
-						},
-					},
+					}),
+					"401": { $ref: "#/components/responses/Unauthorized" },
 				},
 			},
-			"/user": {
-				"/me": {
-					get: {
-						summary: "Get user data and all servers user and bot are in",
-						description: "Get user data and all servers user and bot are in",
+		},
+		"/discord/auth/callback": {
+			get: {
+				tags: ["Auth"],
+				operationId: "discordOAuthCallback",
+				summary: "Complete Discord OAuth",
+				parameters: [
+					{
+						name: "code",
+						in: "query",
+						required: true,
+						description: "Authorization code supplied by Discord.",
+						schema: { type: "string" },
 					},
-					responses: {
-						"200": {
-							description: "User data and all servers user and bot are in",
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											userData: {
-												type: "APIUser",
-											},
-											guilds: {
-												type: "array",
-												items: {
-													type: "Guild",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
+				],
+				responses: {
+					"302": {
+						description:
+							"Authentication cookies are set and the browser is redirected.",
 					},
 				},
 			},
 		},
-		"/server/:serverId": {
-			"/": {
-				get: {
-					summary: "Get server data from both the DB and Discord API",
-					description: "Get server data from both the DB and Discord API",
-					responses: {
-						"200": {
-							description: "Server data from both the DB and Discord API",
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											admin: {
-												type: "boolean",
-											},
-											serverDataDb: {
-												type: "ServerDataDb",
-											},
-											serverDataDiscord: {
-												type: "Guild",
-											},
-										},
-									},
-								},
-							},
-						},
+		"/discord/auth/refresh": {
+			post: {
+				tags: ["Auth"],
+				operationId: "refreshDiscordToken",
+				summary: "Refresh Discord OAuth tokens",
+				security: [{ RefreshTokenCookie: [] }],
+				responses: {
+					"302": {
+						description:
+							"Replacement cookies are set and the browser is redirected.",
 					},
 				},
 			},
-			"/create": {
-				post: {
-					summary: "Create server data in the DB.",
-					description: "Create server data in the DB.",
-					responses: {
-						"200": {
-							description: "Server data created in the DB",
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											message: {
-												type: "string",
-											},
-										},
-									},
-								},
-							},
-						},
+		},
+		"/discord/auth/revoke": {
+			post: {
+				tags: ["Auth"],
+				operationId: "revokeDiscordTokens",
+				summary: "Sign out and revoke Discord OAuth tokens",
+				security: [{ AccessTokenCookie: [], RefreshTokenCookie: [] }],
+				responses: {
+					"302": {
+						description:
+							"Authentication cookies are removed and the browser is redirected.",
 					},
 				},
 			},
-			"/me": {
-				get: {
-					summary: "Get my data in the desired server",
-					description: "Get my data in the desired server",
-					responses: {
-						"200": {
-							description: "My data in the desired server",
-							content: {
-								"application/json": {
-									schema: {
-										type: "GuildMember",
-									},
-								},
-							},
-						},
-					},
+		},
+		"/discord/auth/remove-cookies": {
+			get: {
+				tags: ["Auth"],
+				operationId: "removeAuthCookies",
+				summary: "Remove local authentication cookies",
+				responses: {
+					"200": success("Cookies removed.", {
+						$ref: "#/components/schemas/Detail",
+					}),
 				},
 			},
-			"/sync-roles": {
-				get: {
-					summary: "Sync roles with the DB and Discord API",
-					description: "Sync roles with the DB and Discord API",
+		},
+		"/discord/user/me": {
+			get: {
+				tags: ["Users"],
+				operationId: "getCurrentUserAndGuilds",
+				summary: "Get the current user and mutual Discord servers",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Current user and mutual servers.", {
+						type: "object",
+						required: ["userData", "guilds"],
+						properties: {
+							userData: { $ref: "#/components/schemas/DiscordUser" },
+							guilds: {
+								type: "array",
+								items: { $ref: "#/components/schemas/DiscordGuild" },
+							},
+						},
+					}),
+					"401": { $ref: "#/components/responses/Unauthorized" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}": {
+			parameters: [serverIdParameter],
+			get: {
+				tags: ["Servers"],
+				operationId: "getServer",
+				summary: "Get combined database and Discord server data",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Combined server data.", {
+						$ref: "#/components/schemas/ServerData",
+					}),
+					"401": { $ref: "#/components/responses/Unauthorized" },
+				},
+			},
+			put: {
+				tags: ["Servers"],
+				operationId: "updateServer",
+				summary: "Update server verification requirements",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({
+						$ref: "#/components/schemas/UpdateServerRequest",
+					}),
 				},
 				responses: {
-					"200": {
-						description: "Roles synced with the DB and Discord API",
-						content: {
-							"application/json": {
-								schema: {
-									type: "SyncRolesResponse",
-								},
-							},
-						},
-					},
-					"403": {
-						description: "User does not have manage server permission.",
-						content: {
-							"application/json": {
-								schema: {
-									type: "object",
-									properties: {
-										message: {
-											type: "string",
-										},
-									},
-								},
-							},
-						},
-					},
+					"200": success("Updated server.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/categories": {
-				"/:categoryId": {
-					delete: {
-						summary: "Delete a category in the server",
-						description: "Delete a category in the server",
-						responses: {
-							"200": {
-								description: "Category deleted in the server",
-								content: {
-									"application/json": {
-										schema: {
-											type: "Category",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/create": {
-					post: {
-						summary: "Create a category in the server",
-						description: "Create a category in the server",
-					},
-					responses: {
-						"200": {
-							description: "Category created",
-							content: {
-								"application/json": {
-									schema: {
-										type: "Category",
-									},
-								},
-							},
-						},
-					},
+		},
+		"/discord/servers/{serverId}/create": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Servers"],
+				operationId: "createServer",
+				summary: "Create server data",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Server created.", {
+						$ref: "#/components/schemas/Message",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/games/:gameId": {
-				"/": {
-					put: {
-						summary: "Update a game in the server",
-						description: "Update a game in the server",
-					},
-					delete: {
-						summary: "Delete a game in the server",
-						description: "Delete a game in the server",
-					},
+		},
+		"/discord/servers/{serverId}/me": {
+			parameters: [serverIdParameter],
+			get: {
+				tags: ["Servers"],
+				operationId: "getCurrentServerMember",
+				summary: "Get the current member in a server",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Current server member.", {
+						$ref: "#/components/schemas/GuildMember",
+					}),
+					"401": { $ref: "#/components/responses/Unauthorized" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/sync-roles": {
+			parameters: [serverIdParameter],
+			get: {
+				tags: ["Servers"],
+				operationId: "syncServerRoles",
+				summary: "Synchronize Discord roles with the database",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Role synchronization diff.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/categories/create": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Categories"],
+				operationId: "createCategory",
+				summary: "Create a game category",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/NameRequest" }),
 				},
 				responses: {
-					"200": {
-						description: "Game updated or deleted",
-						content: {
-							"application/json": {
-								schema: {
-									type: "boolean",
-								},
-							},
-						},
-					},
-				},
-				"/categories/add": {
-					post: {
-						summary: "Add a category to a game in the server",
-						description: "Add a category to a game in the server",
-						requestBody: {
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											categoryId: {
-												type: "number",
-											},
-										},
-									},
-								},
-							},
-						},
-						responses: {
-							"200": {
-								description: "Category added to the game",
-								content: {
-									"application/json": {
-										schema: {
-											type: "games.$inferInsert",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/tags/tag": {
-					post: {
-						summary: "Tag a game in the server",
-						description: "Tag a game in the server",
-						requestBody: {
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											tagIds: {
-												type: "array",
-												items: {
-													type: "number",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						responses: {
-							"200": {
-								description: "Game tagged",
-								content: {
-									"application/json": {
-										schema: {
-											type: "boolean",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/tags/:tagId/untag": {
-					post: {
-						summary: "Untag a game in the server",
-						description: "Untag a game in the server",
-					},
-					responses: {
-						"200": {
-							description: "Game untagged",
-							content: {
-								"application/json": {
-									schema: {
-										type: "boolean",
-									},
-								},
-							},
-						},
-					},
-				},
-				"/thumbnail": {
-					get: {
-						summary: "Get the thumbnail of a game in the server",
-						description: "Get the thumbnail of a game in the server",
-					},
-					responses: {
-						"200": {
-							description: "Thumbnail of the game",
-							content: {
-								"application/json": {
-									schema: {
-										type: "Buffer",
-									},
-								},
-							},
-						},
-					},
-				},
-				"/thumbnail/update": {
-					put: {
-						summary: "Update the thumbnail of a game in the server",
-						description: "Update the thumbnail of a game in the server",
-					},
-					responses: {
-						"200": {
-							description: "Thumbnail updated",
-							content: {
-								"application/json": {
-									schema: {
-										type: "Buffer",
-									},
-								},
-							},
-						},
-					},
+					"200": success("Created category.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/role-categories": {
-				"/:roleCategoryId": {
-					delete: {
-						summary: "Delete a role's category in the server",
-						description: "Delete a role's category in the server",
-						responses: {
-							"200": {
-								description: "Role category deleted",
-								content: {
-									"application/json": {
-										schema: {
-											type: "boolean",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/:roleCategoryId/assign": {
-					post: {
-						summary: "Assign a role category to a role in the server",
-						description: "Assign a role category to a role in the server",
-						requestBody: {
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											roleId: {
-												type: "string",
-											},
-										},
-									},
-								},
-							},
-						},
-						responses: {
-							"200": {
-								description: "Role category assigned to the role",
-								content: {
-									"application/json": {
-										schema: {
-											type: "roles.$inferInsert",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/create": {
-					post: {
-						summary: "Create a role category in the server",
-						description: "Create a role category in the server",
-						requestBody: {
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											name: {
-												type: "string",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					responses: {
-						"200": {
-							description: "Role category created",
-							content: {
-								"application/json": {
-									schema: {
-										type: "roleCategories.$inferInsert",
-									},
-								},
-							},
-						},
-					},
+		},
+		"/discord/servers/{serverId}/categories/{categoryId}": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/CategoryId" },
+			],
+			delete: {
+				tags: ["Categories"],
+				operationId: "deleteCategory",
+				summary: "Delete a game category",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Deleted category.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/roles": {
-				"/": {
-					get: {
-						summary: "Get all roles in the server",
-						description: "Get all roles in the server",
-						responses: {
-							"200": {
-								description: "All roles in the server",
-								content: {
-									"application/json": {
-										schema: {
-											type: "object",
-											properties: {
-												serverRoles: {
-													type: "array",
-													items: {
-														type: "Role",
-													},
-												},
-											},
-											myRoles: {
-												type: "array",
-												items: {
-													type: "Role",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+		},
+		"/discord/servers/{serverId}/games/create": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Games"],
+				operationId: "createGame",
+				summary: "Create a game",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/CreateGameRequest" }),
 				},
-				"/:roleId/assign": {
-					post: {
-						summary: "Assign a role to myself",
-						description: "Assign a role to myself",
-					},
-					responses: {
-						"200": {
-							description: "Role assigned to myself",
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											message: {
-												type: "string",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"/:roleId/unassign": {
-					post: {
-						summary: "Unassign a role from myself",
-						description: "Unassign a role from myself",
-						responses: {
-							"200": {
-								description: "Role unassigned from myself",
-								content: {
-									"application/json": {
-										schema: {
-											type: "object",
-											properties: {
-												message: {
-													type: "string",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+				responses: {
+					"200": success("Created game.", {
+						$ref: "#/components/schemas/Game",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/search": {
-				"/all": {
-					get: {
-						summary: "Search for games in the server",
-						description: "Search for games in the server",
-						parameters: {
-							query: {
-								type: "string",
-								description: "Query(name/tag/category)",
-								required: true,
-							},
-						},
-						responses: {
-							"200": {
-								description: "Games found in the server",
-								content: {
-									"application/json": {
-										schema: {
-											type: "array",
-											items: {
-												type: "Game",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+		},
+		"/discord/servers/{serverId}/games/{gameId}": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+			],
+			put: {
+				tags: ["Games"],
+				operationId: "updateGame",
+				summary: "Update a game",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/UpdateGameRequest" }),
+				},
+				responses: {
+					"200": success("Updated game.", {
+						$ref: "#/components/schemas/Game",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
 			},
-			"/tags": {
-				"/": {
-					get: {
-						summary: "Get all tags in the server",
-						description: "Get all tags in the server",
-						responses: {
-							"200": {
-								description: "All tags in the server",
-								content: {
-									"application/json": {
-										schema: {
-											type: "array",
-											items: {
-												type: "Tag",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+			delete: {
+				tags: ["Games"],
+				operationId: "deleteGame",
+				summary: "Delete a game",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Deleted game.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
 				},
-				"/create": {
-					post: {
-						summary: "Create a tag in the server",
-						description: "Create a tag in the server",
-						requestBody: {
-							content: {
-								"application/json": {
-									schema: {
-										type: "object",
-										properties: {
-											name: {
-												type: "string",
-											},
-										},
-									},
-								},
-							},
-						},
-						responses: {
-							"200": {
-								description: "Tag created",
-								content: {
-									"application/json": {
-										schema: {
-											type: "Tag",
-										},
-									},
-								},
-							},
-						},
-					},
+			},
+		},
+		"/discord/servers/{serverId}/games/{gameId}/categories/add": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+			],
+			post: {
+				tags: ["Games"],
+				operationId: "addCategoryToGame",
+				summary: "Assign a category to a game",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({
+						type: "object",
+						required: ["categoryId"],
+						properties: { categoryId: { type: "integer" } },
+					}),
 				},
-				"/:tagId": {
-					delete: {
-						summary: "Delete a tag in the server",
-						description: "Delete a tag in the server",
+				responses: {
+					"200": success("Category assigned.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/games/{gameId}/tags/tag": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+			],
+			post: {
+				tags: ["Games"],
+				operationId: "tagGame",
+				summary: "Add tags to a game",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({
+						type: "object",
+						required: ["tagIds"],
+						properties: {
+							tagIds: {
+								type: "array",
+								items: { type: "integer" },
+							},
+						},
+					}),
+				},
+				responses: {
+					"200": success("Tags added.", {
+						$ref: "#/components/schemas/Game",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/games/{gameId}/tags/{tagId}/untag": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+				{ $ref: "#/components/parameters/TagId" },
+			],
+			post: {
+				tags: ["Games"],
+				operationId: "untagGame",
+				summary: "Remove a tag from a game",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Tag removed.", {
+						$ref: "#/components/schemas/Game",
+					}),
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/games/{gameId}/thumbnail/update": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+			],
+			put: {
+				tags: ["Games"],
+				operationId: "updateGameThumbnail",
+				summary: "Upload a game thumbnail",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: {
+						"multipart/form-data": {
+							schema: {
+								type: "object",
+								required: ["file"],
+								properties: {
+									file: { type: "string", format: "binary" },
+								},
+							},
+						},
 					},
 				},
 				responses: {
+					"200": success("Thumbnail updated.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/games/{gameId}/thumbnail": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/GameId" },
+			],
+			get: {
+				tags: ["Games"],
+				operationId: "getGameThumbnail",
+				summary: "Get a game thumbnail",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
 					"200": {
-						description: "Tag deleted",
+						description: "Thumbnail image.",
 						content: {
-							"application/json": {
-								schema: {
-									type: "Tag",
-								},
+							"application/octet-stream": {
+								schema: { type: "string", format: "binary" },
 							},
 						},
 					},
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/role-categories/create": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Role categories"],
+				operationId: "createRoleCategory",
+				summary: "Create a role category",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/NameRequest" }),
+				},
+				responses: {
+					"200": success("Created role category.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/role-categories/{roleCategoryId}": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/RoleCategoryId" },
+			],
+			delete: {
+				tags: ["Role categories"],
+				operationId: "deleteRoleCategory",
+				summary: "Delete a role category",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Deleted role category.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"400": { $ref: "#/components/responses/BadRequest" },
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/role-categories/assign": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Role categories"],
+				operationId: "assignRoleCategory",
+				summary: "Assign a category to a role",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({
+						$ref: "#/components/schemas/AssignRoleCategoryRequest",
+					}),
+				},
+				responses: {
+					"200": success("Role category assigned.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/roles": {
+			parameters: [serverIdParameter],
+			get: {
+				tags: ["Roles"],
+				operationId: "getServerRoles",
+				summary: "Get server roles and the current member's roles",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Server and member roles.", {
+						type: "object",
+						required: ["serverRoles", "myRoles"],
+						properties: {
+							serverRoles: {
+								type: "array",
+								items: { $ref: "#/components/schemas/GenericObject" },
+							},
+							myRoles: {
+								type: "array",
+								items: { type: "string" },
+							},
+						},
+					}),
+				},
+			},
+		},
+		"/discord/servers/{serverId}/roles/{roleId}/assign": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/RoleId" },
+			],
+			post: {
+				tags: ["Roles"],
+				operationId: "assignRole",
+				summary: "Assign a self-assignable role to the current member",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Role assigned.", {
+						$ref: "#/components/schemas/Message",
+					}),
+					"400": { $ref: "#/components/responses/BadRequest" },
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/roles/{roleId}/unassign": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/RoleId" },
+			],
+			post: {
+				tags: ["Roles"],
+				operationId: "unassignRole",
+				summary: "Remove a self-assignable role from the current member",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Role removed.", {
+						$ref: "#/components/schemas/Message",
+					}),
+					"400": { $ref: "#/components/responses/BadRequest" },
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/roles/{roleId}/update": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/RoleId" },
+			],
+			post: {
+				tags: ["Roles"],
+				operationId: "updateRole",
+				summary: "Update role metadata",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/UpdateRoleRequest" }),
+				},
+				responses: {
+					"200": success("Updated role.", {
+						$ref: "#/components/schemas/GenericObject",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/search/all": {
+			parameters: [
+				serverIdParameter,
+				{
+					name: "query",
+					in: "query",
+					required: false,
+					description: "Game name, tag, or category. Omit to return all games.",
+					schema: { type: "string" },
+				},
+			],
+			get: {
+				tags: ["Search"],
+				operationId: "searchGames",
+				summary: "Search games in a server",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Matching games.", {
+						type: "array",
+						items: { $ref: "#/components/schemas/Game" },
+					}),
+				},
+			},
+		},
+		"/discord/servers/{serverId}/tags": {
+			parameters: [serverIdParameter],
+			get: {
+				tags: ["Tags"],
+				operationId: "getServerTags",
+				summary: "Get all tags in a server",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Server tags.", {
+						type: "array",
+						items: { $ref: "#/components/schemas/Tag" },
+					}),
+				},
+			},
+		},
+		"/discord/servers/{serverId}/tags/create": {
+			parameters: [serverIdParameter],
+			post: {
+				tags: ["Tags"],
+				operationId: "createTag",
+				summary: "Create a tag",
+				security: [{ AccessTokenCookie: [] }],
+				requestBody: {
+					required: true,
+					content: json({ $ref: "#/components/schemas/NameRequest" }),
+				},
+				responses: {
+					"200": success("Created tag.", {
+						$ref: "#/components/schemas/Tag",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+		"/discord/servers/{serverId}/tags/{tagId}": {
+			parameters: [
+				serverIdParameter,
+				{ $ref: "#/components/parameters/TagId" },
+			],
+			delete: {
+				tags: ["Tags"],
+				operationId: "deleteTag",
+				summary: "Delete a tag",
+				security: [{ AccessTokenCookie: [] }],
+				responses: {
+					"200": success("Deleted tag.", {
+						$ref: "#/components/schemas/Tag",
+					}),
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
+			},
+		},
+	},
+	components: {
+		securitySchemes: {
+			AccessTokenCookie: {
+				type: "apiKey",
+				in: "cookie",
+				name: "discord_access_token",
+			},
+			RefreshTokenCookie: {
+				type: "apiKey",
+				in: "cookie",
+				name: "discord_refresh_token",
+			},
+		},
+		parameters: {
+			ServerId: {
+				name: "serverId",
+				in: "path",
+				required: true,
+				description: "Discord server ID.",
+				schema: { type: "string" },
+			},
+			CategoryId: {
+				name: "categoryId",
+				in: "path",
+				required: true,
+				schema: { type: "integer" },
+			},
+			GameId: {
+				name: "gameId",
+				in: "path",
+				required: true,
+				schema: { type: "integer" },
+			},
+			RoleCategoryId: {
+				name: "roleCategoryId",
+				in: "path",
+				required: true,
+				schema: { type: "integer" },
+			},
+			RoleId: {
+				name: "roleId",
+				in: "path",
+				required: true,
+				description: "Discord role ID.",
+				schema: { type: "string" },
+			},
+			TagId: {
+				name: "tagId",
+				in: "path",
+				required: true,
+				schema: { type: "integer" },
+			},
+		},
+		responses: {
+			BadRequest: {
+				description: "Bad request.",
+				content: json({ $ref: "#/components/schemas/Error" }),
+			},
+			Unauthorized: {
+				description: "Authentication is required.",
+				content: json({ $ref: "#/components/schemas/Error" }),
+			},
+			Forbidden: {
+				description: "Manage Server permission is required.",
+				content: json({ $ref: "#/components/schemas/Error" }),
+			},
+			NotFound: {
+				description: "The requested resource was not found.",
+				content: json({ $ref: "#/components/schemas/Error" }),
+			},
+		},
+		schemas: {
+			Error: {
+				type: "object",
+				required: ["message"],
+				properties: { message: { type: "string" } },
+			},
+			Message: {
+				type: "object",
+				required: ["message"],
+				properties: { message: { type: "string" } },
+			},
+			Detail: {
+				type: "object",
+				required: ["detail"],
+				properties: { detail: { type: "string" } },
+			},
+			GenericObject: {
+				type: "object",
+				additionalProperties: true,
+			},
+			DiscordUser: {
+				type: "object",
+				required: ["id", "username"],
+				properties: {
+					id: { type: "string" },
+					username: { type: "string" },
+					global_name: { type: "string", nullable: true },
+					avatar: { type: "string", nullable: true },
+				},
+				additionalProperties: true,
+			},
+			DiscordGuild: {
+				type: "object",
+				required: ["id", "name"],
+				properties: {
+					id: { type: "string" },
+					name: { type: "string" },
+					icon: { type: "string", nullable: true },
+				},
+				additionalProperties: true,
+			},
+			GuildMember: {
+				type: "object",
+				properties: {
+					id: { type: "string" },
+					roles: { type: "array", items: { type: "string" } },
+					avatarURL: { type: "string", nullable: true },
+				},
+				additionalProperties: true,
+			},
+			ServerData: {
+				type: "object",
+				required: ["admin", "serverDataDb", "serverDataDiscord"],
+				properties: {
+					admin: { type: "boolean" },
+					serverDataDb: {
+						$ref: "#/components/schemas/GenericObject",
+					},
+					serverDataDiscord: {
+						$ref: "#/components/schemas/DiscordGuild",
+					},
+				},
+			},
+			Game: {
+				type: "object",
+				required: ["gameId", "name", "serverId"],
+				properties: {
+					gameId: { type: "integer" },
+					name: { type: "string" },
+					description: { type: "string", nullable: true },
+					categoryId: { type: "integer", nullable: true },
+					serverId: { type: "string" },
+					channels: {
+						type: "array",
+						items: { type: "string" },
+						nullable: true,
+					},
+				},
+				additionalProperties: true,
+			},
+			Tag: {
+				type: "object",
+				required: ["tagId", "name", "serverId"],
+				properties: {
+					tagId: { type: "integer" },
+					name: { type: "string" },
+					serverId: { type: "string" },
+				},
+				additionalProperties: true,
+			},
+			NameRequest: {
+				type: "object",
+				required: ["name"],
+				properties: { name: { type: "string" } },
+			},
+			CreateGameRequest: {
+				type: "object",
+				required: ["name"],
+				properties: {
+					name: { type: "string" },
+					description: { type: "string", nullable: true },
+					categoryId: { type: "integer", nullable: true },
+				},
+			},
+			UpdateGameRequest: {
+				type: "object",
+				properties: {
+					name: { type: "string", nullable: true },
+					description: { type: "string", nullable: true },
+					categoryId: { type: "integer", nullable: true },
+					channels: {
+						type: "array",
+						items: { type: "string" },
+						nullable: true,
+					},
+					tagIds: {
+						type: "array",
+						items: { type: "integer" },
+						nullable: true,
+					},
+					roleIds: {
+						type: "array",
+						items: { type: "string" },
+						nullable: true,
+					},
+				},
+			},
+			AssignRoleCategoryRequest: {
+				type: "object",
+				required: ["roleCategoryId", "roleId"],
+				properties: {
+					roleCategoryId: { type: "integer", nullable: true },
+					roleId: { type: "string" },
+				},
+			},
+			UpdateRoleRequest: {
+				type: "object",
+				properties: {
+					selfAssignable: { type: "boolean", nullable: true },
+					description: { type: "string", nullable: true },
+				},
+			},
+			UpdateServerRequest: {
+				type: "object",
+				required: ["verificationRequired"],
+				properties: {
+					verificationRequired: { type: "boolean" },
 				},
 			},
 		},
 	},
 };
 
-app.get("/", (c) => {
-	return c.json(openApiDoc);
-});
+app.get("/", (c) => c.json(openApiDoc));
 
+export { openApiDoc };
 export default app;

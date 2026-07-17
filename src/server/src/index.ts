@@ -59,7 +59,7 @@ app.route("/discord/user", userRoutes);
 app.route("/discord/servers", serverRoutes);
 app.route("/swagger", swagger);
 
-app.get("/docs", swaggerUI({ url: "/swagger" }));
+app.get("/docs", swaggerUI({ url: "./swagger" }));
 
 serve(
 	{
