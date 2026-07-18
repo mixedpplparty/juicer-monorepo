@@ -7,7 +7,6 @@ import {
 import AuthLoading from "./components/auth-loading";
 import RouteErrorBoundary from "./components/error-boundary";
 import _isAuthenticated from "./modules/auth/auth-check";
-import SignInPage from "./pages/auth/login";
 import ServerPage from "./pages/dashboard/server-details-page";
 import ServersPage from "./pages/dashboard/server-list-page";
 import LandingPage from "./pages/landing/landing";
@@ -22,9 +21,7 @@ async function _guestOnlyLoader({ request }: LoaderFunctionArgs) {
 
 async function _authOnlyLoader({ request }: LoaderFunctionArgs) {
 	if ((await _isAuthenticated(request)) !== true) {
-		const url = new URL(request.url);
-		const redirectTo = `${url.pathname}${url.search}`;
-		throw redirect(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+		throw redirect(`/`);
 	}
 	return null;
 }
@@ -46,10 +43,6 @@ export const router = createBrowserRouter([
 					{
 						index: true,
 						Component: LandingPage,
-					},
-					{
-						path: "login",
-						Component: SignInPage,
 					},
 				],
 			},

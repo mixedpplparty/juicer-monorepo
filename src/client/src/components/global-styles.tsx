@@ -52,6 +52,15 @@ export const _globalStyles = css`
 		margin: 0;
 	}
 
+  html,
+  body,
+  #root,
+  #theme-provider-root {
+    width: 100%;
+    height: 100%;
+  }
+  
+
 `;
 
 export default _globalStyles;
