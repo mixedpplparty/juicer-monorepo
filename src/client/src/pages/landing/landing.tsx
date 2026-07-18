@@ -3,7 +3,9 @@ import fullCenteredPage from "../../styles/full-centered-page";
 
 export function LandingPage() {
 	return (
-		<main css={fullCenteredPage}>
+		<main
+			css={[fullCenteredPage, { display: "flex", flexDirection: "column" }]}
+		>
 			<section aria-labelledby="landing-title">
 				<Text
 					typeRole="display"
@@ -25,6 +27,7 @@ export function LandingPage() {
 						/>
 					}
 					aria-label="Discord로 로그인하기"
+					nativeButton={false}
 				>
 					<img
 						src="/discord-logo.svg"

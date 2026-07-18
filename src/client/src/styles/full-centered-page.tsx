@@ -2,9 +2,7 @@ import { css } from "@emotion/react";
 
 export const fullCenteredPage = css({
 	width: "100%",
-	minHeight: "100dvh",
-	display: "flex",
-	flexDirection: "column",
+	height: "100%",
 	justifyContent: "center",
 	alignItems: "center",
 	textAlign: "center",
