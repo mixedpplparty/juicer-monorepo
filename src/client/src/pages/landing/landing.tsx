@@ -1,17 +1,9 @@
 import { Button, Text } from "juicer-m3";
+import fullCenteredPage from "../../styles/full-centered-page";
 
 export function LandingPage() {
 	return (
-		<main
-			css={{
-				width: "100%",
-				height: "100%",
-				display: "flex",
-				flexDirection: "column",
-				justifyContent: "center",
-				textAlign: "center",
-			}}
-		>
+		<main css={fullCenteredPage}>
 			<section aria-labelledby="landing-title">
 				<Text
 					typeRole="display"

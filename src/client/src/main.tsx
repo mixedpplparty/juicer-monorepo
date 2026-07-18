@@ -4,7 +4,7 @@ import "juicer-m3/styles.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
-import _globalStyles from "./components/global-styles.tsx";
+import _globalStyles from "./styles/global.tsx";
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
