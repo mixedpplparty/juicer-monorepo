@@ -1,34 +1,28 @@
 import { Outlet, useMatch } from "react-router";
 import { ServerList } from "../../components/dashboard/server-list";
 import breakpoints from "../../constants/breakpoints";
+import { useMediaQuery } from "../../hooks/use-media-query";
 
 export function ServersLayout() {
-	const isViewingServer = Boolean(useMatch("/servers/:serverId"));
+	const isViewingServer = useMatch("/servers/:serverId") !== null;
+	const isDesktop = useMediaQuery(`(min-width: ${breakpoints.tablet})`);
+	const shouldRenderServerList = isDesktop || !isViewingServer;
 
 	return (
 		<div
 			css={{
 				display: "grid",
-				minHeight: "100dvh",
+				minHeight: "100%",
 				[`@media (min-width: ${breakpoints.tablet})`]: {
 					gridTemplateColumns: "20rem minmax(0, 1fr)",
 				},
 			}}
 		>
-			<aside
-				css={{
-					display: isViewingServer ? "none" : "block",
-					overflow: "auto",
-					[`@media (min-width: ${breakpoints.tablet})`]: {
-						position: "sticky",
-						top: 0,
-						display: "block",
-						height: "100dvh",
-					},
-				}}
-			>
-				<ServerList />
-			</aside>
+			{shouldRenderServerList && (
+				<aside>
+					<ServerList />
+				</aside>
+			)}
 
 			<main
 				css={{
