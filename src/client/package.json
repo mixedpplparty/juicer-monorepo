@@ -18,7 +18,7 @@
 		"discord-api-types": "^0.38.50",
 		"discord.js": "^14.22.1",
 		"jotai": "^2.20.2",
-		"juicer-m3": "file:..\\juicer-m3-0.1.0.tgz",
+		"juicer-m3": "file:..\\juicer-m3-0.1.1.tgz",
 		"juicer-shared": "workspace:*",
 		"lucide-react": "^1.24.0",
 		"react": "^19.2.7",
