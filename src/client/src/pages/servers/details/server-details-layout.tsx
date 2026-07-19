@@ -7,9 +7,13 @@ import { useRequiredServerId } from "./hooks/use-required-server-id";
 import type { ServerDetailsOutletContext } from "./server-details-context";
 import { serverDetailsPageStyles } from "./server-details-page.styles";
 
+// show suspense when navigating between servers
+// the key prop indicates that we aren't refetching the same endpoint
+// without key, the previous data will be shown until fetch completes
 export function ServerDetailsLayout() {
+	const serverId = useRequiredServerId();
 	return (
-		<Suspense fallback={<ServerDetailsLayoutSkeleton />}>
+		<Suspense key={serverId} fallback={<ServerDetailsLayoutSkeleton />}>
 			<ServerDetailsDataLayout />
 		</Suspense>
 	);

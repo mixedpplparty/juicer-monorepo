@@ -1,15 +1,15 @@
-import { useSuspenseQueries } from "@tanstack/react-query";
 import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
-import { lazy, Suspense, useState } from "react";
-import { myDataInServerQueryOptions, topicsQueryOptions } from "../api/queries";
-import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { Suspense, useState } from "react";
+import AdminFabMenu from "./admin-fab-menu";
+import {
+	MyServerProfileSkeleton,
+	TopicListSkeleton,
+} from "./loading-skeletons";
 import MyServerProfile from "./my-server-profile";
 import { serverInfoStyles } from "./server-info.styles";
+import TopicAddDialog from "./topic-add-dialog";
 import TopicList from "./topic-list";
-
-const AdminFabMenu = lazy(() => import("./admin-fab-menu"));
-const TopicAddDialog = lazy(() => import("./topic-add-dialog"));
 
 export interface ServerInfoProps {
 	serverId: string;
@@ -23,13 +23,6 @@ export function ServerInfo({
 	searchQuery,
 }: ServerInfoProps) {
 	const [isTopicAddDialogOpen, setIsTopicAddDialogOpen] = useState(false);
-	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-	const [{ data: myDataInServer }, { data: topics }] = useSuspenseQueries({
-		queries: [
-			myDataInServerQueryOptions(serverId),
-			topicsQueryOptions(serverId, debouncedSearchQuery),
-		],
-	});
 
 	return (
 		<div css={serverInfoStyles.root}>
@@ -42,7 +35,9 @@ export function ServerInfo({
 				>
 					내 프로필
 				</Text>
-				<MyServerProfile myDataInServer={myDataInServer} />
+				<Suspense fallback={<MyServerProfileSkeleton />}>
+					<MyServerProfile serverId={serverId} />
+				</Suspense>
 			</section>
 			<section css={serverInfoStyles.section}>
 				<Text
@@ -53,11 +48,13 @@ export function ServerInfo({
 				>
 					주제 목록
 				</Text>
-				<TopicList
-					topics={topics}
-					serverData={serverData}
-					searchQuery={debouncedSearchQuery}
-				/>
+				<Suspense fallback={<TopicListSkeleton />}>
+					<TopicList
+						serverId={serverId}
+						serverData={serverData}
+						searchQuery={searchQuery}
+					/>
+				</Suspense>
 			</section>
 			{serverData.admin && (
 				<Suspense fallback={null}>

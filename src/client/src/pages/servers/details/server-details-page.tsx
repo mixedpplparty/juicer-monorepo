@@ -1,6 +1,5 @@
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router";
-import { ServerOverviewSkeleton } from "./components/loading-skeletons";
 import ServerHeader from "./components/server-header";
 import ServerInfo from "./components/server-info";
 import type { ServerDetailsOutletContext } from "./server-details-context";
@@ -19,13 +18,11 @@ export function ServerDetailsPage() {
 				onSearchQueryChange={setSearchQuery}
 			/>
 			<div css={serverDetailsPageStyles.content}>
-				<Suspense fallback={<ServerOverviewSkeleton />}>
-					<ServerInfo
-						serverId={serverId}
-						serverData={serverData}
-						searchQuery={searchQuery}
-					/>
-				</Suspense>
+				<ServerInfo
+					serverId={serverId}
+					serverData={serverData}
+					searchQuery={searchQuery}
+				/>
 			</div>
 		</>
 	);

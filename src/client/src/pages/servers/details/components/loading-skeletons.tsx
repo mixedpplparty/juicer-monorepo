@@ -85,17 +85,7 @@ export function ServerOverviewSkeleton() {
 		>
 			<div css={serverInfoStyles.section}>
 				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
-				<Card variant="outlined" css={loadingSkeletonStyles.profileCard}>
-					<div css={loadingSkeletonStyles.profileRow}>
-						<Skeleton css={loadingSkeletonStyles.largeCircle} />
-						<Skeleton css={loadingSkeletonStyles.mediumLine} />
-					</div>
-					<div css={loadingSkeletonStyles.chips}>
-						<Skeleton css={loadingSkeletonStyles.chip} />
-						<Skeleton css={loadingSkeletonStyles.chip} />
-						<Skeleton css={loadingSkeletonStyles.chip} />
-					</div>
-				</Card>
+				<MyServerProfileSkeleton />
 			</div>
 			<div css={serverInfoStyles.section}>
 				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
@@ -105,9 +95,34 @@ export function ServerOverviewSkeleton() {
 	);
 }
 
+export function MyServerProfileSkeleton() {
+	return (
+		<Card
+			variant="outlined"
+			role="status"
+			aria-label="내 서버 프로필 불러오는 중"
+			css={loadingSkeletonStyles.profileCard}
+		>
+			<div css={loadingSkeletonStyles.profileRow}>
+				<Skeleton css={loadingSkeletonStyles.largeCircle} />
+				<Skeleton css={loadingSkeletonStyles.mediumLine} />
+			</div>
+			<div css={loadingSkeletonStyles.chips}>
+				<Skeleton css={loadingSkeletonStyles.chip} />
+				<Skeleton css={loadingSkeletonStyles.chip} />
+				<Skeleton css={loadingSkeletonStyles.chip} />
+			</div>
+		</Card>
+	);
+}
+
 export function TopicListSkeleton() {
 	return (
-		<div aria-hidden="true" css={loadingSkeletonStyles.topicGrid}>
+		<div
+			role="status"
+			aria-label="주제 목록 불러오는 중"
+			css={loadingSkeletonStyles.topicGrid}
+		>
 			{topicCards.map((card) => (
 				<div key={card} css={loadingSkeletonStyles.topicCard}>
 					<Skeleton css={loadingSkeletonStyles.mediumLine} />

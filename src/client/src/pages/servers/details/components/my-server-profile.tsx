@@ -1,15 +1,20 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
 import { Card } from "juicer-m3/card";
 import { Chip, ChipGroup } from "juicer-m3/chip";
 import { Text } from "juicer-m3/text";
-import type { MyDataInServer } from "juicer-shared";
+import { myDataInServerQueryOptions } from "../api/queries";
 import { myServerProfileStyles } from "./my-server-profile.styles";
 
 export interface MyServerProfileProps {
-	myDataInServer: MyDataInServer;
+	serverId: string;
 }
 
-export function MyServerProfile({ myDataInServer }: MyServerProfileProps) {
+export function MyServerProfile({ serverId }: MyServerProfileProps) {
+	const { data: myDataInServer } = useSuspenseQuery(
+		myDataInServerQueryOptions(serverId),
+	);
+
 	return (
 		<Card variant="outlined" css={myServerProfileStyles.root}>
 			<div css={myServerProfileStyles.nicknameRow}>
