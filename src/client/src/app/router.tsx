@@ -12,7 +12,8 @@ import ServerDetailsPage from "@/pages/servers/server-details-page";
 import ServerListPage from "@/pages/servers/server-list-page";
 import ServerSettingsPage from "@/pages/servers/server-settings-page";
 import ServersLayout from "@/pages/servers/servers-layout";
-import TopicAddPage from "@/pages/servers/topic-add-page";
+import TopicDetailsPage from "@/pages/servers/topic-details-page";
+import TopicEditPage from "@/pages/servers/topic-edit-page";
 import AuthLoading from "./auth-loading";
 import RouteErrorBoundary from "./route-error-boundary";
 
@@ -89,14 +90,28 @@ export const router = createBrowserRouter([
 										Component: ServerDetailsPage,
 									},
 									{
-										path: "topics/new",
-										loader: serverAdminOnlyLoader,
-										Component: TopicAddPage,
-									},
-									{
 										path: "settings",
 										loader: serverAdminOnlyLoader,
 										Component: ServerSettingsPage,
+										handle: {
+											serverAppBarTitle: "서버 설정",
+											serverAppBarSubtitle: "server-name",
+										},
+									},
+									{
+										path: "topics/:topicId",
+										Component: TopicDetailsPage,
+										handle: {
+											serverAppBarKind: "topic",
+										},
+									},
+									{
+										path: "topics/:topicId/edit",
+										loader: serverAdminOnlyLoader,
+										Component: TopicEditPage,
+										handle: {
+											serverAppBarKind: "topic-edit",
+										},
 									},
 								],
 							},

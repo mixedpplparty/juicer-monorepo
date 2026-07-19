@@ -9,6 +9,8 @@ import {
 } from "juicer-m3";
 import type { ServerData } from "juicer-shared";
 import { Link } from "react-router";
+import { useScrollState } from "@/hooks/use-scroll-state";
+import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
 import { serverHeaderStyles } from "./server-header.styles";
 
@@ -23,9 +25,22 @@ export function ServerHeader({
 	searchQuery,
 	onSearchQueryChange,
 }: ServerHeaderProps) {
+	const appBarScroll = useScrollState<HTMLElement>();
+
 	return (
-		<header css={serverHeaderStyles.root}>
-			<div css={serverHeaderStyles.searchRow}>
+		<header
+			ref={appBarScroll.ref}
+			data-scrolled={appBarScroll.isScrolled}
+			css={serverHeaderStyles.root}
+		>
+			<div
+				data-scrolled={appBarScroll.isScrolled}
+				css={[
+					appBarStyles.root,
+					appBarStyles.insetInServerPage,
+					serverHeaderStyles.searchRow,
+				]}
+			>
 				<IconButton
 					aria-label="서버 목록으로 돌아가기"
 					render={<Link to="/servers" />}

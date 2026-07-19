@@ -1,5 +1,6 @@
 import { List, ListItem, RoleIndicator, Text } from "juicer-m3";
 import type { Game, ServerData } from "juicer-shared";
+import { Link } from "react-router";
 import {
 	type TopicListItemData,
 	useTopicListItems,
@@ -44,6 +45,7 @@ function TopicListItem({ topic }: TopicListItemProps) {
 	return (
 		<ListItem
 			css={topicListStyles.item}
+			render={<Link to={`topics/${topic.gameId}`} />}
 			headline={
 				<Text typeRole="title" size="large">
 					{topic.name}
@@ -52,20 +54,41 @@ function TopicListItem({ topic }: TopicListItemProps) {
 			supportingText={
 				<span css={topicListStyles.details}>
 					<span css={topicListStyles.channels}>
-						{topic.channels.map((channel) => (
-							<Text key={channel.id} typeRole="body" size="medium">
-								#{channel.name}
+						{topic.channels.length > 0 ? (
+							topic.channels.map((channel) => (
+								<Text key={channel.id} typeRole="body" size="medium">
+									#{channel.name}
+								</Text>
+							))
+						) : (
+							<Text
+								typeRole="body"
+								size="medium"
+								css={topicListStyles.emptyAssociation}
+							>
+								연관 채널 없음
 							</Text>
-						))}
+						)}
 					</span>
 					<span css={topicListStyles.roles}>
-						{topic.roles.map((role) => (
-							<RoleIndicator
-								key={role.id}
-								roleName={role.name}
-								color={role.color}
-							/>
-						))}
+						{topic.roles.length > 0 ? (
+							topic.roles.map((role) => (
+								<RoleIndicator
+									key={role.id}
+									roleName={role.name}
+									color={role.color}
+									active={role.active}
+								/>
+							))
+						) : (
+							<Text
+								typeRole="body"
+								size="medium"
+								css={topicListStyles.emptyAssociation}
+							>
+								연관 역할 없음
+							</Text>
+						)}
 					</span>
 				</span>
 			}

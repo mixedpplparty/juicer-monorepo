@@ -12,6 +12,7 @@ export interface TopicListItemData {
 		id: string;
 		name: string;
 		color: string;
+		active: boolean;
 	}[];
 }
 
@@ -44,6 +45,7 @@ export function useTopicListItems(
 						id: roleId,
 						name: role?.name ?? "역할 이름 없음",
 						color: role?.color ?? "#000000",
+						active: role?.meInRole ?? false,
 					};
 				}) ?? [],
 		}));

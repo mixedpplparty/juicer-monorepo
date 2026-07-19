@@ -1,44 +1,40 @@
-import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Text } from "juicer-m3";
+import type { ServerData } from "juicer-shared";
 import { lazy, Suspense, useState } from "react";
-import { useNavigate } from "react-router";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
 	myDataInServerQueryOptions,
-	serverQueryOptions,
 	topicsQueryOptions,
 } from "../api/server-queries";
 import MyServerProfile from "./my-server-profile";
-import ServerHeader from "./server-header";
 import TopicList from "./topic-list";
 
 const AdminFabMenu = lazy(() => import("./admin-fab-menu"));
+const TopicAddDialog = lazy(() => import("./topic-add-dialog"));
 
 export interface ServerInfoProps {
 	serverId: string;
+	serverData: ServerData;
+	searchQuery: string;
 }
 
-export function ServerInfo({ serverId }: ServerInfoProps) {
-	const [searchQuery, setSearchQuery] = useState("");
-	const navigate = useNavigate();
+export function ServerInfo({
+	serverId,
+	serverData,
+	searchQuery,
+}: ServerInfoProps) {
+	const [isTopicAddDialogOpen, setIsTopicAddDialogOpen] = useState(false);
 	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-	const [{ data: serverData }, { data: myDataInServer }] = useSuspenseQueries({
-		queries: [
-			serverQueryOptions(serverId),
-			myDataInServerQueryOptions(serverId),
-		],
-	});
+	const { data: myDataInServer } = useSuspenseQuery(
+		myDataInServerQueryOptions(serverId),
+	);
 	const { data: topics } = useSuspenseQuery(
 		topicsQueryOptions(serverId, debouncedSearchQuery),
 	);
 
 	return (
 		<section>
-			<ServerHeader
-				serverData={serverData}
-				searchQuery={searchQuery}
-				onSearchQueryChange={setSearchQuery}
-			/>
 			<article>
 				<Text typeRole="title" size="large">
 					내 프로필
@@ -55,9 +51,12 @@ export function ServerInfo({ serverId }: ServerInfoProps) {
 			/>
 			{serverData.admin && (
 				<Suspense fallback={null}>
-					<AdminFabMenu
-						onAddTopic={() => navigate("topics/new")}
-						onOpenServerSettings={() => navigate("settings")}
+					<AdminFabMenu onAddTopic={() => setIsTopicAddDialogOpen(true)} />
+					<TopicAddDialog
+						open={isTopicAddDialogOpen}
+						serverId={serverId}
+						serverData={serverData}
+						onOpenChange={setIsTopicAddDialogOpen}
 					/>
 				</Suspense>
 			)}

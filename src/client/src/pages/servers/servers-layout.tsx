@@ -5,7 +5,7 @@ import breakpoints from "@/shared/styles/breakpoints";
 import { serversLayoutStyles } from "./servers-layout.styles";
 
 export function ServersLayout() {
-	const isViewingServer = useMatch("/servers/:serverId") !== null;
+	const isViewingServer = useMatch("/servers/:serverId/*") !== null;
 	const isDesktop = useMediaQuery(`(min-width: ${breakpoints.tablet})`);
 	const shouldRenderServerList = isDesktop || !isViewingServer;
 

@@ -1,16 +1,13 @@
 import { AddIcon, Fab, FabMenu, SettingsIcon } from "juicer-m3";
 import { useEffect, useId, useRef, useState } from "react";
+import { Link } from "react-router";
 import { adminFabMenuStyles } from "./admin-fab-menu.styles";
 
 export interface AdminFabMenuProps {
 	onAddTopic?: () => void;
-	onOpenServerSettings?: () => void;
 }
 
-export function AdminFabMenu({
-	onAddTopic,
-	onOpenServerSettings,
-}: AdminFabMenuProps) {
+export function AdminFabMenu({ onAddTopic }: AdminFabMenuProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const menuId = useId();
 	const rootRef = useRef<HTMLDivElement>(null);
@@ -62,7 +59,8 @@ export function AdminFabMenu({
 					icon={<SettingsIcon />}
 					label="서버 설정"
 					variant="secondary"
-					onClick={() => runAction(onOpenServerSettings)}
+					render={<Link to="settings" />}
+					css={{ textDecoration: "none" }}
 				/>
 			</FabMenu>
 			<Fab

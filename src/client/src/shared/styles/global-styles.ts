@@ -27,6 +27,7 @@ export const globalStyles = css`
 				transparent 90%
 			),
 			var(--Schemes-Surface);
+		background-attachment: fixed;
 
 		@media (min-width: ${breakpoints.tablet}) {
 			background:
@@ -41,6 +42,7 @@ export const globalStyles = css`
 					transparent 90%
 				),
 				var(--Schemes-Surface-Container);
+			background-attachment: fixed;
 		}
 	}
 

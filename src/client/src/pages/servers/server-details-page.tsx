@@ -1,14 +1,18 @@
-import { useParams } from "react-router";
+import { useOutletContext } from "react-router";
 import ServerInfo from "@/features/servers/components/server-info";
+import type { ServerDetailsOutletContext } from "./server-details-layout";
 
 export function ServerDetailsPage() {
-	const { serverId } = useParams();
+	const { serverId, serverData, searchQuery } =
+		useOutletContext<ServerDetailsOutletContext>();
 
-	if (!serverId) {
-		throw new Error("serverId is required");
-	}
-
-	return <ServerInfo serverId={serverId} />;
+	return (
+		<ServerInfo
+			serverId={serverId}
+			serverData={serverData}
+			searchQuery={searchQuery}
+		/>
+	);
 }
 
 export default ServerDetailsPage;

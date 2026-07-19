@@ -1,5 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { Game, MyDataInServer, MyInfo, ServerData } from "juicer-shared";
+import type {
+	Game,
+	MyDataInServer,
+	MyInfo,
+	ServerData,
+	TopicDetails,
+} from "juicer-shared";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
@@ -43,6 +49,24 @@ async function fetchTopics(serverId: string, query: string): Promise<Game[]> {
 	return response.json();
 }
 
+async function fetchTopicDetails(
+	serverId: string,
+	topicId: number,
+): Promise<TopicDetails> {
+	const response = await fetch(
+		`${backendBase}/discord/servers/${serverId}/games/${topicId}`,
+		{
+			credentials: "include",
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error("주제 정보를 불러오지 못했습니다.");
+	}
+
+	return response.json();
+}
+
 export const myInfoQueryOptions = () =>
 	queryOptions({
 		queryKey: ["myInfo"],
@@ -65,4 +89,10 @@ export const topicsQueryOptions = (serverId: string, query: string) =>
 	queryOptions({
 		queryKey: ["topics", serverId, query],
 		queryFn: () => fetchTopics(serverId, query),
+	});
+
+export const topicDetailsQueryOptions = (serverId: string, topicId: number) =>
+	queryOptions({
+		queryKey: ["topicDetails", serverId, topicId],
+		queryFn: () => fetchTopicDetails(serverId, topicId),
 	});
