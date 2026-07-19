@@ -1,3 +1,10 @@
+import LandingPage from "@/pages/landing/landing-page";
+import { serverQueryOptions } from "@/pages/servers/details/api/queries";
+import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
+import { myInfoQueryOptions } from "@/pages/servers/list/api/queries";
+import ServerListEmptyPage from "@/pages/servers/list/server-list-empty-page";
+import ServersLayout from "@/pages/servers/servers-layout";
+import { HttpError } from "@/shared/api/fetch-json";
 import { lazy } from "react";
 import {
 	createBrowserRouter,
@@ -5,12 +12,6 @@ import {
 	Outlet,
 	redirect,
 } from "react-router";
-import { isAuthenticated } from "@/pages/landing/api/auth";
-import LandingPage from "@/pages/landing/landing-page";
-import { serverQueryOptions } from "@/pages/servers/details/api/queries";
-import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
-import ServerListPage from "@/pages/servers/list/server-list-page";
-import ServersLayout from "@/pages/servers/servers-layout";
 import AuthLoading from "./auth-loading";
 import { queryClient } from "./query-client";
 import RouteErrorBoundary from "./route-error-boundary";
@@ -28,16 +29,28 @@ const TopicEditPage = lazy(
 	() => import("@/pages/servers/details/topics/edit/topic-edit-page"),
 );
 
-async function guestOnlyLoader({ request }: LoaderFunctionArgs) {
-	if (await isAuthenticated(request)) {
+async function getCurrentUser() {
+	try {
+		return await queryClient.fetchQuery(myInfoQueryOptions());
+	} catch (error) {
+		if (error instanceof HttpError && error.status === 401) {
+			return null;
+		}
+
+		throw error;
+	}
+}
+
+async function guestOnlyLoader() {
+	if (await getCurrentUser()) {
 		throw redirect("/servers");
 	}
 
 	return null;
 }
 
-async function authOnlyLoader({ request }: LoaderFunctionArgs) {
-	if (!(await isAuthenticated(request))) {
+async function authOnlyLoader() {
+	if (!(await getCurrentUser())) {
 		throw redirect("/");
 	}
 
@@ -98,7 +111,7 @@ export const router = createBrowserRouter([
 						children: [
 							{
 								index: true,
-								Component: ServerListPage,
+								Component: ServerListEmptyPage,
 							},
 							{
 								path: ":serverId",

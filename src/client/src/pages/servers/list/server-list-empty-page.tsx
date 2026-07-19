@@ -1,7 +1,7 @@
-import { Text } from "juicer-m3";
 import { centeredPageStyles } from "@/shared/styles/layout";
+import { Text } from "juicer-m3";
 
-export function ServerListEmptyState() {
+export function ServerListEmptyPage() {
 	return (
 		<div css={centeredPageStyles}>
 			<Text as="p" typeRole="body" size="large">
@@ -11,4 +11,4 @@ export function ServerListEmptyState() {
 	);
 }
 
-export default ServerListEmptyState;
+export default ServerListEmptyPage;
