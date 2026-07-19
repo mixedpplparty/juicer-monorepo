@@ -14,9 +14,15 @@ import { serverHeaderStyles } from "./server-header.styles";
 
 export interface ServerHeaderProps {
 	serverData: ServerData;
+	searchQuery: string;
+	onSearchQueryChange: (query: string) => void;
 }
 
-export function ServerHeader({ serverData: _serverData }: ServerHeaderProps) {
+export function ServerHeader({
+	serverData: _serverData,
+	searchQuery,
+	onSearchQueryChange,
+}: ServerHeaderProps) {
 	return (
 		<header css={serverHeaderStyles.root}>
 			<div css={serverHeaderStyles.searchRow}>
@@ -27,7 +33,12 @@ export function ServerHeader({ serverData: _serverData }: ServerHeaderProps) {
 				>
 					<ArrowBackIcon />
 				</IconButton>
-				<SearchBar label="주제 검색" placeholder="주제 검색" />
+				<SearchBar
+					label="주제 검색"
+					placeholder="주제 검색"
+					value={searchQuery}
+					onChange={(event) => onSearchQueryChange(event.target.value)}
+				/>
 			</div>
 
 			<div css={serverHeaderStyles.details}>

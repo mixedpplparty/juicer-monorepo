@@ -1,6 +1,6 @@
 import { Outlet, useMatch } from "react-router";
 import ServerList from "@/features/servers/components/server-list";
-import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import breakpoints from "@/shared/styles/breakpoints";
 import { serversLayoutStyles } from "./servers-layout.styles";
 

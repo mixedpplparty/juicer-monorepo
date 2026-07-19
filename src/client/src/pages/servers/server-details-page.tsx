@@ -1,6 +1,5 @@
 import { useParams } from "react-router";
 import ServerInfo from "@/features/servers/components/server-info";
-import { serverDetailsPageStyles } from "./server-details-page.styles";
 
 export function ServerDetailsPage() {
 	const { serverId } = useParams();
@@ -9,11 +8,7 @@ export function ServerDetailsPage() {
 		throw new Error("serverId is required");
 	}
 
-	return (
-		<div css={serverDetailsPageStyles.root}>
-			<ServerInfo serverId={serverId} />
-		</div>
-	);
+	return <ServerInfo serverId={serverId} />;
 }
 
 export default ServerDetailsPage;
