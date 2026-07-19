@@ -100,6 +100,7 @@ export function RoleSettingsDialog({
 							/>
 						</div>
 						<Select.Root
+							css={roleSettingsDialogStyles.fullWidth}
 							value={roleCategoryValue}
 							items={categoryItems}
 							disabled={pending}
@@ -107,7 +108,7 @@ export function RoleSettingsDialog({
 							onValueChange={(value) => value && setRoleCategoryValue(value)}
 						>
 							<Select.Label>역할 분류</Select.Label>
-							<Select.Trigger css={roleSettingsDialogStyles.fullWidth}>
+							<Select.Trigger>
 								<Select.Value placeholder="역할 분류 선택" />
 								<Select.Icon />
 							</Select.Trigger>

@@ -50,6 +50,7 @@ export const topicDetailsPageStyles = {
 	roleItem: css({
 		"--jm3-list-item-container": "var(--md-sys-color-surface-container-low)",
 		minHeight: "3.75rem",
+		cursor: "pointer",
 		"& + &": {
 			borderTop: "1px solid var(--md-sys-color-outline-variant)",
 		},

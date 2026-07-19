@@ -5,7 +5,6 @@ import {
 } from "@tanstack/react-query";
 import {
 	Checkbox,
-	CircularProgress,
 	List,
 	ListItem,
 	RoleIndicator,
@@ -152,13 +151,24 @@ function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
 		},
 	});
 	const disabled = mutation.isPending || !role.selfAssignable;
+	const toggleRole = () => {
+		if (!disabled) {
+			mutation.mutate({
+				serverId,
+				roleId: role.id,
+				assigned: !role.assigned,
+			});
+		}
+	};
 
 	return (
 		<ListItem
+			aria-disabled={disabled || undefined}
 			css={[
 				topicDetailsPageStyles.roleItem,
 				disabled && topicDetailsPageStyles.roleItemDisabled,
 			]}
+			onClick={disabled ? undefined : toggleRole}
 			headline={
 				<RoleIndicator
 					roleName={role.name}
@@ -170,22 +180,19 @@ function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
 			supportingText={role.description || undefined}
 			leading={
 				<span css={topicDetailsPageStyles.roleControl}>
-					{mutation.isPending ? (
-						<CircularProgress size={24} aria-label="역할 변경 중" />
-					) : (
-						<Checkbox
-							checked={role.assigned}
-							disabled={!role.selfAssignable}
-							aria-label={`${role.name} 역할 ${role.assigned ? "해제" : "할당"}`}
-							onCheckedChange={(assigned) =>
-								mutation.mutate({
-									serverId,
-									roleId: role.id,
-									assigned,
-								})
-							}
-						/>
-					)}
+					<Checkbox
+						checked={role.assigned}
+						disabled={disabled}
+						aria-label={`${role.name} 역할 ${role.assigned ? "해제" : "할당"}`}
+						onClick={(event) => event.stopPropagation()}
+						onCheckedChange={(assigned) =>
+							mutation.mutate({
+								serverId,
+								roleId: role.id,
+								assigned,
+							})
+						}
+					/>
 				</span>
 			}
 		/>
