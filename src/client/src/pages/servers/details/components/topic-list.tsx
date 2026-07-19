@@ -1,7 +1,7 @@
+import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
+import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
+import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { List, ListItem } from "juicer-m3/list";
-import { RoleIndicator } from "juicer-m3/role-indicator";
-import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
 import { Link } from "react-router";
 import { topicsQueryOptions } from "../api/queries";

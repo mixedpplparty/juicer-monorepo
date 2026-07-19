@@ -1,10 +1,10 @@
-import { Button } from "juicer-m3/button";
-import { Dialog } from "juicer-m3/dialog";
-import { RoleIndicator } from "juicer-m3/role-indicator";
-import { Select } from "juicer-m3/select";
-import { Switch } from "juicer-m3/switch";
-import { Text } from "juicer-m3/text";
-import { TextField } from "juicer-m3/text-field";
+import { Button } from "@mixedpplparty/juicer-m3/button";
+import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
+import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
+import { Select } from "@mixedpplparty/juicer-m3/select";
+import { Switch } from "@mixedpplparty/juicer-m3/switch";
+import { Text } from "@mixedpplparty/juicer-m3/text";
+import { TextField } from "@mixedpplparty/juicer-m3/text-field";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { roleSettingsDialogStyles } from "./role-settings-dialog.styles";
 
