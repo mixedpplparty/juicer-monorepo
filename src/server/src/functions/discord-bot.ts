@@ -246,22 +246,27 @@ export const assignRolesToUser = async (
 	userId: string,
 	roleIds: string[],
 ) => {
-	// Cache-first guild + a single member fetch (not once per role), then add each
-	// role concurrently. Previously this re-fetched the guild, every role and the
-	// member with force on each loop iteration.
+	// Cache-first guild + a single member fetch (not once per role). Passing all
+	// roles together lets Discord.js return one updated member that can replace
+	// the stale cached member without another Discord request.
 	const guild = await resolveGuild(serverId);
 	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	const member = await guild.members.fetch({ user: userId });
-	await Promise.all(
-		roles.map(async (role) => {
-			const roleObj =
-				guild.roles.cache.get(role.roleId) ??
-				(await guild.roles.fetch(role.roleId));
-			if (roleObj && roleObj.name !== "@everyone") {
-				await member.roles.add(roleObj);
-			}
-		}),
-	);
+	const roleObjects = (
+		await Promise.all(
+			roles.map(async (role) => {
+				const roleObj =
+					guild.roles.cache.get(role.roleId) ??
+					(await guild.roles.fetch(role.roleId));
+				return roleObj?.name === "@everyone" ? null : roleObj;
+			}),
+		)
+	).filter((role): role is Role => role !== null);
+
+	if (roleObjects.length > 0) {
+		const updatedMember = await member.roles.add(roleObjects);
+		guild.members.cache.set(updatedMember.id, updatedMember);
+	}
 };
 
 // MUST authenticate before using
@@ -272,21 +277,26 @@ export const unassignRolesFromUser = async (
 	userId: string,
 	roleIds: string[],
 ) => {
-	// Same shape as assignRolesToUser: cache-first guild, one member fetch, then
-	// remove each role concurrently.
+	// Same shape as assignRolesToUser: store the member returned by Discord.js so
+	// subsequent cache-first reads immediately observe the removed roles.
 	const guild = await resolveGuild(serverId);
 	const roles = await getRoleInServerInDbByRoleIds({ serverId, roleIds });
 	const member = await guild.members.fetch({ user: userId });
-	await Promise.all(
-		roles.map(async (role) => {
-			const roleObj =
-				guild.roles.cache.get(role.roleId) ??
-				(await guild.roles.fetch(role.roleId));
-			if (roleObj && roleObj.name !== "@everyone") {
-				await member.roles.remove(roleObj);
-			}
-		}),
-	);
+	const roleObjects = (
+		await Promise.all(
+			roles.map(async (role) => {
+				const roleObj =
+					guild.roles.cache.get(role.roleId) ??
+					(await guild.roles.fetch(role.roleId));
+				return roleObj?.name === "@everyone" ? null : roleObj;
+			}),
+		)
+	).filter((role): role is Role => role !== null);
+
+	if (roleObjects.length > 0) {
+		const updatedMember = await member.roles.remove(roleObjects);
+		guild.members.cache.set(updatedMember.id, updatedMember);
+	}
 };
 
 export const syncRolesWithDbAndDiscord = async (
