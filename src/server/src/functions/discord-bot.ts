@@ -40,13 +40,46 @@ discordClient.once(Events.ClientReady, (readyClient: DiscordClient) => {
 // Log in to Discord with your client's token
 discordClient.login(DISCORD_BOT_TOKEN);
 
+const MAX_DISCORD_SNOWFLAKE = 9_223_372_036_854_775_807n;
+
+const isValidDiscordSnowflake = (value: string) =>
+	/^\d+$/.test(value) &&
+	BigInt(value) > 0n &&
+	BigInt(value) <= MAX_DISCORD_SNOWFLAKE;
+
+const serverNotFound = () =>
+	new HTTPException(404, {
+		message: "Server not found. Bot may not be in that server.",
+	});
+
 // Resolve a guild from the gateway cache when possible (the bot has the Guilds
 // intent, so guilds it is in are already cached) and only fall back to a REST
 // fetch on a miss. Avoids a Discord round-trip on hot read paths like the
 // per-game thumbnail endpoint, which the client fires once per game.
-const resolveGuild = (serverId: string) =>
-	discordClient.guilds.cache.get(serverId) ??
-	discordClient.guilds.fetch({ guild: serverId });
+const resolveGuild = async (serverId: string) => {
+	// discord.js throws a RangeError before making a request when a snowflake is
+	// above Discord's signed 64-bit maximum. Treat malformed and oversized server
+	// IDs the same as any other server that cannot exist.
+	if (!isValidDiscordSnowflake(serverId)) {
+		throw serverNotFound();
+	}
+
+	const cachedGuild = discordClient.guilds.cache.get(serverId);
+	if (cachedGuild) {
+		return cachedGuild;
+	}
+
+	try {
+		return await discordClient.guilds.fetch({ guild: serverId });
+	} catch (error) {
+		// 10004 is Discord's "Unknown Guild" response for a valid, in-range
+		// snowflake that does not identify a guild visible to the bot.
+		if (error instanceof DiscordAPIError && error.code === 10004) {
+			throw serverNotFound();
+		}
+		throw error;
+	}
+};
 
 export const authenticateAndAuthorizeUser = async (
 	serverId: string,
@@ -65,9 +98,7 @@ export const authenticateAndAuthorizeUser = async (
 		resolveGuild(serverId),
 	]);
 	if (!guild) {
-		throw new HTTPException(404, {
-			message: "Server not found. Bot may not be in that server.",
-		});
+		throw serverNotFound();
 	}
 	// force defaults to true (callers that need fresh roles/permissions); read-only
 	// endpoints pass false so repeated hits reuse the member cache instead of
@@ -112,9 +143,7 @@ export const getGuildAndMemberData = async (
 		resolveGuild(serverId),
 	]);
 	if (!guild) {
-		throw new HTTPException(404, {
-			message: "Server not found. Bot may not be in that server.",
-		});
+		throw serverNotFound();
 	}
 	// Owner, channels, roles and the requesting member are independent given the
 	// guild — fetch them concurrently instead of one after another.
@@ -297,9 +326,7 @@ export const syncRolesWithDbAndDiscord = async (
 export const getAllRolesInServerInDiscordApi = async (
 	serverId: string,
 ): Promise<Collection<Snowflake, Role>> => {
-	const guild = await discordClient.guilds.fetch({
-		guild: serverId,
-	});
+	const guild = await resolveGuild(serverId);
 	const roles = await guild.roles.fetch();
 	return roles;
 };
@@ -309,9 +336,7 @@ export const getMyDataInServerInDiscordApi = async (
 	serverId: string,
 	userId: string,
 ): Promise<GuildMember> => {
-	const guild = await discordClient.guilds.fetch({
-		guild: serverId,
-	});
+	const guild = await resolveGuild(serverId);
 	const member = await guild.members.fetch(userId);
 	return member;
 };
