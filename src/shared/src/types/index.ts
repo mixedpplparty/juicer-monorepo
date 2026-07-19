@@ -111,6 +111,36 @@ const Game = z.intersection(
 
 export type Game = z.infer<typeof Game>;
 
+export const TopicDetailsChannel = z.object({
+	id: z.string(),
+	name: z.string(),
+});
+
+export type TopicDetailsChannel = z.infer<typeof TopicDetailsChannel>;
+
+export const TopicDetailsRole = z.object({
+	id: z.string(),
+	name: z.string(),
+	color: z.string(),
+	description: z.string().nullable(),
+	selfAssignable: z.boolean(),
+	assigned: z.boolean(),
+});
+
+export type TopicDetailsRole = z.infer<typeof TopicDetailsRole>;
+
+export const TopicDetails = z.object({
+	gameId: z.number(),
+	serverId: z.string(),
+	name: z.string(),
+	description: z.string().nullable(),
+	category: Category.nullable(),
+	channels: z.array(TopicDetailsChannel),
+	roles: z.array(TopicDetailsRole),
+});
+
+export type TopicDetails = z.infer<typeof TopicDetails>;
+
 const ServerDataDiscordRole2 = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -166,13 +196,27 @@ const ServerData = z.object({
 
 export type ServerData = z.infer<typeof ServerData>;
 
-const MyDataInServer = z.object({
-	id: z.string(),
+export const ServerMemberRole = z.object({
+	roleId: z.string(),
 	name: z.string(),
-	nick: z.string().nullable(),
-	avatar: z.string().nullable(),
-	roles: z.array(Role).nullable(),
-	joined_at: z.string(),
+	color: z.string(),
+});
+
+export type ServerMemberRole = z.infer<typeof ServerMemberRole>;
+
+export const CategorizedRoleGroup = z.object({
+	roleCategoryId: z.number().nullable(),
+	roleCategoryName: z.string().nullable(),
+	roles: z.array(ServerMemberRole),
+});
+
+export type CategorizedRoleGroup = z.infer<typeof CategorizedRoleGroup>;
+
+export const MyDataInServer = z.object({
+	id: z.string(),
+	displayName: z.string(),
+	displayAvatarURL: z.string(),
+	categorizedRoles: z.array(CategorizedRoleGroup),
 });
 
 export type MyDataInServer = z.infer<typeof MyDataInServer>;
@@ -338,6 +382,25 @@ export const SetRoleSelfAssignableRequestBody = z.object({
 	selfAssignable: z.boolean().optional().nullable(),
 	description: z.string().nullable().optional(),
 });
+
+export const UpdateRoleSettingsRequestBody = z
+	.object({
+		roleCategoryId: z.number().int().positive().nullable().optional(),
+		selfAssignable: z.boolean().optional(),
+		description: z.string().trim().max(500).nullable().optional(),
+	})
+	.strict()
+	.refine(
+		({ roleCategoryId, selfAssignable, description }) =>
+			roleCategoryId !== undefined ||
+			selfAssignable !== undefined ||
+			description !== undefined,
+		{ message: "At least one role setting is required." },
+	);
+
+export type UpdateRoleSettingsRequest = z.infer<
+	typeof UpdateRoleSettingsRequestBody
+>;
 
 export const GuildMember = z.object({
 	avatarURL: z.string().nullable(),

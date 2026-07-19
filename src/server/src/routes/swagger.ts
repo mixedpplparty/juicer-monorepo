@@ -312,7 +312,7 @@ const openApiDoc = {
 							content: {
 								"application/json": {
 									schema: {
-										type: "GuildMember",
+										type: "MyDataInServer",
 									},
 								},
 							},
@@ -430,6 +430,70 @@ const openApiDoc = {
 			},
 			"/games/:gameId": {
 				"/": {
+					get: {
+						summary: "Get topic details",
+						description:
+							"Get a topic with its category, channels, and roles, including the current user's assignment state and whether each role is self-assignable.",
+						responses: {
+							"200": {
+								description: "Topic details",
+								content: {
+									"application/json": {
+										schema: {
+											type: "object",
+											properties: {
+												gameId: { type: "number" },
+												serverId: { type: "string" },
+												name: { type: "string" },
+												description: {
+													type: "string",
+													nullable: true,
+												},
+												category: {
+													type: "Category",
+													nullable: true,
+												},
+												channels: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+														},
+													},
+												},
+												roles: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+															color: { type: "string" },
+															description: {
+																type: "string",
+																nullable: true,
+															},
+															selfAssignable: {
+																type: "boolean",
+															},
+															assigned: {
+																type: "boolean",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							"404": {
+								description: "Topic not found",
+							},
+						},
+					},
 					put: {
 						summary: "Update a game in the server",
 						description: "Update a game in the server",
@@ -594,6 +658,7 @@ const openApiDoc = {
 				},
 				"/assign": {
 					post: {
+						deprecated: true,
 						summary: "Assign a role category to a role in the server",
 						description: "Assign a role category to a role in the server",
 						requestBody: {
@@ -695,6 +760,61 @@ const openApiDoc = {
 						},
 					},
 				},
+				"/:roleId": {
+					patch: {
+						summary: "Update role settings atomically",
+						description:
+							"Update one or more role settings. Supplied fields are committed together.",
+						requestBody: {
+							required: true,
+							content: {
+								"application/json": {
+									schema: {
+										type: "object",
+										additionalProperties: false,
+										properties: {
+											roleCategoryId: {
+												type: "number",
+												nullable: true,
+											},
+											selfAssignable: {
+												type: "boolean",
+											},
+											description: {
+												type: "string",
+												maxLength: 500,
+												nullable: true,
+											},
+										},
+										minProperties: 1,
+									},
+								},
+							},
+						},
+						responses: {
+							"200": {
+								description: "Updated role",
+								content: {
+									"application/json": {
+										schema: {
+											type: "Role",
+										},
+									},
+								},
+							},
+							"400": {
+								description:
+									"Invalid settings or role category belongs to another server.",
+							},
+							"403": {
+								description: "User does not have manage server permission.",
+							},
+							"404": {
+								description: "Role not found in this server.",
+							},
+						},
+					},
+				},
 				"/:roleId/assign": {
 					post: {
 						summary: "Assign a role to myself",
@@ -743,6 +863,7 @@ const openApiDoc = {
 				},
 				"/:roleId/update": {
 					post: {
+						deprecated: true,
 						summary: "Update a role in the server",
 						description:
 							"Update whether a role is self-assignable and its description",

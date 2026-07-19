@@ -2,10 +2,13 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { SetRoleSelfAssignableRequestBody } from "juicer-shared/dist/types/index.js";
+import {
+	SetRoleSelfAssignableRequestBody,
+	UpdateRoleSettingsRequestBody,
+} from "juicer-shared/dist/types/index.js";
 import {
 	getRoleInServerInDbByRoleIds,
-	updateRoleInfo,
+	updateRoleSettings,
 } from "../../../functions/db.js";
 import {
 	assignRolesToUser,
@@ -83,6 +86,33 @@ app.post("/:roleId/unassign", async (c) => {
 	return c.json({ message: "Role unassigned successfully." }, 200);
 });
 
+app.patch(
+	"/:roleId",
+	zValidator("json", UpdateRoleSettingsRequestBody),
+	async (c) => {
+		const serverId = c.req.param("serverId");
+		const roleId = c.req.param("roleId");
+		const body = c.req.valid("json");
+		const accessToken = getCookie(c, "discord_access_token");
+
+		if (!serverId || !roleId) {
+			throw new HTTPException(400, {
+				message: "Server ID and role ID are required.",
+			});
+		}
+
+		await authenticateAndAuthorizeUser(serverId, accessToken as string, true);
+
+		const role = await updateRoleSettings({
+			serverId,
+			roleId,
+			...body,
+		});
+		return c.json(role, 200);
+	},
+);
+
+// Deprecated compatibility endpoint. Use PATCH /:roleId instead.
 app.post(
 	"/:roleId/update",
 	zValidator("json", SetRoleSelfAssignableRequestBody),
@@ -91,23 +121,18 @@ app.post(
 		const roleId = c.req.param("roleId");
 		const body = await c.req.valid("json");
 		const accessToken = getCookie(c, "discord_access_token");
-		const { manageGuildPermission } = await authenticateAndAuthorizeUser(
+		await authenticateAndAuthorizeUser(
 			serverId as string,
 			accessToken as string,
 			true,
 		);
-		if (manageGuildPermission) {
-			const role = await updateRoleInfo({
-				roleId: roleId as string,
-				serverId: serverId as string,
-				selfAssignable: body.selfAssignable as boolean | null,
-				description: body.description as string | null | undefined,
-			});
-			return c.json(role, 200);
-		}
-		throw new HTTPException(403, {
-			message: "User does not have manage server permission.",
+		const role = await updateRoleSettings({
+			roleId: roleId as string,
+			serverId: serverId as string,
+			selfAssignable: body.selfAssignable ?? false,
+			description: body.description,
 		});
+		return c.json([role], 200);
 	},
 );
 
