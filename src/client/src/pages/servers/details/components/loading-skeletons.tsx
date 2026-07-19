@@ -5,6 +5,7 @@ import { hideOnDesktop } from "@/shared/styles/responsive";
 import { serverDetailsPageStyles } from "../server-details-page.styles";
 import { loadingSkeletonStyles } from "./loading-skeletons.styles";
 import { serverHeaderStyles } from "./server-header.styles";
+import { serverInfoStyles } from "./server-info.styles";
 
 const topicCards = [0, 1, 2, 3];
 const skeletonRows = ["row-a", "row-b", "row-c", "row-d"];
@@ -89,22 +90,26 @@ export function ServerOverviewSkeleton() {
 		<div
 			role="status"
 			aria-label="서버 상세 불러오는 중"
-			css={loadingSkeletonStyles.overview}
+			css={serverInfoStyles.root}
 		>
-			<Skeleton css={loadingSkeletonStyles.sectionHeading} />
-			<Card variant="outlined" css={loadingSkeletonStyles.profileCard}>
-				<div css={loadingSkeletonStyles.profileRow}>
-					<Skeleton css={loadingSkeletonStyles.largeCircle} />
-					<Skeleton css={loadingSkeletonStyles.mediumLine} />
-				</div>
-				<div css={loadingSkeletonStyles.chips}>
-					<Skeleton css={loadingSkeletonStyles.chip} />
-					<Skeleton css={loadingSkeletonStyles.chip} />
-					<Skeleton css={loadingSkeletonStyles.chip} />
-				</div>
-			</Card>
-			<Skeleton css={loadingSkeletonStyles.sectionHeading} />
-			<TopicListSkeleton />
+			<section css={serverInfoStyles.section}>
+				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
+				<Card variant="outlined" css={loadingSkeletonStyles.profileCard}>
+					<div css={loadingSkeletonStyles.profileRow}>
+						<Skeleton css={loadingSkeletonStyles.largeCircle} />
+						<Skeleton css={loadingSkeletonStyles.mediumLine} />
+					</div>
+					<div css={loadingSkeletonStyles.chips}>
+						<Skeleton css={loadingSkeletonStyles.chip} />
+						<Skeleton css={loadingSkeletonStyles.chip} />
+						<Skeleton css={loadingSkeletonStyles.chip} />
+					</div>
+				</Card>
+			</section>
+			<section css={serverInfoStyles.section}>
+				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
+				<TopicListSkeleton />
+			</section>
 		</div>
 	);
 }

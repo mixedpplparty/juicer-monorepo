@@ -34,23 +34,13 @@ export function ServerInfo({
 	return (
 		<div css={serverInfoStyles.root}>
 			<section css={serverInfoStyles.section}>
-				<Text
-					as="h2"
-					typeRole="title"
-					size="large"
-					css={serverInfoStyles.heading}
-				>
+				<Text typeRole="label" size="large" css={serverInfoStyles.heading}>
 					내 프로필
 				</Text>
 				<MyServerProfile myDataInServer={myDataInServer} />
 			</section>
 			<section css={serverInfoStyles.section}>
-				<Text
-					as="h2"
-					typeRole="title"
-					size="large"
-					css={serverInfoStyles.heading}
-				>
+				<Text typeRole="label" size="large" css={serverInfoStyles.heading}>
 					주제 목록
 				</Text>
 				<TopicList

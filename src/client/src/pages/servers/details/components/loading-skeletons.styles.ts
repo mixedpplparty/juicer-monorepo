@@ -1,5 +1,5 @@
-import breakpoints from "@/shared/styles/breakpoints";
 import { css } from "@emotion/react";
+import breakpoints from "@/shared/styles/breakpoints";
 
 export const loadingSkeletonStyles = {
 	status: css({
@@ -73,11 +73,6 @@ export const loadingSkeletonStyles = {
 		flex: 1,
 		flexDirection: "column",
 		gap: "0.5rem",
-	}),
-	overview: css({
-		display: "flex",
-		flexDirection: "column",
-		gap: "1.5rem",
 	}),
 	sectionHeading: css({
 		width: "8rem",
