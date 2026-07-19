@@ -6,10 +6,10 @@ import {
 } from "react-router";
 import AuthLoading from "./components/auth-loading";
 import RouteErrorBoundary from "./components/error-boundary";
-import ServerPage from "./pages/dashboard/server-details-page";
 import ServersPage from "./pages/dashboard/server-list-page";
 import ServersLayout from "./pages/dashboard/servers-layout";
 import LandingPage from "./pages/landing/landing";
+import ServerDetailsPage from "./pages/server/server-details-page";
 import { _isAuthenticated } from "./remotes/remotes";
 
 async function _guestOnlyLoader({ request }: LoaderFunctionArgs) {
@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
 							},
 							{
 								path: ":serverId",
-								Component: ServerPage,
+								Component: ServerDetailsPage,
 							},
 						],
 					},

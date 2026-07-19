@@ -1,4 +1,5 @@
 import { css } from "@emotion/react";
+import breakpoints from "../constants/breakpoints";
 
 export const fullCenteredPage = css({
 	width: "100%",
@@ -8,4 +9,8 @@ export const fullCenteredPage = css({
 	textAlign: "center",
 });
 
-export default fullCenteredPage;
+export const hideOnDesktop = css({
+	[`@media (min-width: ${breakpoints.tablet})`]: {
+		display: "none",
+	},
+});

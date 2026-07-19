@@ -1,5 +1,5 @@
 import { Button, Text } from "juicer-m3";
-import fullCenteredPage from "../../styles/full-centered-page";
+import { fullCenteredPage } from "../../styles/styles";
 
 export function LandingPage() {
 	return (

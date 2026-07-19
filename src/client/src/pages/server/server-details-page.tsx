@@ -1,6 +1,8 @@
+import { AppBar } from "juicer-m3";
 import { Link, useParams } from "react-router";
 import { ServerInfo } from "../../components/dashboard/server-details";
-import breakpoints from "../../constants/breakpoints";
+import { hideOnDesktop } from "../../styles/styles";
+import { serverDetailsContainerStyles } from "./styles";
 
 export function ServerDetailsPage() {
 	const { serverId } = useParams();
@@ -10,21 +12,22 @@ export function ServerDetailsPage() {
 	}
 
 	return (
-		<>
+		<div css={serverDetailsContainerStyles}>
+			<AppBar title="title"></AppBar>
 			<Link
 				to="/servers"
-				css={{
-					display: "inline-block",
-					padding: "1rem",
-					[`@media (min-width: ${breakpoints.tablet})`]: {
-						display: "none",
+				css={[
+					{
+						display: "inline-block",
+						padding: "1rem",
 					},
-				}}
+					hideOnDesktop,
+				]}
 			>
 				← 서버 목록
 			</Link>
 			<ServerInfo serverId={serverId} />
-		</>
+		</div>
 	);
 }
 

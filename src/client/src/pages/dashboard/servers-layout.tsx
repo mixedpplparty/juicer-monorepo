@@ -31,6 +31,8 @@ export function ServersLayout() {
 					[`@media (min-width: ${breakpoints.tablet})`]: {
 						display: "block",
 						overflow: "auto",
+						boxSizing: "border-box",
+						padding: "1rem 1rem 0",
 					},
 				}}
 			>

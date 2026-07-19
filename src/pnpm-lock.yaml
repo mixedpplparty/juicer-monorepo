@@ -43,8 +43,8 @@ importers:
         specifier: ^2.20.2
         version: 2.20.2(@babel/core@7.28.4)(@babel/template@7.27.2)(@types/react@19.2.17)(react@19.2.7)
       juicer-m3:
-        specifier: file:..\juicer-m3-0.1.1.tgz
-        version: file:juicer-m3-0.1.1.tgz(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: file:..\juicer-m3-1.1.0.tgz
+        version: file:juicer-m3-1.1.0.tgz(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       juicer-shared:
         specifier: workspace:*
         version: link:../shared
@@ -1543,9 +1543,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  juicer-m3@file:juicer-m3-0.1.1.tgz:
-    resolution: {integrity: sha512-9Y0mEfmE1YOJlI9H9Xm/xyrJswbltL8HE0Plkz9FNEYH4b6K2QpVjvNw2Bwl8luAL2TMX2liZn3IZPczl+xUTA==, tarball: file:juicer-m3-0.1.1.tgz}
-    version: 0.1.1
+  juicer-m3@file:juicer-m3-1.1.0.tgz:
+    resolution: {integrity: sha512-V5PuuckiI3vSNIZuynpQGrC+o9Uu1PYVYEJpF4bSE5LVPFB5p3cw6EefnPz9ozo+47/IJOyJ9JDijbtUvXgfAQ==, tarball: file:juicer-m3-1.1.0.tgz}
+    version: 1.1.0
     engines: {node: '>=22'}
     peerDependencies:
       react: ^18.3.0 || ^19.0.0
@@ -3293,7 +3293,7 @@ snapshots:
   json5@2.2.3:
     optional: true
 
-  juicer-m3@file:juicer-m3-0.1.1.tgz(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  juicer-m3@file:juicer-m3-1.1.0.tgz(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@base-ui/react': 1.6.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       motion: 12.42.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
