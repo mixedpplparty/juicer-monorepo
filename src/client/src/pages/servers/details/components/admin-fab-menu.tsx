@@ -51,14 +51,14 @@ export function AdminFabMenu({ onAddTopic }: AdminFabMenuProps) {
 					aria-label="주제 추가"
 					icon={<AddIcon />}
 					label="주제 추가"
-					variant="secondary"
+					variant="primary-container"
 					onClick={() => runAction(onAddTopic)}
 				/>
 				<Fab
 					aria-label="서버 설정"
 					icon={<SettingsIcon />}
 					label="서버 설정"
-					variant="secondary"
+					variant="primary-container"
 					render={<Link to="settings" />}
 					css={{ textDecoration: "none" }}
 				/>
@@ -68,6 +68,7 @@ export function AdminFabMenu({ onAddTopic }: AdminFabMenuProps) {
 				aria-label={isOpen ? "관리 메뉴 닫기" : "관리 메뉴 열기"}
 				aria-controls={menuId}
 				aria-expanded={isOpen}
+				variant="primary"
 				icon={<SettingsIcon />}
 				onClick={() => setIsOpen((open) => !open)}
 			/>
