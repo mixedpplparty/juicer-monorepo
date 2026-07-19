@@ -148,6 +148,12 @@ All "Admin required" handlers must keep the exact 403 message "User does not hav
 
 ## Intentional divergences from the TS backend (reviewed & accepted)
 
+- `update_game`: an absent `tagIds`/`roleIds` leaves the game's relations
+  untouched; an empty array clears them. (The TS treated absent as "remove
+  everything", which silently stripped roles on tags-only calls and vice
+  versa.) The relation DELETEs are also scoped to the game — the TS deletes
+  filtered only on tag_id/role_id and corrupted sibling games sharing them.
+
 - `find_games_by_tags` uses a real JOIN on `games_tags`. The TS version produced
   invalid relational SQL (referenced `games_tags` without joining it) and 500'd
   whenever matching tags existed; the Rust version returns actual results.

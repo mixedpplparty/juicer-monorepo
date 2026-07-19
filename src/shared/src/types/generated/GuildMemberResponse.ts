@@ -9,4 +9,8 @@ export type GuildMemberResponse = { avatarURL: string | null, bannerURL: string 
 /**
  * Role IDs of the member.
  */
-roles: Array<string>, id: string, nick: string | null, joinedAt: string | null, };
+roles: Array<string>, id: string, nick: string | null, 
+/**
+ * Server nick ?? global display name ?? username (discord.js displayName).
+ */
+displayName: string, joinedAt: string | null, };

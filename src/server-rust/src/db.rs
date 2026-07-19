@@ -356,22 +356,24 @@ pub async fn update_game(
         }
     }
 
-    // Tags diff. NOTE: mirrors the TS in that when `tag_ids` is None, every
-    // existing tag is removed (accepted parity bug); unlike the TS, the delete
-    // below is scoped to this game.
-    let tags_to_add: Vec<i32> = match &params.tag_ids {
-        Some(tag_ids) => tag_ids
-            .iter()
-            .copied()
-            .filter(|tag_id| !existing_tag_ids.contains(tag_id))
-            .collect(),
-        None => Vec::new(),
+    // Tags diff. An absent `tag_ids` leaves the game's tags untouched (the TS
+    // treated absent as "remove everything" — a bug this port fixes; an empty
+    // array still clears them deliberately).
+    let (tags_to_add, tags_to_remove): (Vec<i32>, Vec<i32>) = match &params.tag_ids {
+        Some(tag_ids) => (
+            tag_ids
+                .iter()
+                .copied()
+                .filter(|tag_id| !existing_tag_ids.contains(tag_id))
+                .collect(),
+            existing_tag_ids
+                .iter()
+                .copied()
+                .filter(|tag_id| !tag_ids.contains(tag_id))
+                .collect(),
+        ),
+        None => (Vec::new(), Vec::new()),
     };
-    let tags_to_remove: Vec<i32> = existing_tag_ids
-        .iter()
-        .copied()
-        .filter(|tag_id| !params.tag_ids.as_ref().is_some_and(|ids| ids.contains(tag_id)))
-        .collect();
     if !tags_to_add.is_empty() {
         let mut qb: QueryBuilder<Postgres> =
             QueryBuilder::new("INSERT INTO games_tags (game_id, tag_id) ");
@@ -417,20 +419,22 @@ pub async fn update_game(
         res.tags.removed = Some(removed);
     }
 
-    // Roles diff — same semantics as tags.
-    let roles_to_add: Vec<String> = match &params.role_ids {
-        Some(role_ids) => role_ids
-            .iter()
-            .filter(|role_id| !existing_role_ids.contains(role_id))
-            .cloned()
-            .collect(),
-        None => Vec::new(),
+    // Roles diff — same semantics as tags (absent leaves roles untouched).
+    let (roles_to_add, roles_to_remove): (Vec<String>, Vec<String>) = match &params.role_ids {
+        Some(role_ids) => (
+            role_ids
+                .iter()
+                .filter(|role_id| !existing_role_ids.contains(role_id))
+                .cloned()
+                .collect(),
+            existing_role_ids
+                .iter()
+                .filter(|role_id| !role_ids.contains(role_id))
+                .cloned()
+                .collect(),
+        ),
+        None => (Vec::new(), Vec::new()),
     };
-    let roles_to_remove: Vec<String> = existing_role_ids
-        .iter()
-        .filter(|role_id| !params.role_ids.as_ref().is_some_and(|ids| ids.contains(role_id)))
-        .cloned()
-        .collect();
     if !roles_to_add.is_empty() {
         let mut qb: QueryBuilder<Postgres> =
             QueryBuilder::new("INSERT INTO games_roles (game_id, role_id) ");
@@ -990,6 +994,28 @@ mod smoke_tests {
         )
         .await
         .unwrap();
+        // absent tag_ids/role_ids must leave relations untouched (the TS
+        // backend wiped them — fixed divergence)
+        let noop = update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: Some("Factorio SA".into()), description: None, category_id: None,
+                thumbnail: None, channels: None, tag_ids: None, role_ids: None,
+            },
+        )
+        .await
+        .unwrap();
+        assert!(noop.tags.removed.is_none() && noop.roles.removed.is_none());
+        let kept: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM games_tags WHERE game_id = $1")
+                .bind(game.game_id)
+                .fetch_one(&db)
+                .await
+                .unwrap();
+        assert_eq!(kept, 1, "absent tag_ids must not remove existing tags");
+
         let missing = update_game(
             &db, 999_999, sid,
             UpdateGameParams { name: None, description: None, category_id: None,

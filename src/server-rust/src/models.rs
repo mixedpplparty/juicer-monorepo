@@ -220,6 +220,8 @@ pub struct GuildMemberResponse {
     pub roles: Vec<String>,
     pub id: String,
     pub nick: Option<String>,
+    /// Server nick ?? global display name ?? username (discord.js displayName).
+    pub display_name: String,
     pub joined_at: Option<String>,
 }
 

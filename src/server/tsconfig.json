@@ -10,5 +10,9 @@
 		"jsxImportSource": "hono/jsx",
 		"outDir": "./dist"
 	},
+	// The runtime backend now lives in ../server-rust; this package is kept
+	// only for drizzle-kit migrations (see ../db.Dockerfile), so only the
+	// drizzle config and schema are compiled.
+	"include": ["drizzle.config.ts", "src/db/**/*"],
 	"exclude": ["node_modules"]
 }

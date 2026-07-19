@@ -643,6 +643,8 @@ pub fn member_to_response(member: &Member) -> GuildMemberResponse {
         roles: member.roles.iter().map(|role_id| role_id.to_string()).collect(),
         id: member.user.id.to_string(),
         nick: member.nick.clone(),
+        // nick ?? global display name ?? username, like discord.js displayName.
+        display_name: member.display_name().to_string(),
         joined_at: member.joined_at.map(|timestamp| timestamp.to_string()),
     }
 }
