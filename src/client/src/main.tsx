@@ -4,14 +4,19 @@ import { ThemeProvider } from "juicer-m3";
 import "juicer-m3/styles.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import _globalStyles from "./styles/global.tsx";
+import App from "@/app/app";
+import globalStyles from "@/shared/styles/global-styles";
 
 const queryClient = new QueryClient();
+const rootElement = document.getElementById("root");
 
-createRoot(document.getElementById("root")!).render(
+if (!rootElement) {
+	throw new Error("Root element not found");
+}
+
+createRoot(rootElement).render(
 	<StrictMode>
-		<Global styles={_globalStyles} />
+		<Global styles={globalStyles} />
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme="light" id="theme-provider-root">
 				<App />

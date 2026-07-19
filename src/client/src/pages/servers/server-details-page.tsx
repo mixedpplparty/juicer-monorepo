@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
-import { ServerInfo } from "../../components/dashboard/server-details";
-import { serverDetailsContainerStyles } from "./styles";
+import ServerInfo from "@/features/servers/components/server-info";
+import { serverDetailsPageStyles } from "./server-details-page.styles";
 
 export function ServerDetailsPage() {
 	const { serverId } = useParams();
@@ -10,7 +10,7 @@ export function ServerDetailsPage() {
 	}
 
 	return (
-		<div css={serverDetailsContainerStyles}>
+		<div css={serverDetailsPageStyles.root}>
 			<ServerInfo serverId={serverId} />
 		</div>
 	);

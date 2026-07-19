@@ -4,26 +4,27 @@ import {
 	Outlet,
 	redirect,
 } from "react-router";
-import AuthLoading from "./components/auth-loading";
-import RouteErrorBoundary from "./components/error-boundary";
-import ServersPage from "./pages/dashboard/server-list-page";
-import ServersLayout from "./pages/dashboard/servers-layout";
-import LandingPage from "./pages/landing/landing";
-import ServerDetailsPage from "./pages/server/server-details-page";
-import { _isAuthenticated } from "./remotes/remotes";
+import { isAuthenticated } from "@/features/auth/api/auth";
+import LandingPage from "@/pages/landing/landing-page";
+import ServerDetailsPage from "@/pages/servers/server-details-page";
+import ServerListPage from "@/pages/servers/server-list-page";
+import ServersLayout from "@/pages/servers/servers-layout";
+import AuthLoading from "./auth-loading";
+import RouteErrorBoundary from "./route-error-boundary";
 
-async function _guestOnlyLoader({ request }: LoaderFunctionArgs) {
-	if ((await _isAuthenticated(request)) === true) {
+async function guestOnlyLoader({ request }: LoaderFunctionArgs) {
+	if (await isAuthenticated(request)) {
 		throw redirect("/servers");
 	}
 
 	return null;
 }
 
-async function _authOnlyLoader({ request }: LoaderFunctionArgs) {
-	if ((await _isAuthenticated(request)) !== true) {
-		throw redirect(`/`);
+async function authOnlyLoader({ request }: LoaderFunctionArgs) {
+	if (!(await isAuthenticated(request))) {
+		throw redirect("/");
 	}
+
 	return null;
 }
 
@@ -38,7 +39,7 @@ export const router = createBrowserRouter([
 		ErrorBoundary: RouteErrorBoundary,
 		children: [
 			{
-				loader: _guestOnlyLoader,
+				loader: guestOnlyLoader,
 				Component: RouteOutlet,
 				children: [
 					{
@@ -48,7 +49,7 @@ export const router = createBrowserRouter([
 				],
 			},
 			{
-				loader: _authOnlyLoader,
+				loader: authOnlyLoader,
 				Component: RouteOutlet,
 				children: [
 					{
@@ -57,7 +58,7 @@ export const router = createBrowserRouter([
 						children: [
 							{
 								index: true,
-								Component: ServersPage,
+								Component: ServerListPage,
 							},
 							{
 								path: ":serverId",

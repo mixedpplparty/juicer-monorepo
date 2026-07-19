@@ -10,18 +10,18 @@ import {
 } from "juicer-m3";
 import type { FilteredGuild } from "juicer-shared";
 import { Link, useParams } from "react-router";
-import { _fetchMyInfo } from "../../remotes/remotes";
-import { hideOnDesktop } from "../../styles/styles";
+import { hideOnDesktop } from "@/shared/styles/responsive";
+import { myInfoQueryOptions } from "../api/server-queries";
 
 export function ServerList() {
-	const { data: _myData } = useSuspenseQuery(_fetchMyInfo.query());
+	const { data: myData } = useSuspenseQuery(myInfoQueryOptions());
 	const params = useParams();
 
 	return (
 		<nav>
 			<AppBar title="서버 목록" container="transparent" css={hideOnDesktop} />
 			<List container="transparent">
-				{_myData.guilds.map((guild: FilteredGuild) => (
+				{myData.guilds.map((guild: FilteredGuild) => (
 					<ListItem
 						key={guild.id}
 						headline={guild.name}
@@ -45,3 +45,5 @@ export function ServerList() {
 		</nav>
 	);
 }
+
+export default ServerList;

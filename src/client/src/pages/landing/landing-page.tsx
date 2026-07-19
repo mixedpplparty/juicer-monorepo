@@ -1,11 +1,10 @@
 import { Button, Text } from "juicer-m3";
-import { fullCenteredPage } from "../../styles/styles";
+import { centeredPageStyles } from "@/shared/styles/layout";
+import { landingPageStyles } from "./landing-page.styles";
 
 export function LandingPage() {
 	return (
-		<main
-			css={[fullCenteredPage, { display: "flex", flexDirection: "column" }]}
-		>
+		<main css={centeredPageStyles}>
 			<section aria-labelledby="landing-title">
 				<Text
 					typeRole="display"
@@ -19,10 +18,10 @@ export function LandingPage() {
 				<p>Discord 역할을 관리해 보세요</p>
 				<Button
 					size="md"
-					css={{ textDecoration: "none" }}
+					css={landingPageStyles.loginLink}
 					render={
 						<a
-							href={`${import.meta.env.VITE_USER_AUTH_URI}`}
+							href={import.meta.env.VITE_USER_AUTH_URI}
 							aria-label="Discord로 로그인하기"
 						/>
 					}
@@ -31,9 +30,9 @@ export function LandingPage() {
 				>
 					<img
 						src="/discord-logo.svg"
-						alt="Discord"
+						alt=""
 						aria-hidden="true"
-						css={{ display: "block", width: "5.75rem", height: "auto" }}
+						css={landingPageStyles.discordLogo}
 					/>
 					<span>로 로그인하기</span>
 				</Button>

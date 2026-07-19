@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { _fetchServerData } from "../../remotes/remotes";
+import { serverQueryOptions } from "../api/server-queries";
 import ServerHeader from "./server-header";
 
 export interface ServerInfoProps {
@@ -7,14 +7,12 @@ export interface ServerInfoProps {
 }
 
 export function ServerInfo({ serverId }: ServerInfoProps) {
-	const { data: _serverData } = useSuspenseQuery(
-		_fetchServerData.query(serverId),
-	);
-	const server = _serverData.serverDataDiscord;
+	const { data: serverData } = useSuspenseQuery(serverQueryOptions(serverId));
+	const server = serverData.serverDataDiscord;
 
 	return (
 		<section>
-			<ServerHeader serverData={_serverData} />
+			<ServerHeader serverData={serverData} />
 			<article>
 				<header>
 					{server.icon ? (
@@ -35,9 +33,9 @@ export function ServerInfo({ serverId }: ServerInfoProps) {
 
 				<section>
 					<h2>주제 목록</h2>
-					{_serverData.serverDataDb?.games?.length ? (
+					{serverData.serverDataDb?.games?.length ? (
 						<ul>
-							{_serverData.serverDataDb.games.map((game) => (
+							{serverData.serverDataDb.games.map((game) => (
 								<li key={game.gameId}>{game.name}</li>
 							))}
 						</ul>
