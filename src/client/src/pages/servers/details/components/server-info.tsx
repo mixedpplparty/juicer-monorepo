@@ -1,16 +1,15 @@
 import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
-import { lazy, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
+import AdminFabMenu from "./admin-fab-menu";
 import {
 	MyServerProfileSkeleton,
 	TopicListSkeleton,
 } from "./loading-skeletons";
 import MyServerProfile from "./my-server-profile";
 import { serverInfoStyles } from "./server-info.styles";
+import TopicAddDialog from "./topic-add-dialog";
 import TopicList from "./topic-list";
-
-const AdminFabMenu = lazy(() => import("./admin-fab-menu"));
-const TopicAddDialog = lazy(() => import("./topic-add-dialog"));
 
 export interface ServerInfoProps {
 	serverId: string;
