@@ -1,9 +1,9 @@
+import { Button } from "@mixedpplparty/juicer-m3/button";
+import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
+import { Select } from "@mixedpplparty/juicer-m3/select";
+import { Text } from "@mixedpplparty/juicer-m3/text";
+import { TextField } from "@mixedpplparty/juicer-m3/text-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "juicer-m3/button";
-import { Dialog } from "juicer-m3/dialog";
-import { Select } from "juicer-m3/select";
-import { Text } from "juicer-m3/text";
-import { TextField } from "juicer-m3/text-field";
 import type { ServerData } from "juicer-shared";
 import { type FormEvent, useRef, useState } from "react";
 import { createTopic } from "../api/mutations";

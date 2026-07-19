@@ -1,8 +1,8 @@
 import { Global } from "@emotion/react";
+import { SnackbarProvider } from "@mixedpplparty/juicer-m3/snackbar";
+import { ThemeProvider } from "@mixedpplparty/juicer-m3/theme";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { SnackbarProvider } from "juicer-m3/snackbar";
-import { ThemeProvider } from "juicer-m3/theme";
-import "juicer-m3/styles.css";
+import "@mixedpplparty/juicer-m3/styles.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "@/app/app";

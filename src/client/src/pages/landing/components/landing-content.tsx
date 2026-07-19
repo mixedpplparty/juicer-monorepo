@@ -1,5 +1,5 @@
-import { Button } from "juicer-m3/button";
-import { Text } from "juicer-m3/text";
+import { Button } from "@mixedpplparty/juicer-m3/button";
+import { Text } from "@mixedpplparty/juicer-m3/text";
 import { landingPageStyles } from "./landing-content.styles";
 
 export function LandingContent() {

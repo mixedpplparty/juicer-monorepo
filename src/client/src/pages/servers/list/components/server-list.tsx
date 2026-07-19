@@ -1,8 +1,12 @@
+import { AppBar } from "@mixedpplparty/juicer-m3/app-bar";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@mixedpplparty/juicer-m3/avatar";
+import { AddIcon } from "@mixedpplparty/juicer-m3/icons/add";
+import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { AppBar } from "juicer-m3/app-bar";
-import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
-import { AddIcon } from "juicer-m3/icons/add";
-import { List, ListItem } from "juicer-m3/list";
 import type { FilteredGuild } from "juicer-shared";
 import { Link, useParams } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";

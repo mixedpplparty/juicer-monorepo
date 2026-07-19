@@ -1,8 +1,8 @@
-import { Button } from "juicer-m3/button";
-import { Checkbox } from "juicer-m3/checkbox";
-import { Dialog } from "juicer-m3/dialog";
-import { List, ListItem } from "juicer-m3/list";
-import { Text } from "juicer-m3/text";
+import { Button } from "@mixedpplparty/juicer-m3/button";
+import { Checkbox } from "@mixedpplparty/juicer-m3/checkbox";
+import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
+import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
+import { Text } from "@mixedpplparty/juicer-m3/text";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { topicAssociationDialogStyles } from "./topic-association-dialog.styles";

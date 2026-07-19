@@ -1,4 +1,4 @@
-import { Text } from "juicer-m3/text";
+import { Text } from "@mixedpplparty/juicer-m3/text";
 import type { ServerData } from "juicer-shared";
 import { Suspense, useState } from "react";
 import AdminFabMenu from "./admin-fab-menu";

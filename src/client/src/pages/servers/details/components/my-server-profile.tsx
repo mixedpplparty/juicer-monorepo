@@ -1,8 +1,12 @@
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@mixedpplparty/juicer-m3/avatar";
+import { Card } from "@mixedpplparty/juicer-m3/card";
+import { Chip, ChipGroup } from "@mixedpplparty/juicer-m3/chip";
+import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
-import { Card } from "juicer-m3/card";
-import { Chip, ChipGroup } from "juicer-m3/chip";
-import { Text } from "juicer-m3/text";
 import { myDataInServerQueryOptions } from "../api/queries";
 import { myServerProfileStyles } from "./my-server-profile.styles";
 
