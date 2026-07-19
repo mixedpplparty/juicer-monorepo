@@ -1,4 +1,8 @@
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
 	Checkbox,
 	CircularProgress,
@@ -23,7 +27,7 @@ export function TopicDetailsContent() {
 		throw new Error("올바르지 않은 주제 ID입니다.");
 	}
 
-	const { data: topic, refetch } = useSuspenseQuery(
+	const { data: topic } = useSuspenseQuery(
 		topicDetailsQueryOptions(serverId, topicId),
 	);
 
@@ -86,8 +90,8 @@ export function TopicDetailsContent() {
 							<TopicRoleItem
 								key={role.id}
 								serverId={serverId}
+								topicId={topicId}
 								role={role}
-								refetchTopic={refetch}
 							/>
 						))}
 					</List>
@@ -129,16 +133,19 @@ function DetailField({ label, children }: DetailFieldProps) {
 
 interface TopicRoleItemProps {
 	serverId: string;
+	topicId: number;
 	role: TopicDetailsRole;
-	refetchTopic: () => Promise<unknown>;
 }
 
-function TopicRoleItem({ serverId, role, refetchTopic }: TopicRoleItemProps) {
+function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
+	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
 	const mutation = useMutation({
 		mutationFn: setRoleAssignment,
 		onSuccess: async (_, variables) => {
-			await refetchTopic();
+			await queryClient.invalidateQueries({
+				queryKey: topicDetailsQueryOptions(serverId, topicId).queryKey,
+			});
 			enqueue(
 				variables.assigned
 					? `${role.name} 역할을 추가했습니다.`
