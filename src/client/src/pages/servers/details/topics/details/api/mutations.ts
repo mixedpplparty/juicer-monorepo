@@ -1,4 +1,4 @@
-import { getErrorMessage } from "../../../api/get-error-message";
+import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
@@ -14,14 +14,9 @@ export async function setRoleAssignment({
 	assigned,
 }: SetRoleAssignmentInput): Promise<{ message: string }> {
 	const action = assigned ? "assign" : "unassign";
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/roles/${roleId}/${action}`,
-		{ method: "POST", credentials: "include" },
+		{ method: "POST" },
+		"역할을 변경하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "역할을 변경하지 못했습니다."),
-		);
-	}
-	return response.json();
 }

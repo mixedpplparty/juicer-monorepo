@@ -4,7 +4,7 @@ import type {
 	ServerDataDb,
 	SyncRolesResponse,
 } from "juicer-shared";
-import { getErrorMessage } from "../../api/get-error-message";
+import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
@@ -15,33 +15,24 @@ export async function updateServerVerificationRequired({
 	serverId: string;
 	verificationRequired: boolean;
 }): Promise<ServerDataDb[]> {
-	const response = await fetch(`${backendBase}/discord/servers/${serverId}`, {
-		method: "PUT",
-		credentials: "include",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ verificationRequired }),
-	});
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "서버 보안 설정을 변경하지 못했습니다."),
-		);
-	}
-	return response.json();
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}`,
+		{
+			method: "PUT",
+			json: { verificationRequired },
+		},
+		"서버 보안 설정을 변경하지 못했습니다.",
+	);
 }
 
 export async function syncServerRoles(
 	serverId: string,
 ): Promise<SyncRolesResponse> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/sync-roles`,
-		{ credentials: "include" },
+		{},
+		"서버 데이터를 동기화하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "서버 데이터를 동기화하지 못했습니다."),
-		);
-	}
-	return response.json();
 }
 
 export async function createRoleCategory({
@@ -51,21 +42,14 @@ export async function createRoleCategory({
 	serverId: string;
 	name: string;
 }): Promise<RoleCategory[]> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/role-categories/create`,
 		{
 			method: "POST",
-			credentials: "include",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name }),
+			json: { name },
 		},
+		"역할 분류를 추가하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "역할 분류를 추가하지 못했습니다."),
-		);
-	}
-	return response.json();
 }
 
 export async function deleteRoleCategory({
@@ -75,16 +59,11 @@ export async function deleteRoleCategory({
 	serverId: string;
 	roleCategoryId: number;
 }): Promise<RoleCategory[]> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/role-categories/${roleCategoryId}`,
-		{ method: "DELETE", credentials: "include" },
+		{ method: "DELETE" },
+		"역할 분류를 삭제하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "역할 분류를 삭제하지 못했습니다."),
-		);
-	}
-	return response.json();
 }
 
 export async function assignRoleCategory({
@@ -96,21 +75,14 @@ export async function assignRoleCategory({
 	roleId: string;
 	roleCategoryId: number | null;
 }): Promise<Role[]> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/role-categories/assign`,
 		{
 			method: "POST",
-			credentials: "include",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ roleId, roleCategoryId }),
+			json: { roleId, roleCategoryId },
 		},
+		"역할 분류를 변경하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "역할 분류를 변경하지 못했습니다."),
-		);
-	}
-	return response.json();
 }
 
 export async function updateRoleSettings({
@@ -124,19 +96,12 @@ export async function updateRoleSettings({
 	selfAssignable: boolean;
 	description: string | null;
 }): Promise<Role[]> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/roles/${roleId}/update`,
 		{
 			method: "POST",
-			credentials: "include",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ selfAssignable, description }),
+			json: { selfAssignable, description },
 		},
+		"역할 설정을 변경하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "역할 설정을 변경하지 못했습니다."),
-		);
-	}
-	return response.json();
 }

@@ -1,5 +1,5 @@
 import type { UpdateGameResponse } from "juicer-shared";
-import { getErrorMessage } from "../../../api/get-error-message";
+import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
@@ -20,24 +20,17 @@ export async function updateTopic({
 	channelIds,
 	roleIds,
 }: UpdateTopicInput): Promise<UpdateGameResponse> {
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/games/${topicId}`,
 		{
 			method: "PUT",
-			credentials: "include",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
+			json: {
 				name,
 				description,
 				channels: channelIds,
 				roleIds,
-			}),
+			},
 		},
+		"주제를 저장하지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error(
-			await getErrorMessage(response, "주제를 저장하지 못했습니다."),
-		);
-	}
-	return response.json();
 }

@@ -1,49 +1,58 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { Game, MyDataInServer, ServerData } from "juicer-shared";
+import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
-export async function fetchServerData(serverId: string): Promise<ServerData> {
-	const response = await fetch(`${backendBase}/discord/servers/${serverId}`, {
-		credentials: "include",
-	});
-	return response.json();
+export function fetchServerData(
+	serverId: string,
+	signal: AbortSignal,
+): Promise<ServerData> {
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}`,
+		{ signal },
+		"서버 정보를 불러오지 못했습니다.",
+	);
 }
 
-async function fetchMyDataInServer(serverId: string): Promise<MyDataInServer> {
-	const response = await fetch(
+function fetchMyDataInServer(
+	serverId: string,
+	signal: AbortSignal,
+): Promise<MyDataInServer> {
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/me`,
-		{ credentials: "include" },
+		{ signal },
+		"내 서버 프로필을 불러오지 못했습니다.",
 	);
-	return response.json();
 }
 
-async function fetchTopics(serverId: string, query: string): Promise<Game[]> {
+function fetchTopics(
+	serverId: string,
+	query: string,
+	signal: AbortSignal,
+): Promise<Game[]> {
 	const searchParams = new URLSearchParams({ query });
-	const response = await fetch(
+	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/search/all?${searchParams}`,
-		{ credentials: "include" },
+		{ signal },
+		"주제 목록을 불러오지 못했습니다.",
 	);
-	if (!response.ok) {
-		throw new Error("주제 목록을 불러오지 못했습니다.");
-	}
-	return response.json();
 }
 
 export const serverQueryOptions = (serverId: string) =>
 	queryOptions({
 		queryKey: ["serverData", serverId],
-		queryFn: () => fetchServerData(serverId),
+		queryFn: ({ signal }) => fetchServerData(serverId, signal),
 	});
 
 export const myDataInServerQueryOptions = (serverId: string) =>
 	queryOptions({
 		queryKey: ["myDataInServer", serverId],
-		queryFn: () => fetchMyDataInServer(serverId),
+		queryFn: ({ signal }) => fetchMyDataInServer(serverId, signal),
 	});
 
 export const topicsQueryOptions = (serverId: string, query: string) =>
 	queryOptions({
 		queryKey: ["topics", serverId, query],
-		queryFn: () => fetchTopics(serverId, query),
+		queryFn: ({ signal }) => fetchTopics(serverId, query, signal),
 	});
