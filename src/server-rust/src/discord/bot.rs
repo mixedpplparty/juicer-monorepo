@@ -312,12 +312,23 @@ pub async fn get_guild_and_member_data(
     // Owner, channels, roles, the requesting member and the bot's own member
     // (needed for channel visibility) are independent given the guild — fetch
     // them concurrently instead of one after another.
+    // The bot's own member must come from the regular guild-member endpoint —
+    // /users/@me/guilds/{id}/member is OAuth-only and Discord answers
+    // "Bots cannot use this endpoint" to bot tokens.
+    let bot_user_id = {
+        let cached = state.discord_cache.current_user().id;
+        if cached.get() != 0 {
+            cached
+        } else {
+            state.discord_http.get_current_user().await?.id
+        }
+    };
     let (owner, fetched_channels, fetched_roles, member, bot_member) = tokio::join!(
         state.discord_http.get_member(guild.id, guild.owner_id),
         state.discord_http.get_channels(guild.id),
         state.discord_http.get_guild_roles(guild.id),
         fetch_member(state, guild.id, user_id),
-        state.discord_http.get_current_user_guild_member(guild.id),
+        state.discord_http.get_member(guild.id, bot_user_id),
     );
     let owner = owner?;
     let fetched_channels = fetched_channels?;
