@@ -17,6 +17,16 @@ async function fetchServerData(serverId: string): Promise<ServerData> {
 	return response.json();
 }
 
+async function fetchMyDataInServer(serverId: string): Promise<ServerData> {
+	const response = await fetch(
+		`${backendBase}/discord/servers/${serverId}/me`,
+		{
+			credentials: "include",
+		},
+	);
+	return response.json();
+}
+
 export const myInfoQueryOptions = () =>
 	queryOptions({
 		queryKey: ["myInfo"],
@@ -27,4 +37,10 @@ export const serverQueryOptions = (serverId: string) =>
 	queryOptions({
 		queryKey: ["serverData", serverId],
 		queryFn: () => fetchServerData(serverId),
+	});
+
+export const myDataInServerQueryOptions = (serverId: string) =>
+	queryOptions({
+		queryKey: ["myDataInServer", serverId],
+		queryFn: () => fetchMyDataInServer(serverId),
 	});
