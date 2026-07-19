@@ -4,7 +4,7 @@ import {
 	PG_NOT_NULL_VIOLATION,
 	PG_UNIQUE_VIOLATION,
 } from "@drdgvhbh/postgres-error-codes";
-import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
+import { and, asc, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type {
 	CreateCategoryRequestBody,
@@ -344,6 +344,23 @@ export const getRoleInServerInDbByRoleIds = async ({
 	return await db.query.roles.findMany({
 		where: and(inArray(roles.roleId, roleIds), eq(roles.serverId, serverId)),
 	});
+};
+
+export const getServerRoleMetadata = async (serverId: string) => {
+	const [serverRoles, serverRoleCategories] = await Promise.all([
+		db.query.roles.findMany({
+			where: eq(roles.serverId, serverId),
+		}),
+		db.query.roleCategories.findMany({
+			where: eq(roleCategories.serverId, serverId),
+			orderBy: asc(roleCategories.roleCategoryId),
+		}),
+	]);
+
+	return {
+		roles: serverRoles,
+		roleCategories: serverRoleCategories,
+	};
 };
 
 export const deleteRoleFromDb = async ({

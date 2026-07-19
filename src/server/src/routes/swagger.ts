@@ -312,7 +312,7 @@ const openApiDoc = {
 							content: {
 								"application/json": {
 									schema: {
-										type: "GuildMember",
+										type: "MyDataInServer",
 									},
 								},
 							},

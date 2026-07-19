@@ -166,13 +166,27 @@ const ServerData = z.object({
 
 export type ServerData = z.infer<typeof ServerData>;
 
-const MyDataInServer = z.object({
-	id: z.string(),
+export const ServerMemberRole = z.object({
+	roleId: z.string(),
 	name: z.string(),
-	nick: z.string().nullable(),
-	avatar: z.string().nullable(),
-	roles: z.array(Role).nullable(),
-	joined_at: z.string(),
+	color: z.string(),
+});
+
+export type ServerMemberRole = z.infer<typeof ServerMemberRole>;
+
+export const CategorizedRoleGroup = z.object({
+	roleCategoryId: z.number().nullable(),
+	roleCategoryName: z.string().nullable(),
+	roles: z.array(ServerMemberRole),
+});
+
+export type CategorizedRoleGroup = z.infer<typeof CategorizedRoleGroup>;
+
+export const MyDataInServer = z.object({
+	id: z.string(),
+	displayName: z.string(),
+	displayAvatarURL: z.string(),
+	categorizedRoles: z.array(CategorizedRoleGroup),
 });
 
 export type MyDataInServer = z.infer<typeof MyDataInServer>;
