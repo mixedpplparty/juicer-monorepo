@@ -843,3 +843,161 @@ pub async fn update_role_category_of_role(
     .await?;
     Ok(rows)
 }
+
+#[cfg(test)]
+mod smoke_tests {
+    //! End-to-end SQL smoke test against a real Postgres. Skipped unless
+    //! SMOKE_DATABASE_URL is set (e.g. postgres://juicer:juicer@127.0.0.1:15432/juicer).
+    use super::*;
+
+    #[tokio::test]
+    async fn full_db_flow() {
+        let Ok(url) = std::env::var("SMOKE_DATABASE_URL") else {
+            eprintln!("SMOKE_DATABASE_URL not set — skipping DB smoke test");
+            return;
+        };
+        let db = PgPool::connect(&url).await.expect("connect");
+        let sid = "smoke-server";
+        // Clean slate for reruns.
+        sqlx::query("DELETE FROM servers WHERE server_id = $1")
+            .bind(sid)
+            .execute(&db)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM roles_categories WHERE server_id = $1")
+            .bind(sid)
+            .execute(&db)
+            .await
+            .unwrap();
+
+        // servers: create + duplicate -> 400
+        let server = create_server(&db, sid).await.expect("create_server");
+        assert_eq!(server.server_id, sid);
+        assert!(!server.verification_required);
+        let dup = create_server(&db, sid).await.unwrap_err();
+        assert_eq!(dup.status.as_u16(), 400);
+        assert_eq!(dup.message, "Server already exists.");
+
+        update_server_verification_required(&db, sid, true).await.unwrap();
+
+        // categories / tags / role categories / roles
+        let cat = create_category(&db, sid, "rpg").await.unwrap()[0].clone();
+        let tag = create_tag(&db, sid, "coop").await.unwrap()[0].clone();
+        let tag_again = create_tag(&db, sid, "coop").await.unwrap();
+        assert_eq!(tag_again[0].tag_id, tag.tag_id, "create_tag must return existing tag");
+        let rc = create_role_category(&db, sid, "verification").await.unwrap()[0].clone();
+        create_role_in_db(&db, sid, "111").await.unwrap();
+        create_role_in_db(&db, sid, "111").await.unwrap(); // unique violation swallowed
+        let roles = get_all_roles_in_server_in_db(&db, sid).await.unwrap();
+        assert_eq!(roles.len(), 1);
+
+        // role info: set description, clear via explicit null, keep via absent
+        update_role_info(&db, "111", sid, Some(true), Some(Some("desc".into()))).await.unwrap();
+        let r = &get_roles_in_server_in_db_by_role_ids(&db, sid, &["111".into()]).await.unwrap()[0];
+        assert_eq!(r.description.as_deref(), Some("desc"));
+        assert!(r.self_assignable);
+        update_role_info(&db, "111", sid, Some(true), None).await.unwrap();
+        let r = &get_roles_in_server_in_db_by_role_ids(&db, sid, &["111".into()]).await.unwrap()[0];
+        assert_eq!(r.description.as_deref(), Some("desc"), "absent description must be kept");
+        update_role_info(&db, "111", sid, Some(true), Some(None)).await.unwrap();
+        let r = &get_roles_in_server_in_db_by_role_ids(&db, sid, &["111".into()]).await.unwrap()[0];
+        assert_eq!(r.description, None, "explicit null must clear description");
+
+        update_role_category_of_role(&db, "111", Some(rc.role_category_id), sid).await.unwrap();
+        update_role_category_of_role(&db, "111", None, sid).await.unwrap();
+
+        // games: create, update with tags/roles diff, search, thumbnail, delete
+        let game = create_game(&db, sid, "Factorio", Some("automation"), Some(cat.category_id))
+            .await
+            .unwrap();
+        let upd = update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: Some("Factorio SA".into()),
+                description: None,
+                category_id: None,
+                thumbnail: None,
+                channels: Some(vec!["123".into()]),
+                tag_ids: Some(vec![tag.tag_id]),
+                role_ids: Some(vec!["111".into()]),
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(upd.updated_game.as_ref().unwrap().name, "Factorio SA");
+        assert_eq!(upd.tags.added.as_ref().unwrap().len(), 1);
+        assert_eq!(upd.roles.added.as_ref().unwrap().len(), 1);
+        // removing the tag via empty list
+        let upd2 = update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: None,
+                description: None,
+                category_id: None,
+                thumbnail: None,
+                channels: None,
+                tag_ids: Some(vec![]),
+                role_ids: Some(vec!["111".into()]),
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(upd2.tags.removed.as_ref().unwrap().len(), 1);
+        assert!(upd2.roles.added.is_none() && upd2.roles.removed.is_none());
+        // put the tag back for search
+        update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: None, description: None, category_id: None, thumbnail: None,
+                channels: None, tag_ids: Some(vec![tag.tag_id]), role_ids: None,
+            },
+        )
+        .await
+        .unwrap();
+        let missing = update_game(
+            &db, 999_999, sid,
+            UpdateGameParams { name: None, description: None, category_id: None,
+                thumbnail: None, channels: None, tag_ids: None, role_ids: None },
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(missing.status.as_u16(), 404);
+
+        assert_eq!(find_games_by_name(&db, sid, "factorio").await.unwrap().len(), 1);
+        assert_eq!(find_games_by_tags(&db, sid, &["coop".into()]).await.unwrap().len(), 1);
+        assert_eq!(find_games_by_category_name(&db, sid, "rpg").await.unwrap().len(), 1);
+        let all = get_all_games_in_server(&db, sid).await.unwrap();
+        assert_eq!(all.len(), 1);
+        assert!(all[0].games_tags.as_ref().unwrap().len() == 1);
+        assert!(all[0].game.thumbnail.is_none(), "list payloads must omit thumbnail");
+
+        update_game_thumbnail(&db, game.game_id, sid, &[7u8; 200]).await.unwrap();
+        let thumb = get_game_thumbnail(&db, game.game_id, sid).await.unwrap().unwrap();
+        assert_eq!(thumb.len(), 200);
+
+        // full aggregate
+        let data = get_server_data_in_db(&db, sid).await.unwrap().unwrap();
+        assert!(data.verification_required);
+        assert_eq!(data.games.as_ref().unwrap().len(), 1);
+        assert_eq!(data.categories.as_ref().unwrap().len(), 1);
+        assert_eq!(data.tags.as_ref().unwrap().len(), 1);
+        assert_eq!(data.roles.as_ref().unwrap().len(), 1);
+        assert_eq!(data.role_categories.as_ref().unwrap().len(), 1);
+        assert!(get_server_data_in_db(&db, "no-such").await.unwrap().is_none());
+
+        // deletes
+        let deleted = delete_game(&db, game.game_id, sid).await.unwrap();
+        assert_eq!(deleted.game_id, game.game_id);
+        assert_eq!(delete_tag(&db, tag.tag_id, sid).await.unwrap().len(), 1);
+        assert_eq!(delete_category(&db, cat.category_id, sid).await.unwrap().len(), 1);
+        delete_role_from_db(&db, sid, "111").await.unwrap();
+        assert_eq!(delete_role_category(&db, rc.role_category_id, sid).await.unwrap().len(), 1);
+        assert!(get_all_roles_in_server_in_db(&db, sid).await.unwrap().is_empty());
+    }
+}
