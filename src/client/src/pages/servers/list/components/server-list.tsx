@@ -31,21 +31,32 @@ export function ServerList() {
 			/>
 			<nav aria-label="서버 목록">
 				<List container="transparent">
-					{myData.guilds.map((guild: FilteredGuild) => (
-						<ListItem
-							key={guild.id}
-							headline={guild.name}
-							leading={
-								<Avatar>
-									<AvatarImage src={guild.icon} />
-									<AvatarFallback>{guild.name.substring(0, 2)}</AvatarFallback>
-								</Avatar>
-							}
-							supportingText={`by ${guild.ownerName}`}
-							render={<Link to={guild.id} />}
-							selected={params.serverId === guild.id}
-						/>
-					))}
+					{myData.guilds.map((guild: FilteredGuild) => {
+						const selected = params.serverId === guild.id;
+
+						return (
+							<ListItem
+								key={guild.id}
+								headline={guild.name}
+								leading={
+									<Avatar>
+										<AvatarImage src={guild.icon} alt="" />
+										<AvatarFallback aria-hidden="true">
+											{guild.name.substring(0, 2)}
+										</AvatarFallback>
+									</Avatar>
+								}
+								supportingText={`by ${guild.ownerName}`}
+								render={
+									<Link
+										to={guild.id}
+										aria-current={selected ? "page" : undefined}
+									/>
+								}
+								selected={selected}
+							/>
+						);
+					})}
 					<ListItem
 						leading={<AddIcon />}
 						headline="juicer에 내 서버 추가하기"

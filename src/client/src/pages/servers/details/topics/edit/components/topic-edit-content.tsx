@@ -158,7 +158,7 @@ export function TopicEditContent() {
 	};
 
 	return (
-		<main css={topicEditPageStyles.root}>
+		<div css={topicEditPageStyles.root}>
 			<form css={topicEditPageStyles.form} onSubmit={handleSubmit}>
 				<div css={topicEditPageStyles.fields}>
 					<TextField
@@ -261,7 +261,7 @@ export function TopicEditContent() {
 				onOpenChange={setRoleDialogOpen}
 				onConfirm={setRoleIds}
 			/>
-		</main>
+		</div>
 	);
 }
 

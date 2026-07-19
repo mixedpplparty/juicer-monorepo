@@ -3,11 +3,11 @@ import { centeredPageStyles } from "@/shared/styles/layout";
 
 export function ServerListEmptyState() {
 	return (
-		<section css={centeredPageStyles}>
-			<Text typeRole="body" size="large">
+		<div css={centeredPageStyles}>
+			<Text as="p" typeRole="body" size="large">
 				서버를 선택해 주세요
 			</Text>
-		</section>
+		</div>
 	);
 }
 

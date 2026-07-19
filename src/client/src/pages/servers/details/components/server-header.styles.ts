@@ -1,5 +1,5 @@
-import breakpoints from "@/shared/styles/breakpoints";
 import { css } from "@emotion/react";
+import breakpoints from "@/shared/styles/breakpoints";
 
 export const serverHeaderStyles = {
 	root: css({
@@ -64,5 +64,8 @@ export const serverHeaderStyles = {
 		[`@media (min-width: ${breakpoints.tablet})`]: {
 			padding: 0,
 		},
+	}),
+	serverName: css({
+		margin: 0,
 	}),
 };

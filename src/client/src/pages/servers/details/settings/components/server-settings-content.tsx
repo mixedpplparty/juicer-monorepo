@@ -206,7 +206,7 @@ export function ServerSettingsContent() {
 			: (serverData.serverDataDb?.verificationRequired ?? false);
 
 	const handleDrop = (
-		event: DragEvent<HTMLFieldSetElement>,
+		event: DragEvent<HTMLElement>,
 		roleCategoryId: number | null,
 	) => {
 		event.preventDefault();
@@ -224,7 +224,7 @@ export function ServerSettingsContent() {
 	};
 
 	return (
-		<main css={serverSettingsPageStyles.root}>
+		<div css={serverSettingsPageStyles.root}>
 			<SettingsSection title="서버 보안">
 				<List
 					container="transparent"
@@ -408,7 +408,7 @@ export function ServerSettingsContent() {
 					}
 				}}
 			/>
-		</main>
+		</div>
 	);
 }
 
@@ -422,7 +422,7 @@ interface RoleDropZoneProps {
 	onRoleClick: (role: RoleSettingsValue) => void;
 	onDragStart: (roleId: string) => void;
 	onDragOverCategory: (categoryKey: string) => void;
-	onDrop: (event: DragEvent<HTMLFieldSetElement>) => void;
+	onDrop: (event: DragEvent<HTMLElement>) => void;
 }
 
 function RoleDropZone({
@@ -438,8 +438,8 @@ function RoleDropZone({
 	onDrop,
 }: RoleDropZoneProps) {
 	return (
-		<fieldset
-			aria-label={`${name} 역할 분류`}
+		<section
+			aria-labelledby={`role-category-${categoryKey}`}
 			css={serverSettingsPageStyles.roleGroup}
 			data-drag-over={dragOverCategory === categoryKey}
 			onDragEnter={() => !disabled && onDragOverCategory(categoryKey)}
@@ -457,6 +457,7 @@ function RoleDropZone({
 		>
 			<div css={serverSettingsPageStyles.roleGroupHeader}>
 				<Text
+					id={`role-category-${categoryKey}`}
 					as="h3"
 					typeRole="title"
 					size="medium"
@@ -503,7 +504,7 @@ function RoleDropZone({
 					</Text>
 				)}
 			</div>
-		</fieldset>
+		</section>
 	);
 }
 

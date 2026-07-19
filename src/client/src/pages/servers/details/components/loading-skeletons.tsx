@@ -92,7 +92,7 @@ export function ServerOverviewSkeleton() {
 			aria-label="서버 상세 불러오는 중"
 			css={serverInfoStyles.root}
 		>
-			<section css={serverInfoStyles.section}>
+			<div css={serverInfoStyles.section}>
 				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
 				<Card variant="outlined" css={loadingSkeletonStyles.profileCard}>
 					<div css={loadingSkeletonStyles.profileRow}>
@@ -105,11 +105,11 @@ export function ServerOverviewSkeleton() {
 						<Skeleton css={loadingSkeletonStyles.chip} />
 					</div>
 				</Card>
-			</section>
-			<section css={serverInfoStyles.section}>
+			</div>
+			<div css={serverInfoStyles.section}>
 				<Skeleton css={loadingSkeletonStyles.sectionHeading} />
 				<TopicListSkeleton />
-			</section>
+			</div>
 		</div>
 	);
 }

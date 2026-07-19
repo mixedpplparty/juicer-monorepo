@@ -14,7 +14,7 @@ export function ServersLayout() {
 	return (
 		<div css={serversLayoutStyles.root}>
 			{shouldRenderServerList && (
-				<aside>
+				<aside aria-label="서버 탐색">
 					<Suspense fallback={<ServerListSkeleton />}>
 						<ServerList />
 					</Suspense>

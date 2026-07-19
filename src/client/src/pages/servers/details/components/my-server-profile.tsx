@@ -19,8 +19,8 @@ export function MyServerProfile({ myDataInServer }: MyServerProfileProps) {
 		<Card variant="outlined" css={myServerProfileStyles.root}>
 			<div css={myServerProfileStyles.nicknameRow}>
 				<Avatar size="lg">
-					<AvatarImage src={myDataInServer.displayAvatarURL} />
-					<AvatarFallback>
+					<AvatarImage src={myDataInServer.displayAvatarURL} alt="" />
+					<AvatarFallback aria-hidden="true">
 						{myDataInServer.displayName.substring(0, 2)}
 					</AvatarFallback>
 				</Avatar>

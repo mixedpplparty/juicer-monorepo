@@ -9,6 +9,12 @@ export const topicDetailsPageStyles = {
 		flexDirection: "column",
 		gap: "1.5rem",
 	}),
+	details: css({
+		display: "flex",
+		margin: 0,
+		flexDirection: "column",
+		gap: "1.5rem",
+	}),
 	field: css({
 		display: "flex",
 		flexDirection: "column",
@@ -16,6 +22,9 @@ export const topicDetailsPageStyles = {
 	}),
 	label: css({
 		color: "var(--md-sys-color-on-surface-variant)",
+	}),
+	detailValue: css({
+		margin: 0,
 	}),
 	value: css({
 		margin: 0,

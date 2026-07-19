@@ -58,13 +58,18 @@ export function ServerHeader({
 
 			<div css={serverHeaderStyles.details}>
 				<Avatar size="lg">
-					<AvatarImage src={_serverData.serverDataDiscord.icon} />
-					<AvatarFallback>
+					<AvatarImage src={_serverData.serverDataDiscord.icon} alt="" />
+					<AvatarFallback aria-hidden="true">
 						{_serverData.serverDataDiscord.name.substring(0, 2)}
 					</AvatarFallback>
 				</Avatar>
 				<div css={serverHeaderStyles.serverText}>
-					<Text typeRole="headline" size="medium">
+					<Text
+						as="h1"
+						typeRole="headline"
+						size="medium"
+						css={serverHeaderStyles.serverName}
+					>
 						{_serverData.serverDataDiscord.name}
 					</Text>
 					<Text typeRole="body" size="medium">

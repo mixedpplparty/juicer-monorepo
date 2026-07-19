@@ -32,44 +32,36 @@ export function TopicDetailsContent() {
 	);
 
 	return (
-		<main css={topicDetailsPageStyles.root}>
-			<DetailField label="설명">
-				<Text
-					as="p"
-					typeRole="body"
-					size="large"
-					css={topicDetailsPageStyles.value}
-				>
-					{topic.description || "설명이 없습니다."}
-				</Text>
-			</DetailField>
+		<div css={topicDetailsPageStyles.root}>
+			<dl css={topicDetailsPageStyles.details}>
+				<DetailField label="설명">
+					<Text typeRole="body" size="large">
+						{topic.description || "설명이 없습니다."}
+					</Text>
+				</DetailField>
 
-			<DetailField label="카테고리">
-				<Text
-					as="p"
-					typeRole="body"
-					size="large"
-					css={topicDetailsPageStyles.value}
-				>
-					{topic.category?.name || "카테고리가 없습니다."}
-				</Text>
-			</DetailField>
+				<DetailField label="카테고리">
+					<Text typeRole="body" size="large">
+						{topic.category?.name || "카테고리가 없습니다."}
+					</Text>
+				</DetailField>
 
-			<DetailField label="연관 채널">
-				<div css={topicDetailsPageStyles.channels}>
-					{topic.channels.length > 0 ? (
-						topic.channels.map((channel) => (
-							<Text key={channel.id} typeRole="body" size="large">
-								#{channel.name}
+				<DetailField label="연관 채널">
+					<div css={topicDetailsPageStyles.channels}>
+						{topic.channels.length > 0 ? (
+							topic.channels.map((channel) => (
+								<Text key={channel.id} typeRole="body" size="large">
+									#{channel.name}
+								</Text>
+							))
+						) : (
+							<Text typeRole="body" size="large">
+								연관 채널이 없습니다.
 							</Text>
-						))
-					) : (
-						<Text typeRole="body" size="large">
-							연관 채널이 없습니다.
-						</Text>
-					)}
-				</div>
-			</DetailField>
+						)}
+					</div>
+				</DetailField>
+			</dl>
 
 			<section css={topicDetailsPageStyles.roles}>
 				<Text
@@ -106,7 +98,7 @@ export function TopicDetailsContent() {
 					</Text>
 				)}
 			</section>
-		</main>
+		</div>
 	);
 }
 
@@ -117,17 +109,17 @@ interface DetailFieldProps {
 
 function DetailField({ label, children }: DetailFieldProps) {
 	return (
-		<section css={topicDetailsPageStyles.field}>
+		<div css={topicDetailsPageStyles.field}>
 			<Text
-				as="h2"
+				as="dt"
 				typeRole="label"
 				size="large"
 				css={topicDetailsPageStyles.label}
 			>
 				{label}
 			</Text>
-			{children}
-		</section>
+			<dd css={topicDetailsPageStyles.detailValue}>{children}</dd>
+		</div>
 	);
 }
 
