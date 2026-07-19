@@ -3,6 +3,7 @@ import type {
 	RoleCategory,
 	ServerDataDb,
 	SyncRolesResponse,
+	UpdateRoleSettingsRequest,
 } from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 
@@ -66,41 +67,19 @@ export async function deleteRoleCategory({
 	);
 }
 
-export async function assignRoleCategory({
-	serverId,
-	roleId,
-	roleCategoryId,
-}: {
-	serverId: string;
-	roleId: string;
-	roleCategoryId: number | null;
-}): Promise<Role[]> {
-	return fetchJson(
-		`${backendBase}/discord/servers/${serverId}/role-categories/assign`,
-		{
-			method: "POST",
-			json: { roleId, roleCategoryId },
-		},
-		"역할 분류를 변경하지 못했습니다.",
-	);
-}
-
 export async function updateRoleSettings({
 	serverId,
 	roleId,
-	selfAssignable,
-	description,
+	...settings
 }: {
 	serverId: string;
 	roleId: string;
-	selfAssignable: boolean;
-	description: string | null;
-}): Promise<Role[]> {
+} & UpdateRoleSettingsRequest): Promise<Role> {
 	return fetchJson(
-		`${backendBase}/discord/servers/${serverId}/roles/${roleId}/update`,
+		`${backendBase}/discord/servers/${serverId}/roles/${roleId}`,
 		{
-			method: "POST",
-			json: { selfAssignable, description },
+			method: "PATCH",
+			json: settings,
 		},
 		"역할 설정을 변경하지 못했습니다.",
 	);

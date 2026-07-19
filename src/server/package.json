@@ -4,6 +4,7 @@
 	"scripts": {
 		"dev": "bun run --hot src/index.ts",
 		"build": "tsc",
+		"test": "tsx --test src/functions/role-settings.test.ts",
 		"start": "bun run src/index.js",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",

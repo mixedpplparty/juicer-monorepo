@@ -383,6 +383,25 @@ export const SetRoleSelfAssignableRequestBody = z.object({
 	description: z.string().nullable().optional(),
 });
 
+export const UpdateRoleSettingsRequestBody = z
+	.object({
+		roleCategoryId: z.number().int().positive().nullable().optional(),
+		selfAssignable: z.boolean().optional(),
+		description: z.string().trim().max(500).nullable().optional(),
+	})
+	.strict()
+	.refine(
+		({ roleCategoryId, selfAssignable, description }) =>
+			roleCategoryId !== undefined ||
+			selfAssignable !== undefined ||
+			description !== undefined,
+		{ message: "At least one role setting is required." },
+	);
+
+export type UpdateRoleSettingsRequest = z.infer<
+	typeof UpdateRoleSettingsRequestBody
+>;
+
 export const GuildMember = z.object({
 	avatarURL: z.string().nullable(),
 	bannerURL: z.string().nullable(),

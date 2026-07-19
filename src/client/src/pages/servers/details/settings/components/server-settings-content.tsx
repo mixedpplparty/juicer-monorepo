@@ -15,13 +15,12 @@ import {
 	Text,
 	useSnackbar,
 } from "juicer-m3";
-import type { RoleCategory } from "juicer-shared";
+import type { Role, RoleCategory, ServerData } from "juicer-shared";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 import { useOutletContext } from "react-router";
 import { serverQueryOptions } from "../../api/queries";
 import type { ServerDetailsOutletContext } from "../../server-details-context";
 import {
-	assignRoleCategory,
 	createRoleCategory,
 	deleteRoleCategory,
 	syncServerRoles,
@@ -90,6 +89,26 @@ export function ServerSettingsContent() {
 		queryClient.refetchQueries({
 			queryKey: serverQueryOptions(serverId).queryKey,
 		});
+	const updateCachedRole = (updatedRole: Role) => {
+		queryClient.setQueryData<ServerData>(
+			serverQueryOptions(serverId).queryKey,
+			(current) => {
+				if (!current?.serverDataDb?.roles) {
+					return current;
+				}
+
+				return {
+					...current,
+					serverDataDb: {
+						...current.serverDataDb,
+						roles: current.serverDataDb.roles.map((role) =>
+							role.roleId === updatedRole.roleId ? updatedRole : role,
+						),
+					},
+				};
+			},
+		);
+	};
 
 	const verificationMutation = useMutation({
 		mutationFn: updateServerVerificationRequired,
@@ -128,9 +147,9 @@ export function ServerSettingsContent() {
 		}: {
 			roleId: string;
 			roleCategoryId: number | null;
-		}) => assignRoleCategory({ serverId, roleId, roleCategoryId }),
-		onSuccess: async () => {
-			await refreshServerData();
+		}) => updateRoleSettings({ serverId, roleId, roleCategoryId }),
+		onSuccess: (updatedRole) => {
+			updateCachedRole(updatedRole);
 			enqueue("역할을 옮겼습니다.");
 		},
 		onError: (error) => showError(error, enqueue),
@@ -141,7 +160,7 @@ export function ServerSettingsContent() {
 	});
 
 	const roleSettingsMutation = useMutation({
-		mutationFn: async ({
+		mutationFn: ({
 			role,
 			roleCategoryId,
 			selfAssignable,
@@ -151,42 +170,20 @@ export function ServerSettingsContent() {
 			roleCategoryId: number | null;
 			selfAssignable: boolean;
 			description: string | null;
-		}) => {
-			const categoryChanged = role.roleCategoryId !== roleCategoryId;
-			if (categoryChanged) {
-				await assignRoleCategory({
-					serverId,
-					roleId: role.id,
-					roleCategoryId,
-				});
-			}
-			try {
-				await updateRoleSettings({
-					serverId,
-					roleId: role.id,
-					selfAssignable,
-					description,
-				});
-			} catch (error) {
-				if (categoryChanged) {
-					await assignRoleCategory({
-						serverId,
-						roleId: role.id,
-						roleCategoryId: role.roleCategoryId,
-					}).catch(() => undefined);
-				}
-				throw error;
-			}
-		},
-		onSuccess: async () => {
-			await refreshServerData();
+		}) =>
+			updateRoleSettings({
+				serverId,
+				roleId: role.id,
+				roleCategoryId,
+				selfAssignable,
+				description,
+			}),
+		onSuccess: (updatedRole) => {
+			updateCachedRole(updatedRole);
 			setSelectedRole(null);
 			enqueue("역할 설정을 저장했습니다.");
 		},
-		onError: async (error) => {
-			await refreshServerData();
-			showError(error, enqueue);
-		},
+		onError: (error) => showError(error, enqueue),
 	});
 
 	const deleteCategoryMutation = useMutation({

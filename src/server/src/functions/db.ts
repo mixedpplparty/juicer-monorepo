@@ -22,7 +22,7 @@ import type {
 	Tag,
 	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
-	UpdateServerVerificationRequiredRequestBody,
+	UpdateRoleSettingsRequest,
 } from "juicer-shared/dist/types/index.js";
 import { DatabaseError } from "pg";
 import type * as z from "zod";
@@ -37,6 +37,7 @@ import {
 	servers,
 	tags,
 } from "../db/schemas.js";
+import { buildRoleSettingsUpdate } from "./role-settings.js";
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this
 export const getServerDataInDb = async (
@@ -452,41 +453,86 @@ export const deleteRoleCategory = async ({
 	roleCategoryId: number;
 	serverId: string;
 }): Promise<(typeof roleCategories.$inferInsert)[]> => {
-	return await db
-		.delete(roleCategories)
-		.where(
-			and(
-				eq(roleCategories.roleCategoryId, roleCategoryId),
-				eq(roleCategories.serverId, serverId),
-			),
-		)
-		.returning();
+	return await db.transaction(async (tx) => {
+		const [category] = await tx
+			.select({
+				roleCategoryId: roleCategories.roleCategoryId,
+				name: roleCategories.name,
+			})
+			.from(roleCategories)
+			.where(
+				and(
+					eq(roleCategories.roleCategoryId, roleCategoryId),
+					eq(roleCategories.serverId, serverId),
+				),
+			)
+			.limit(1);
+
+		if (!category) {
+			throw new HTTPException(404, {
+				message: "Role category not found in this server.",
+			});
+		}
+		if (category.name.trim().toLowerCase() === "verification") {
+			throw new HTTPException(400, {
+				message: "Cannot delete the verification role category.",
+			});
+		}
+
+		return await tx
+			.delete(roleCategories)
+			.where(
+				and(
+					eq(roleCategories.roleCategoryId, roleCategoryId),
+					eq(roleCategories.serverId, serverId),
+				),
+			)
+			.returning();
+	});
 };
 
-export const updateRoleCategoryOfRole = async ({
+export const updateRoleSettings = async ({
 	roleId,
-	roleCategoryId,
 	serverId,
-}: {
+	...input
+}: UpdateRoleSettingsRequest & {
 	roleId: string;
-	roleCategoryId: number | null;
 	serverId: string;
-}): Promise<(typeof roles.$inferInsert)[]> => {
-	if (roleCategoryId === null) {
-		// unassign the role category from the role
-		return await db
+}): Promise<typeof roles.$inferSelect> => {
+	return await db.transaction(async (tx) => {
+		if (input.roleCategoryId !== undefined && input.roleCategoryId !== null) {
+			const [category] = await tx
+				.select({ roleCategoryId: roleCategories.roleCategoryId })
+				.from(roleCategories)
+				.where(
+					and(
+						eq(roleCategories.roleCategoryId, input.roleCategoryId),
+						eq(roleCategories.serverId, serverId),
+					),
+				)
+				.limit(1);
+
+			if (!category) {
+				throw new HTTPException(400, {
+					message: "Role category does not belong to this server.",
+				});
+			}
+		}
+
+		const [updatedRole] = await tx
 			.update(roles)
-			.set({ roleCategoryId: null })
+			.set(buildRoleSettingsUpdate(input))
 			.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
 			.returning();
-	} else {
-		// assign the role category to the role
-		return await db
-			.update(roles)
-			.set({ roleCategoryId })
-			.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
-			.returning();
-	}
+
+		if (!updatedRole) {
+			throw new HTTPException(404, {
+				message: "Role not found in this server.",
+			});
+		}
+
+		return updatedRole;
+	});
 };
 
 export const findGamesByCategoryName = async ({
@@ -627,27 +673,6 @@ export const getGameThumbnail = async ({
 			where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 		})
 		.then((res) => res?.thumbnail ?? null);
-};
-
-export const updateRoleInfo = async ({
-	roleId,
-	serverId,
-	selfAssignable,
-	description,
-}: {
-	roleId: string;
-	serverId: string;
-	selfAssignable?: boolean | null;
-	description?: string | null | undefined;
-}): Promise<(typeof roles.$inferInsert)[]> => {
-	if (selfAssignable === undefined || selfAssignable === null) {
-		selfAssignable = false;
-	}
-	return await db
-		.update(roles)
-		.set({ selfAssignable, description })
-		.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
-		.returning();
 };
 
 export const updateServerVerificationRequired = async ({
