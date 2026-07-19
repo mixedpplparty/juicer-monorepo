@@ -1,20 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-	AddIcon,
-	Button,
-	Chip,
-	CircularProgress,
-	DeleteIcon,
-	Dialog,
-	IconButton,
-	List,
-	ListItem,
-	RefreshIcon,
-	RoleIndicator,
-	Switch,
-	Text,
-	useSnackbar,
-} from "juicer-m3";
+import { Button, IconButton } from "juicer-m3/button";
+import { Chip } from "juicer-m3/chip";
+import { Dialog } from "juicer-m3/dialog";
+import { AddIcon } from "juicer-m3/icons/add";
+import { DeleteIcon } from "juicer-m3/icons/delete";
+import { RefreshIcon } from "juicer-m3/icons/refresh";
+import { List, ListItem } from "juicer-m3/list";
+import { CircularProgress } from "juicer-m3/progress";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { useSnackbar } from "juicer-m3/snackbar";
+import { Switch } from "juicer-m3/switch";
+import { Text } from "juicer-m3/text";
 import type { Role, RoleCategory, ServerData } from "juicer-shared";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 import { useOutletContext } from "react-router";

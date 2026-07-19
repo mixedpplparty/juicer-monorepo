@@ -1,5 +1,8 @@
-import { AppBar, ArrowBackIcon, Card, IconButton, Skeleton } from "juicer-m3";
-import type { ReactNode } from "react";
+import { AppBar } from "juicer-m3/app-bar";
+import { IconButton } from "juicer-m3/button";
+import { Card } from "juicer-m3/card";
+import { ArrowBackIcon } from "juicer-m3/icons/arrow-back";
+import { Skeleton } from "juicer-m3/skeleton";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
 import { serverDetailsPageStyles } from "../server-details-page.styles";
@@ -10,28 +13,16 @@ import { serverInfoStyles } from "./server-info.styles";
 const topicCards = [0, 1, 2, 3];
 const skeletonRows = ["row-a", "row-b", "row-c", "row-d"];
 
-export type ServerRouteSkeletonKind =
-	| "overview"
-	| "settings"
-	| "topic"
-	| "topic-edit";
-
-export function ServerDetailsLayoutSkeleton({
-	kind = "overview",
-	content,
-}: {
-	kind?: ServerRouteSkeletonKind;
-	content?: ReactNode;
-}) {
+export function ServerDetailsLayoutSkeleton() {
 	return (
 		<div
 			role="status"
 			aria-label="서버 정보 불러오는 중"
 			css={serverDetailsPageStyles.root}
 		>
-			{kind === "overview" ? <ServerHeaderSkeleton /> : <TopicAppBarSkeleton />}
+			<ServerHeaderSkeleton />
 			<div css={serverDetailsPageStyles.content}>
-				{content ?? <ServerOverviewSkeleton />}
+				<ServerOverviewSkeleton />
 			</div>
 		</div>
 	);

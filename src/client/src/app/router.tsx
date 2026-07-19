@@ -1,11 +1,14 @@
 import LandingPage from "@/pages/landing/landing-page";
 import { serverQueryOptions } from "@/pages/servers/details/api/queries";
 import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
+import ServerDetailsPage from "@/pages/servers/details/server-details-page";
+import ServerSettingsPage from "@/pages/servers/details/settings/server-settings-page";
+import TopicDetailsPage from "@/pages/servers/details/topics/details/topic-details-page";
+import TopicEditPage from "@/pages/servers/details/topics/edit/topic-edit-page";
 import { myInfoQueryOptions } from "@/pages/servers/list/api/queries";
 import ServerListEmptyPage from "@/pages/servers/list/server-list-empty-page";
 import ServersLayout from "@/pages/servers/servers-layout";
 import { HttpError } from "@/shared/api/fetch-json";
-import { lazy } from "react";
 import {
 	createBrowserRouter,
 	type LoaderFunctionArgs,
@@ -15,19 +18,6 @@ import {
 import AuthLoading from "./auth-loading";
 import { queryClient } from "./query-client";
 import RouteErrorBoundary from "./route-error-boundary";
-
-const ServerDetailsPage = lazy(
-	() => import("@/pages/servers/details/server-details-page"),
-);
-const ServerSettingsPage = lazy(
-	() => import("@/pages/servers/details/settings/server-settings-page"),
-);
-const TopicDetailsPage = lazy(
-	() => import("@/pages/servers/details/topics/details/topic-details-page"),
-);
-const TopicEditPage = lazy(
-	() => import("@/pages/servers/details/topics/edit/topic-edit-page"),
-);
 
 async function getCurrentUser() {
 	try {
@@ -125,28 +115,15 @@ export const router = createBrowserRouter([
 										path: "settings",
 										loader: serverAdminOnlyLoader,
 										Component: ServerSettingsPage,
-										handle: {
-											serverAppBarTitle: "서버 설정",
-											serverAppBarSubtitle: "server-name",
-											serverContentSkeleton: "settings",
-										},
 									},
 									{
 										path: "topics/:topicId",
 										Component: TopicDetailsPage,
-										handle: {
-											serverAppBarKind: "topic",
-											serverContentSkeleton: "topic",
-										},
 									},
 									{
 										path: "topics/:topicId/edit",
 										loader: serverAdminOnlyLoader,
 										Component: TopicEditPage,
-										handle: {
-											serverAppBarKind: "topic-edit",
-											serverContentSkeleton: "topic-edit",
-										},
 									},
 								],
 							},

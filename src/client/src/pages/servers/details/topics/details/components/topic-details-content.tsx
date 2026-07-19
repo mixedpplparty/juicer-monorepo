@@ -1,35 +1,25 @@
-import {
-	useMutation,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
-import {
-	Checkbox,
-	List,
-	ListItem,
-	RoleIndicator,
-	Text,
-	useSnackbar,
-} from "juicer-m3";
-import type { TopicDetailsRole } from "juicer-shared";
-import { useOutletContext, useParams } from "react-router";
-import type { ServerDetailsOutletContext } from "../../../server-details-context";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Checkbox } from "juicer-m3/checkbox";
+import { List, ListItem } from "juicer-m3/list";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { useSnackbar } from "juicer-m3/snackbar";
+import { Text } from "juicer-m3/text";
+import type { TopicDetails, TopicDetailsRole } from "juicer-shared";
 import { topicDetailsQueryOptions } from "../../api/queries";
 import { setRoleAssignment } from "../api/mutations";
 import { topicDetailsPageStyles } from "../topic-details-page.styles";
 
-export function TopicDetailsContent() {
-	const { serverId } = useOutletContext<ServerDetailsOutletContext>();
-	const topicId = Number(useParams().topicId);
+interface TopicDetailsContentProps {
+	serverId: string;
+	topicId: number;
+	topic: TopicDetails;
+}
 
-	if (!Number.isInteger(topicId)) {
-		throw new Error("올바르지 않은 주제 ID입니다.");
-	}
-
-	const { data: topic } = useSuspenseQuery(
-		topicDetailsQueryOptions(serverId, topicId),
-	);
-
+export function TopicDetailsContent({
+	serverId,
+	topicId,
+	topic,
+}: TopicDetailsContentProps) {
 	return (
 		<div css={topicDetailsPageStyles.root}>
 			<dl css={topicDetailsPageStyles.details}>

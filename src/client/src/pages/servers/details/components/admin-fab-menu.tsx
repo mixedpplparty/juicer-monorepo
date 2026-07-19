@@ -1,4 +1,6 @@
-import { AddIcon, Fab, FabMenu, SettingsIcon } from "juicer-m3";
+import { Fab, FabMenu } from "juicer-m3/fab";
+import { AddIcon } from "juicer-m3/icons/add";
+import { SettingsIcon } from "juicer-m3/icons/settings";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { adminFabMenuStyles } from "./admin-fab-menu.styles";

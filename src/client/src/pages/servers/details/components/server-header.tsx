@@ -1,12 +1,8 @@
-import {
-	ArrowBackIcon,
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-	IconButton,
-	SearchBar,
-	Text,
-} from "juicer-m3";
+import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
+import { IconButton } from "juicer-m3/button";
+import { ArrowBackIcon } from "juicer-m3/icons/arrow-back";
+import { SearchBar } from "juicer-m3/search";
+import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
 import { Link } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";
@@ -21,7 +17,7 @@ export interface ServerHeaderProps {
 }
 
 export function ServerHeader({
-	serverData: _serverData,
+	serverData,
 	searchQuery,
 	onSearchQueryChange,
 }: ServerHeaderProps) {
@@ -58,9 +54,9 @@ export function ServerHeader({
 
 			<div css={serverHeaderStyles.details}>
 				<Avatar size="lg">
-					<AvatarImage src={_serverData.serverDataDiscord.icon} alt="" />
+					<AvatarImage src={serverData.serverDataDiscord.icon} alt="" />
 					<AvatarFallback aria-hidden="true">
-						{_serverData.serverDataDiscord.name.substring(0, 2)}
+						{serverData.serverDataDiscord.name.substring(0, 2)}
 					</AvatarFallback>
 				</Avatar>
 				<div css={serverHeaderStyles.serverText}>
@@ -70,11 +66,11 @@ export function ServerHeader({
 						size="medium"
 						css={serverHeaderStyles.serverName}
 					>
-						{_serverData.serverDataDiscord.name}
+						{serverData.serverDataDiscord.name}
 					</Text>
 					<Text typeRole="body" size="medium">
-						by {_serverData.serverDataDiscord.ownerName},{" "}
-						{_serverData.serverDataDiscord.memberCount}명
+						by {serverData.serverDataDiscord.ownerName},{" "}
+						{serverData.serverDataDiscord.memberCount}명
 					</Text>
 				</div>
 			</div>

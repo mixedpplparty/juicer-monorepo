@@ -1,26 +1,18 @@
-import {
-	useMutation,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
-import {
-	AddIcon,
-	CircularProgress,
-	DeleteIcon,
-	Fab,
-	IconButton,
-	List,
-	ListItem,
-	RoleIndicator,
-	Text,
-	TextField,
-	useSnackbar,
-} from "juicer-m3";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { IconButton } from "juicer-m3/button";
+import { Fab } from "juicer-m3/fab";
+import { AddIcon } from "juicer-m3/icons/add";
+import { DeleteIcon } from "juicer-m3/icons/delete";
+import { List, ListItem } from "juicer-m3/list";
+import { CircularProgress } from "juicer-m3/progress";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { useSnackbar } from "juicer-m3/snackbar";
+import { Text } from "juicer-m3/text";
+import { TextField } from "juicer-m3/text-field";
+import type { ServerData, TopicDetails } from "juicer-shared";
 import { SaveIcon } from "lucide-react";
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
-import { useOutletContext, useParams } from "react-router";
 import { useUnsavedChangesWarning } from "../../../hooks/use-unsaved-changes-warning";
-import type { ServerDetailsOutletContext } from "../../../server-details-context";
 import { topicDetailsQueryOptions } from "../../api/queries";
 import { updateTopic } from "../api/mutations";
 import TopicAssociationDialog, {
@@ -28,20 +20,21 @@ import TopicAssociationDialog, {
 } from "./topic-association-dialog";
 import { topicEditPageStyles } from "./topic-edit-content.styles";
 
-export function TopicEditContent() {
-	const { serverId, serverData } =
-		useOutletContext<ServerDetailsOutletContext>();
-	const topicId = Number(useParams().topicId);
+interface TopicEditContentProps {
+	serverId: string;
+	serverData: ServerData;
+	topicId: number;
+	topic: TopicDetails;
+}
 
-	if (!Number.isInteger(topicId)) {
-		throw new Error("올바르지 않은 주제 ID입니다.");
-	}
-
+export function TopicEditContent({
+	serverId,
+	serverData,
+	topicId,
+	topic,
+}: TopicEditContentProps) {
 	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
-	const { data: topic } = useSuspenseQuery(
-		topicDetailsQueryOptions(serverId, topicId),
-	);
 	const [name, setName] = useState(topic.name);
 	const [description, setDescription] = useState(topic.description ?? "");
 	const [channelIds, setChannelIds] = useState(() =>

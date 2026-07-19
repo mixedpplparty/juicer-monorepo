@@ -1,4 +1,8 @@
-import { Button, Checkbox, Dialog, List, ListItem, Text } from "juicer-m3";
+import { Button } from "juicer-m3/button";
+import { Checkbox } from "juicer-m3/checkbox";
+import { Dialog } from "juicer-m3/dialog";
+import { List, ListItem } from "juicer-m3/list";
+import { Text } from "juicer-m3/text";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { topicAssociationDialogStyles } from "./topic-association-dialog.styles";

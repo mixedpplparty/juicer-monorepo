@@ -1,4 +1,6 @@
-import { List, ListItem, RoleIndicator, Text } from "juicer-m3";
+import { List, ListItem } from "juicer-m3/list";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { Text } from "juicer-m3/text";
 import type { Game, ServerData } from "juicer-shared";
 import { Link } from "react-router";
 import {

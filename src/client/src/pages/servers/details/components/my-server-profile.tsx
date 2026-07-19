@@ -1,12 +1,7 @@
-import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-	Card,
-	Chip,
-	ChipGroup,
-	Text,
-} from "juicer-m3";
+import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
+import { Card } from "juicer-m3/card";
+import { Chip, ChipGroup } from "juicer-m3/chip";
+import { Text } from "juicer-m3/text";
 import type { MyDataInServer } from "juicer-shared";
 import { myServerProfileStyles } from "./my-server-profile.styles";
 

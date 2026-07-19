@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Dialog, Select, Text, TextField } from "juicer-m3";
+import { Button } from "juicer-m3/button";
+import { Dialog } from "juicer-m3/dialog";
+import { Select } from "juicer-m3/select";
+import { Text } from "juicer-m3/text";
+import { TextField } from "juicer-m3/text-field";
 import type { ServerData } from "juicer-shared";
 import { type FormEvent, useRef, useState } from "react";
 import { createTopic } from "../api/mutations";
