@@ -21,7 +21,7 @@ export interface ServerHeaderProps {
 }
 
 export function ServerHeader({
-	serverData: _serverData,
+	serverData,
 	searchQuery,
 	onSearchQueryChange,
 }: ServerHeaderProps) {
@@ -58,9 +58,9 @@ export function ServerHeader({
 
 			<div css={serverHeaderStyles.details}>
 				<Avatar size="lg">
-					<AvatarImage src={_serverData.serverDataDiscord.icon} alt="" />
+					<AvatarImage src={serverData.serverDataDiscord.icon} alt="" />
 					<AvatarFallback aria-hidden="true">
-						{_serverData.serverDataDiscord.name.substring(0, 2)}
+						{serverData.serverDataDiscord.name.substring(0, 2)}
 					</AvatarFallback>
 				</Avatar>
 				<div css={serverHeaderStyles.serverText}>
@@ -70,11 +70,11 @@ export function ServerHeader({
 						size="medium"
 						css={serverHeaderStyles.serverName}
 					>
-						{_serverData.serverDataDiscord.name}
+						{serverData.serverDataDiscord.name}
 					</Text>
 					<Text typeRole="body" size="medium">
-						by {_serverData.serverDataDiscord.ownerName},{" "}
-						{_serverData.serverDataDiscord.memberCount}명
+						by {serverData.serverDataDiscord.ownerName},{" "}
+						{serverData.serverDataDiscord.memberCount}명
 					</Text>
 				</div>
 			</div>
