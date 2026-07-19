@@ -1,4 +1,6 @@
-import { Button, Dialog, TextField } from "juicer-m3";
+import { Button } from "juicer-m3/button";
+import { Dialog } from "juicer-m3/dialog";
+import { TextField } from "juicer-m3/text-field";
 import { type FormEvent, useEffect, useState } from "react";
 import { roleCategoryDialogStyles } from "./role-category-dialog.styles";
 

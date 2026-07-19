@@ -1,4 +1,4 @@
-import { Skeleton } from "juicer-m3";
+import { Skeleton } from "juicer-m3/skeleton";
 import { SkeletonRows } from "../../../components/loading-skeletons";
 import { loadingSkeletonStyles } from "../../../components/loading-skeletons.styles";
 

@@ -1,12 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-	Checkbox,
-	List,
-	ListItem,
-	RoleIndicator,
-	Text,
-	useSnackbar,
-} from "juicer-m3";
+import { Checkbox } from "juicer-m3/checkbox";
+import { List, ListItem } from "juicer-m3/list";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { useSnackbar } from "juicer-m3/snackbar";
+import { Text } from "juicer-m3/text";
 import type { TopicDetails, TopicDetailsRole } from "juicer-shared";
 import { topicDetailsQueryOptions } from "../../api/queries";
 import { setRoleAssignment } from "../api/mutations";

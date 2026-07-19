@@ -1,5 +1,5 @@
 import { centeredPageStyles } from "@/shared/styles/layout";
-import { Text } from "juicer-m3";
+import { Text } from "juicer-m3/text";
 
 export function ServerListEmptyPage() {
 	return (

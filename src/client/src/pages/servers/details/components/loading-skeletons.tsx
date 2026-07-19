@@ -1,4 +1,8 @@
-import { AppBar, ArrowBackIcon, Card, IconButton, Skeleton } from "juicer-m3";
+import { AppBar } from "juicer-m3/app-bar";
+import { IconButton } from "juicer-m3/button";
+import { Card } from "juicer-m3/card";
+import { ArrowBackIcon } from "juicer-m3/icons/arrow-back";
+import { Skeleton } from "juicer-m3/skeleton";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
 import { serverDetailsPageStyles } from "../server-details-page.styles";

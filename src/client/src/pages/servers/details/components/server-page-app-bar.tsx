@@ -1,10 +1,8 @@
-import {
-	AppBar,
-	ArrowBackIcon,
-	EditIcon,
-	IconButton,
-	Text,
-} from "juicer-m3";
+import { AppBar } from "juicer-m3/app-bar";
+import { IconButton } from "juicer-m3/button";
+import { ArrowBackIcon } from "juicer-m3/icons/arrow-back";
+import { EditIcon } from "juicer-m3/icons/edit";
+import { Text } from "juicer-m3/text";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";

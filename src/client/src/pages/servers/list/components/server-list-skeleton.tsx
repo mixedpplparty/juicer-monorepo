@@ -1,5 +1,7 @@
 import { css } from "@emotion/react";
-import { AppBar, List, ListItem, Skeleton } from "juicer-m3";
+import { AppBar } from "juicer-m3/app-bar";
+import { List, ListItem } from "juicer-m3/list";
+import { Skeleton } from "juicer-m3/skeleton";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
 

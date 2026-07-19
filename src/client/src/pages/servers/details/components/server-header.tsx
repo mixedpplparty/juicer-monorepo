@@ -1,12 +1,8 @@
-import {
-	ArrowBackIcon,
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-	IconButton,
-	SearchBar,
-	Text,
-} from "juicer-m3";
+import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
+import { IconButton } from "juicer-m3/button";
+import { ArrowBackIcon } from "juicer-m3/icons/arrow-back";
+import { SearchBar } from "juicer-m3/search";
+import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
 import { Link } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";

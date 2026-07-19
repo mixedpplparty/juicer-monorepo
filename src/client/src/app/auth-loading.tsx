@@ -1,4 +1,5 @@
-import { CircularProgress, Text } from "juicer-m3";
+import { CircularProgress } from "juicer-m3/progress";
+import { Text } from "juicer-m3/text";
 import { centeredPageStyles } from "@/shared/styles/layout";
 
 export function AuthLoading() {

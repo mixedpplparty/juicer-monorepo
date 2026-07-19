@@ -1,5 +1,5 @@
 import { useSuspenseQueries } from "@tanstack/react-query";
-import { Text } from "juicer-m3";
+import { Text } from "juicer-m3/text";
 import type { ServerData } from "juicer-shared";
 import { lazy, Suspense, useState } from "react";
 import { myDataInServerQueryOptions, topicsQueryOptions } from "../api/queries";

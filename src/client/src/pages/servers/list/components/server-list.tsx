@@ -1,13 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-	AddIcon,
-	AppBar,
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-	List,
-	ListItem,
-} from "juicer-m3";
+import { AppBar } from "juicer-m3/app-bar";
+import { Avatar, AvatarFallback, AvatarImage } from "juicer-m3/avatar";
+import { AddIcon } from "juicer-m3/icons/add";
+import { List, ListItem } from "juicer-m3/list";
 import type { FilteredGuild } from "juicer-shared";
 import { Link, useParams } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";

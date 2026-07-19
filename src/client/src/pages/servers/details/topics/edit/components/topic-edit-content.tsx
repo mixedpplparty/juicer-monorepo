@@ -1,17 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-	AddIcon,
-	CircularProgress,
-	DeleteIcon,
-	Fab,
-	IconButton,
-	List,
-	ListItem,
-	RoleIndicator,
-	Text,
-	TextField,
-	useSnackbar,
-} from "juicer-m3";
+import { IconButton } from "juicer-m3/button";
+import { Fab } from "juicer-m3/fab";
+import { AddIcon } from "juicer-m3/icons/add";
+import { DeleteIcon } from "juicer-m3/icons/delete";
+import { List, ListItem } from "juicer-m3/list";
+import { CircularProgress } from "juicer-m3/progress";
+import { RoleIndicator } from "juicer-m3/role-indicator";
+import { useSnackbar } from "juicer-m3/snackbar";
+import { Text } from "juicer-m3/text";
+import { TextField } from "juicer-m3/text-field";
 import type { ServerData, TopicDetails } from "juicer-shared";
 import { SaveIcon } from "lucide-react";
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
