@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 export const routeErrorBoundaryStyles = {
 	root: css({
 		display: "grid",
-		minHeight: "100vh",
+		minHeight: "100dvh",
 		padding: "1.5rem",
 		placeContent: "center",
 		textAlign: "center",

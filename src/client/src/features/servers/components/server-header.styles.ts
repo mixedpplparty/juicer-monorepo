@@ -10,7 +10,6 @@ export const serverHeaderStyles = {
 			flexDirection: "row",
 			alignItems: "center",
 			gap: "2rem",
-			padding: "1.5rem",
 		},
 	}),
 	searchRow: css({
@@ -20,7 +19,6 @@ export const serverHeaderStyles = {
 		alignItems: "center",
 		gap: "0.5rem",
 		boxSizing: "border-box",
-		padding: "0.25rem 1rem",
 		"& > .jm3-search": {
 			flex: "1 1 0",
 			minWidth: 0,
@@ -36,11 +34,27 @@ export const serverHeaderStyles = {
 		},
 	}),
 	details: css({
+		display: "flex",
+		flexDirection: "row",
+		alignItems: "center",
+		gap: "0.75rem",
 		order: 1,
 		minWidth: 0,
 		[`@media (min-width: ${breakpoints.tablet})`]: {
 			order: 0,
 			flex: "1 1 auto",
+		},
+	}),
+	serverText: css({
+		display: "flex",
+		minWidth: 0,
+		flex: "1 1 auto",
+		flexDirection: "column",
+		overflow: "hidden",
+		"& > *": {
+			overflow: "hidden",
+			textOverflow: "ellipsis",
+			whiteSpace: "nowrap",
 		},
 	}),
 };

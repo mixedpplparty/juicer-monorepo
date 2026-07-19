@@ -6,7 +6,9 @@ export const serverDetailsPageStyles = {
 		width: "100%",
 		height: "100%",
 		boxSizing: "border-box",
+		padding: "0.5rem 1rem",
 		[`@media (min-width: ${breakpoints.tablet})`]: {
+			padding: "1.5rem",
 			overflow: "hidden",
 			borderRadius: "1rem 1rem 0 0",
 			backgroundColor: "var(--Schemes-Surface)",
