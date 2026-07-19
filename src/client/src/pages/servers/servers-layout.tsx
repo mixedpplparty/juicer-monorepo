@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { Outlet, useMatch } from "react-router";
-import ServerList from "@/features/servers/components/server-list";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import ServerList from "@/pages/servers/list/components/server-list";
+import { ServerListSkeleton } from "@/pages/servers/list/components/server-list-skeleton";
 import breakpoints from "@/shared/styles/breakpoints";
+import { useMediaQuery } from "./hooks/use-media-query";
 import { serversLayoutStyles } from "./servers-layout.styles";
 
 export function ServersLayout() {
@@ -13,7 +15,9 @@ export function ServersLayout() {
 		<div css={serversLayoutStyles.root}>
 			{shouldRenderServerList && (
 				<aside>
-					<ServerList />
+					<Suspense fallback={<ServerListSkeleton />}>
+						<ServerList />
+					</Suspense>
 				</aside>
 			)}
 

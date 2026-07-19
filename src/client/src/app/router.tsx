@@ -1,21 +1,32 @@
+import { lazy } from "react";
 import {
 	createBrowserRouter,
 	type LoaderFunctionArgs,
 	Outlet,
 	redirect,
 } from "react-router";
-import { isAuthenticated } from "@/features/auth/api/auth";
-import { fetchServerData } from "@/features/servers/api/server-queries";
+import { isAuthenticated } from "@/pages/landing/api/auth";
 import LandingPage from "@/pages/landing/landing-page";
-import ServerDetailsLayout from "@/pages/servers/server-details-layout";
-import ServerDetailsPage from "@/pages/servers/server-details-page";
-import ServerListPage from "@/pages/servers/server-list-page";
-import ServerSettingsPage from "@/pages/servers/server-settings-page";
+import { serverQueryOptions } from "@/pages/servers/details/api/queries";
+import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
+import ServerListPage from "@/pages/servers/list/server-list-page";
 import ServersLayout from "@/pages/servers/servers-layout";
-import TopicDetailsPage from "@/pages/servers/topic-details-page";
-import TopicEditPage from "@/pages/servers/topic-edit-page";
 import AuthLoading from "./auth-loading";
+import { queryClient } from "./query-client";
 import RouteErrorBoundary from "./route-error-boundary";
+
+const ServerDetailsPage = lazy(
+	() => import("@/pages/servers/details/server-details-page"),
+);
+const ServerSettingsPage = lazy(
+	() => import("@/pages/servers/details/settings/server-settings-page"),
+);
+const TopicDetailsPage = lazy(
+	() => import("@/pages/servers/details/topics/details/topic-details-page"),
+);
+const TopicEditPage = lazy(
+	() => import("@/pages/servers/details/topics/edit/topic-edit-page"),
+);
 
 async function guestOnlyLoader({ request }: LoaderFunctionArgs) {
 	if (await isAuthenticated(request)) {
@@ -40,7 +51,9 @@ async function serverAdminOnlyLoader({ params }: LoaderFunctionArgs) {
 		throw redirect("/servers");
 	}
 
-	const serverData = await fetchServerData(serverId);
+	const serverData = await queryClient.ensureQueryData(
+		serverQueryOptions(serverId),
+	);
 
 	if (!serverData.admin) {
 		throw redirect(`/servers/${serverId}`);
@@ -53,14 +66,19 @@ function RouteOutlet() {
 	return <Outlet />;
 }
 
+function RootOutlet() {
+	return <Outlet />;
+}
+
 export const router = createBrowserRouter([
 	{
-		Component: RouteOutlet,
+		Component: RootOutlet,
 		HydrateFallback: AuthLoading,
 		ErrorBoundary: RouteErrorBoundary,
 		children: [
 			{
 				loader: guestOnlyLoader,
+				shouldRevalidate: () => false,
 				Component: RouteOutlet,
 				children: [
 					{
@@ -71,6 +89,7 @@ export const router = createBrowserRouter([
 			},
 			{
 				loader: authOnlyLoader,
+				shouldRevalidate: () => false,
 				Component: RouteOutlet,
 				children: [
 					{
@@ -96,6 +115,7 @@ export const router = createBrowserRouter([
 										handle: {
 											serverAppBarTitle: "서버 설정",
 											serverAppBarSubtitle: "server-name",
+											serverContentSkeleton: "settings",
 										},
 									},
 									{
@@ -103,6 +123,7 @@ export const router = createBrowserRouter([
 										Component: TopicDetailsPage,
 										handle: {
 											serverAppBarKind: "topic",
+											serverContentSkeleton: "topic",
 										},
 									},
 									{
@@ -111,6 +132,7 @@ export const router = createBrowserRouter([
 										Component: TopicEditPage,
 										handle: {
 											serverAppBarKind: "topic-edit",
+											serverContentSkeleton: "topic-edit",
 										},
 									},
 								],
