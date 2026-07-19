@@ -204,54 +204,62 @@ export const updateGame = async ({
 			res.updatedGame = updatedGame[0];
 		}
 
-		// update tags table
-		const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
-		// tags to add
-		const tagsToAdd = tagIds?.filter(
-			(tagId) => !existingTagIds.includes(tagId),
-		);
-		// tags to remove
-		const tagsToRemove = existingTagIds.filter(
-			(tagId) => !tagIds?.includes(tagId),
-		);
-		if (tagsToAdd && tagsToAdd.length > 0) {
-			const addedTags = await tx
-				.insert(gamesTags)
-				.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
-				.returning();
-			res.tags.added = addedTags;
-		}
-		if (tagsToRemove && tagsToRemove.length > 0) {
-			const removedTags = await tx
-				.delete(gamesTags)
-				.where(inArray(gamesTags.tagId, tagsToRemove))
-				.returning();
-			res.tags.removed = removedTags;
+		if (tagIds !== undefined && tagIds !== null) {
+			const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
+			const tagsToAdd = tagIds.filter(
+				(tagId) => !existingTagIds.includes(tagId),
+			);
+			const tagsToRemove = existingTagIds.filter(
+				(tagId) => !tagIds.includes(tagId),
+			);
+			if (tagsToAdd.length > 0) {
+				const addedTags = await tx
+					.insert(gamesTags)
+					.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
+					.returning();
+				res.tags.added = addedTags;
+			}
+			if (tagsToRemove.length > 0) {
+				const removedTags = await tx
+					.delete(gamesTags)
+					.where(
+						and(
+							eq(gamesTags.gameId, gameId),
+							inArray(gamesTags.tagId, tagsToRemove),
+						),
+					)
+					.returning();
+				res.tags.removed = removedTags;
+			}
 		}
 
-		// update roles table
-		const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
-		// roles to add
-		const rolesToAdd = roleIds?.filter(
-			(roleId) => !existingRoleIds.includes(roleId),
-		);
-		// roles to remove
-		const rolesToRemove = existingRoleIds.filter(
-			(roleId) => !roleIds?.includes(roleId),
-		);
-		if (rolesToAdd && rolesToAdd.length > 0) {
-			const addedRoles = await tx
-				.insert(gamesRoles)
-				.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
-				.returning();
-			res.roles.added = addedRoles;
-		}
-		if (rolesToRemove && rolesToRemove.length > 0) {
-			const removedRoles = await tx
-				.delete(gamesRoles)
-				.where(inArray(gamesRoles.roleId, rolesToRemove))
-				.returning();
-			res.roles.removed = removedRoles;
+		if (roleIds !== undefined && roleIds !== null) {
+			const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
+			const rolesToAdd = roleIds.filter(
+				(roleId) => !existingRoleIds.includes(roleId),
+			);
+			const rolesToRemove = existingRoleIds.filter(
+				(roleId) => !roleIds.includes(roleId),
+			);
+			if (rolesToAdd.length > 0) {
+				const addedRoles = await tx
+					.insert(gamesRoles)
+					.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
+					.returning();
+				res.roles.added = addedRoles;
+			}
+			if (rolesToRemove.length > 0) {
+				const removedRoles = await tx
+					.delete(gamesRoles)
+					.where(
+						and(
+							eq(gamesRoles.gameId, gameId),
+							inArray(gamesRoles.roleId, rolesToRemove),
+						),
+					)
+					.returning();
+				res.roles.removed = removedRoles;
+			}
 		}
 	});
 
@@ -566,6 +574,23 @@ export const getAllGamesInServer = async ({
 		where: eq(games.serverId, serverId),
 		with: {
 			gamesTags: true,
+			gamesRoles: true,
+		},
+	});
+};
+
+export const getGameDetailsInDb = async ({
+	gameId,
+	serverId,
+}: {
+	gameId: number;
+	serverId: string;
+}) => {
+	return await db.query.games.findFirst({
+		columns: { thumbnail: false },
+		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
+		with: {
+			category: true,
 			gamesRoles: true,
 		},
 	});

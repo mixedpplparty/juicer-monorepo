@@ -111,6 +111,36 @@ const Game = z.intersection(
 
 export type Game = z.infer<typeof Game>;
 
+export const TopicDetailsChannel = z.object({
+	id: z.string(),
+	name: z.string(),
+});
+
+export type TopicDetailsChannel = z.infer<typeof TopicDetailsChannel>;
+
+export const TopicDetailsRole = z.object({
+	id: z.string(),
+	name: z.string(),
+	color: z.string(),
+	description: z.string().nullable(),
+	selfAssignable: z.boolean(),
+	assigned: z.boolean(),
+});
+
+export type TopicDetailsRole = z.infer<typeof TopicDetailsRole>;
+
+export const TopicDetails = z.object({
+	gameId: z.number(),
+	serverId: z.string(),
+	name: z.string(),
+	description: z.string().nullable(),
+	category: Category.nullable(),
+	channels: z.array(TopicDetailsChannel),
+	roles: z.array(TopicDetailsRole),
+});
+
+export type TopicDetails = z.infer<typeof TopicDetails>;
+
 const ServerDataDiscordRole2 = z.object({
 	id: z.string(),
 	name: z.string(),

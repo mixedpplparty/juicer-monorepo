@@ -430,6 +430,70 @@ const openApiDoc = {
 			},
 			"/games/:gameId": {
 				"/": {
+					get: {
+						summary: "Get topic details",
+						description:
+							"Get a topic with its category, channels, and roles, including the current user's assignment state and whether each role is self-assignable.",
+						responses: {
+							"200": {
+								description: "Topic details",
+								content: {
+									"application/json": {
+										schema: {
+											type: "object",
+											properties: {
+												gameId: { type: "number" },
+												serverId: { type: "string" },
+												name: { type: "string" },
+												description: {
+													type: "string",
+													nullable: true,
+												},
+												category: {
+													type: "Category",
+													nullable: true,
+												},
+												channels: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+														},
+													},
+												},
+												roles: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+															color: { type: "string" },
+															description: {
+																type: "string",
+																nullable: true,
+															},
+															selfAssignable: {
+																type: "boolean",
+															},
+															assigned: {
+																type: "boolean",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							"404": {
+								description: "Topic not found",
+							},
+						},
+					},
 					put: {
 						summary: "Update a game in the server",
 						description: "Update a game in the server",
