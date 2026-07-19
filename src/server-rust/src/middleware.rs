@@ -26,9 +26,16 @@ const RATE_LIMIT: u32 = 250;
 const RATE_WINDOW: Duration = Duration::from_secs(60);
 
 /// key -> (window start, request count in window). In-house fixed-window
-/// counter, equivalent to hono-rate-limiter's default MemoryStore.
-static RATE_BUCKETS: LazyLock<Mutex<HashMap<String, (Instant, u32)>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+/// counter, equivalent to hono-rate-limiter's default MemoryStore. The Instant
+/// alongside the map is the last expiry sweep.
+type RateBuckets = (HashMap<String, (Instant, u32)>, Instant);
+static RATE_BUCKETS: LazyLock<Mutex<RateBuckets>> =
+    LazyLock::new(|| Mutex::new((HashMap::new(), Instant::now())));
+
+/// Keys come from client-controlled values (cookie, XFF); cap their length so
+/// junk input cannot balloon per-entry memory.
+const RATE_KEY_MAX_LEN: usize = 128;
+const RATE_SWEEP_INTERVAL: Duration = Duration::from_secs(10);
 
 /// Wrap the app router with the global middleware stack. Layer order matches
 /// the TS `every(cors, csrf, rateLimiter, logger)`: CORS runs outermost, then
@@ -136,14 +143,19 @@ async fn rate_limit_middleware(req: Request, next: Next) -> Response {
         })
         .or_else(|| connect_info.map(|ConnectInfo(addr)| addr.ip().to_string()))
         .unwrap_or_else(|| "unknown".to_string());
+    let mut key = key;
+    key.truncate(RATE_KEY_MAX_LEN);
 
     let now = Instant::now();
     let (count, reset_in) = {
-        let mut buckets = RATE_BUCKETS.lock().unwrap_or_else(|e| e.into_inner());
-        // Opportunistically drop expired windows so the map does not grow
-        // without bound.
-        if buckets.len() > 10_000 {
+        let mut guard = RATE_BUCKETS.lock().unwrap_or_else(|e| e.into_inner());
+        let (buckets, last_sweep) = &mut *guard;
+        // Drop expired windows on a fixed cadence (not per-request) so a flood
+        // of distinct keys cannot turn every request into an O(n) scan while
+        // still bounding the map to ~one window of distinct keys.
+        if now.duration_since(*last_sweep) >= RATE_SWEEP_INTERVAL {
             buckets.retain(|_, (start, _)| now.duration_since(*start) < RATE_WINDOW);
+            *last_sweep = now;
         }
         let entry = buckets.entry(key).or_insert((now, 0));
         if now.duration_since(entry.0) >= RATE_WINDOW {

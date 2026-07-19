@@ -126,13 +126,18 @@ async fn add_category_to_game(
 
 /// Tag IDs currently assigned to `game_id` according to the server data blob.
 async fn existing_tag_ids(state: &AppState, server_id: &str, game_id: i32) -> Result<Vec<i32>> {
-    let server_data = db::get_server_data_in_db(&state.db, server_id).await?;
-    Ok(server_data
-        .and_then(|data| data.games)
-        .and_then(|games| games.into_iter().find(|g| g.game.game_id == game_id))
-        .and_then(|game| game.games_tags)
-        .map(|tags| tags.into_iter().map(|t| t.tag_id).collect())
-        .unwrap_or_default())
+    // One targeted query — this previously materialized the whole server
+    // aggregate (~8 queries) just to read one game's tag list. Game existence/
+    // ownership is enforced by update_game's own 404 check right after.
+    Ok(sqlx::query_scalar(
+        "SELECT gt.tag_id FROM games_tags gt \
+         JOIN games g ON g.game_id = gt.game_id \
+         WHERE gt.game_id = $1 AND g.server_id = $2",
+    )
+    .bind(game_id)
+    .bind(server_id)
+    .fetch_all(&state.db)
+    .await?)
 }
 
 // add tags to game
@@ -265,6 +270,22 @@ async fn update_thumbnail(
     }
 }
 
+/// Magic-byte sniff over the stored bytea (the upload's mime isn't persisted;
+/// the TS backend sent no Content-Type at all and let browsers sniff).
+fn sniff_image_mime(bytes: &[u8]) -> &'static str {
+    match bytes {
+        [0x89, b'P', b'N', b'G', ..] => "image/png",
+        [0xFF, 0xD8, 0xFF, ..] => "image/jpeg",
+        [b'G', b'I', b'F', b'8', ..] => "image/gif",
+        [b'B', b'M', ..] => "image/bmp",
+        [b'R', b'I', b'F', b'F', _, _, _, _, b'W', b'E', b'B', b'P', ..] => "image/webp",
+        [0x49, 0x49, 0x2A, 0x00, ..] | [0x4D, 0x4D, 0x00, 0x2A, ..] => "image/tiff",
+        _ if bytes.len() > 11 && &bytes[4..12] == b"ftypavif" => "image/avif",
+        _ if bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") => "image/svg+xml",
+        _ => "application/octet-stream",
+    }
+}
+
 async fn get_thumbnail(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
@@ -280,7 +301,10 @@ async fn get_thumbnail(
             StatusCode::OK,
             // Let the browser cache thumbnails: private (per-user, behind auth)
             // with a short max-age so updates go stale within minutes.
-            [(header::CACHE_CONTROL, "private, max-age=300")],
+            [
+                (header::CACHE_CONTROL, "private, max-age=300"),
+                (header::CONTENT_TYPE, sniff_image_mime(&bytes)),
+            ],
             bytes,
         )
             .into_response()),

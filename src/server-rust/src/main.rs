@@ -38,9 +38,25 @@ async fn main() {
             .expect("failed to build Discord client");
     let discord_http = discord_client.http.clone();
     let discord_cache = discord_client.cache.clone();
+    let shard_manager = discord_client.shard_manager.clone();
+    // Gateway exits are retried with capped backoff; persistent failure (e.g. a
+    // rotated token) kills the process so the orchestrator restarts it instead
+    // of serving indefinitely with an empty guild cache.
     tokio::spawn(async move {
-        if let Err(err) = discord_client.start().await {
-            tracing::error!(error = %err, "Discord gateway client exited");
+        let mut failures: u32 = 0;
+        loop {
+            match discord_client.start().await {
+                Ok(()) => break, // clean shutdown (shard manager told to stop)
+                Err(err) => {
+                    failures += 1;
+                    tracing::error!(error = %err, failures, "Discord gateway client exited");
+                    if failures >= 5 {
+                        tracing::error!("Discord gateway failed 5 times; exiting for restart");
+                        std::process::exit(1);
+                    }
+                    tokio::time::sleep(std::time::Duration::from_secs(2u64.pow(failures))).await;
+                }
+            }
         }
     });
 
@@ -49,7 +65,13 @@ async fn main() {
         config: config.clone(),
         discord_http,
         discord_cache,
-        http: reqwest::Client::new(),
+        // Explicit timeouts: a blackholed Discord endpoint must not wedge every
+        // authenticated handler (reqwest's default has no timeout at all).
+        http: reqwest::Client::builder()
+            .connect_timeout(std::time::Duration::from_secs(5))
+            .timeout(std::time::Duration::from_secs(15))
+            .build()
+            .expect("failed to build HTTP client"),
     };
 
     let app = middleware::apply(routes::router(state.clone()), config.clone());
@@ -62,6 +84,23 @@ async fn main() {
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
     )
+    .with_graceful_shutdown(async move {
+        let ctrl_c = tokio::signal::ctrl_c();
+        #[cfg(unix)]
+        {
+            let mut sigterm =
+                tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                    .expect("failed to install SIGTERM handler");
+            tokio::select! {
+                _ = ctrl_c => {},
+                _ = sigterm.recv() => {},
+            }
+        }
+        #[cfg(not(unix))]
+        ctrl_c.await.ok();
+        tracing::info!("shutdown signal received; draining");
+        shard_manager.shutdown_all().await;
+    })
     .await
     .expect("server error");
 }

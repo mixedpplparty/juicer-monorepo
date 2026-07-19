@@ -6,8 +6,13 @@
 //! (`tokio::join!` / `join_all`), mirroring the `Promise.all` shapes in the TS
 //! source.
 
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+use std::time::{Duration, Instant};
+
 use axum::http::StatusCode;
 use serenity::async_trait;
+use serenity::futures::stream::{self, StreamExt};
 use serenity::client::{Context, EventHandler};
 use serenity::futures::future::join_all;
 use serenity::model::channel::{ChannelType, GuildChannel, PermissionOverwriteType};
@@ -142,12 +147,53 @@ async fn resolve_guild(state: &AppState, server_id: &str) -> Result<ResolvedGuil
     })
 }
 
+/// Process-level TTL member cache. With only the Guilds intent serenity's own
+/// member cache never fills (no member gateway events), so this stands in for
+/// discord.js's member cache on force=false paths — notably the per-game
+/// thumbnail endpoint, which otherwise pays one REST call per image.
+const MEMBER_CACHE_TTL: Duration = Duration::from_secs(30);
+type MemberCacheMap = HashMap<(GuildId, UserId), (Instant, Member)>;
+static MEMBER_CACHE: LazyLock<Mutex<MemberCacheMap>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+fn member_cache_get(guild_id: GuildId, user_id: UserId) -> Option<Member> {
+    let cache = MEMBER_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    cache
+        .get(&(guild_id, user_id))
+        .filter(|(at, _)| at.elapsed() < MEMBER_CACHE_TTL)
+        .map(|(_, member)| member.clone())
+}
+
+fn member_cache_put(guild_id: GuildId, user_id: UserId, member: &Member) {
+    let mut cache = MEMBER_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    if cache.len() >= 4096 {
+        cache.retain(|_, (at, _)| at.elapsed() < MEMBER_CACHE_TTL);
+    }
+    cache.insert((guild_id, user_id), (Instant::now(), member.clone()));
+}
+
+/// REST member fetch through the TTL cache. `force` bypasses (and refreshes)
+/// the cached entry, mirroring discord.js `members.fetch({ force })`.
+async fn get_member_cached(
+    state: &AppState,
+    guild_id: GuildId,
+    user_id: UserId,
+    force: bool,
+) -> serenity::Result<Member> {
+    if !force {
+        if let Some(member) = member_cache_get(guild_id, user_id) {
+            return Ok(member);
+        }
+    }
+    let member = state.discord_http.get_member(guild_id, user_id).await?;
+    member_cache_put(guild_id, user_id, &member);
+    Ok(member)
+}
+
 /// REST member fetch, mapping Discord's 404 (Unknown Member/User) to the
-/// contract's "User not in server." error.
+/// contract's "User not in server." error. Always forces a fresh fetch.
 async fn fetch_member(state: &AppState, guild_id: GuildId, user_id: UserId) -> Result<Member> {
-    state
-        .discord_http
-        .get_member(guild_id, user_id)
+    get_member_cached(state, guild_id, user_id, true)
         .await
         .map_err(|err| {
             if is_discord_status(&err, StatusCode::NOT_FOUND) {
@@ -268,22 +314,17 @@ pub async fn authenticate_and_authorize_user(
     let user_id = user_id_from_oauth(&user_data)?;
 
     // force defaults to true in callers that need fresh roles/permissions;
-    // read-only endpoints pass false so repeated hits reuse the member cache
-    // instead of forcing a Discord round-trip on every request.
-    let member = if force_member_fetch {
-        fetch_member(state, guild.id, user_id).await?
-    } else {
-        let cached: Option<Member> = {
-            state
-                .discord_cache
-                .guild(guild.id)
-                .and_then(|g| g.members.get(&user_id).cloned())
-        };
-        match cached {
-            Some(member) => member,
-            None => fetch_member(state, guild.id, user_id).await?,
-        }
-    };
+    // read-only endpoints pass false so repeated hits reuse the TTL member
+    // cache instead of forcing a Discord round-trip on every request.
+    let member = get_member_cached(state, guild.id, user_id, force_member_fetch)
+        .await
+        .map_err(|err| {
+            if is_discord_status(&err, StatusCode::NOT_FOUND) {
+                user_not_in_server()
+            } else {
+                err.into()
+            }
+        })?;
 
     let manage_guild_permission =
         compute_manage_guild_permission(guild.id, guild.owner_id, &guild.roles, &member);
@@ -324,11 +365,12 @@ pub async fn get_guild_and_member_data(
         }
     };
     let (owner, fetched_channels, fetched_roles, member, bot_member) = tokio::join!(
-        state.discord_http.get_member(guild.id, guild.owner_id),
+        get_member_cached(state, guild.id, guild.owner_id, false),
         state.discord_http.get_channels(guild.id),
         state.discord_http.get_guild_roles(guild.id),
         fetch_member(state, guild.id, user_id),
-        state.discord_http.get_member(guild.id, bot_user_id),
+        // The bot's own role set changes rarely — serve it from the TTL cache.
+        get_member_cached(state, guild.id, bot_user_id, false),
     );
     let owner = owner?;
     let fetched_channels = fetched_channels?;
@@ -414,33 +456,43 @@ pub async fn get_all_servers_user_and_bot_are_in(
         })
         .collect();
 
-    let results = join_all(snapshots.iter().map(|guild| async move {
-        match state.discord_http.get_member(guild.id, user_id).await {
-            Ok(_member) => {}
-            Err(err) => {
-                // 404 (10007) = user simply isn't in this guild; anything else
-                // is real, but the TS code only logged it and skipped the guild.
-                if !matches!(
-                    err,
-                    serenity::Error::Http(serenity::http::HttpError::UnsuccessfulRequest(_))
-                ) {
-                    tracing::error!(guild_id = %guild.id, error = %err, "Error fetching member in guild");
+    // Bounded fan-out: each guild is its own rate-limit bucket, so unbounded
+    // join_all would fire 2×N REST calls at once on a multi-guild bot. The
+    // membership probe stays fresh per user; the owner lookup goes through the
+    // TTL member cache (owners rarely change), halving steady-state calls.
+    // Futures are collected eagerly before streaming (lazily-mapped iterators
+    // trip a higher-ranked lifetime error in stream::iter).
+    let futs: Vec<_> = snapshots
+        .iter()
+        .map(|guild| async move {
+            match get_member_cached(state, guild.id, user_id, false).await {
+                Ok(_member) => {}
+                Err(err) => {
+                    // 404 (10007) = user simply isn't in this guild; anything else
+                    // is real, but the TS code only logged it and skipped the guild.
+                    if !matches!(
+                        err,
+                        serenity::Error::Http(serenity::http::HttpError::UnsuccessfulRequest(_))
+                    ) {
+                        tracing::error!(guild_id = %guild.id, error = %err, "Error fetching member in guild");
+                    }
+                    return Ok::<Option<FilteredGuild>, HttpError>(None);
                 }
-                return Ok::<Option<FilteredGuild>, HttpError>(None);
             }
-        }
-        let owner = state.discord_http.get_member(guild.id, guild.owner_id).await?;
-        Ok(Some(FilteredGuild {
-            id: guild.id.to_string(),
-            name: guild.name.clone(),
-            icon: guild.icon_url.clone(),
-            owner_id: guild.owner_id.to_string(),
-            owner_name: owner.display_name().to_string(),
-            owner_nick: owner.nick.clone(),
-            member_count: guild.member_count,
-        }))
-    }))
-    .await;
+            let owner = get_member_cached(state, guild.id, guild.owner_id, false).await?;
+            Ok(Some(FilteredGuild {
+                id: guild.id.to_string(),
+                name: guild.name.clone(),
+                icon: guild.icon_url.clone(),
+                owner_id: guild.owner_id.to_string(),
+                owner_name: owner.display_name().to_string(),
+                owner_nick: owner.nick.clone(),
+                member_count: guild.member_count,
+            }))
+        })
+        .collect();
+    let results: Vec<std::result::Result<Option<FilteredGuild>, HttpError>> =
+        stream::iter(futs).buffer_unordered(8).collect().await;
 
     let mut guilds = Vec::new();
     for result in results {
@@ -568,25 +620,12 @@ pub async fn sync_roles_with_db_and_discord(
         .map(|role| role.role_id.clone())
         .collect();
 
-    // Await ALL writes (concurrently) before returning the diff.
-    let (create_results, delete_results) = tokio::join!(
-        join_all(
-            roles_created
-                .iter()
-                .map(|role_id| db::create_role_in_db(&state.db, server_id, role_id)),
-        ),
-        join_all(
-            roles_deleted
-                .iter()
-                .map(|role_id| db::delete_role_from_db(&state.db, server_id, role_id)),
-        ),
-    );
-    for result in create_results {
-        result?;
-    }
-    for result in delete_results {
-        result?;
-    }
+    // Two set-based statements instead of one INSERT/DELETE per role — a big
+    // guild's first sync was an N+1 write burst against a 10-connection pool.
+    tokio::try_join!(
+        db::create_roles_bulk(&state.db, server_id, &roles_created),
+        db::delete_roles_bulk(&state.db, server_id, &roles_deleted),
+    )?;
 
     Ok(SyncRolesResponse { roles_created, roles_deleted })
 }

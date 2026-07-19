@@ -81,16 +81,14 @@ async fn attach_game_relations(
     }
     let game_ids: Vec<i32> = games.iter().map(|g| g.game_id).collect();
 
-    let tag_rels: Vec<TagRelationToGame> =
+    let (tag_rels, role_rels): (Vec<TagRelationToGame>, Vec<RoleRelationToGame>) = tokio::try_join!(
         sqlx::query_as("SELECT game_id, tag_id FROM games_tags WHERE game_id = ANY($1)")
             .bind(&game_ids)
-            .fetch_all(db)
-            .await?;
-    let role_rels: Vec<RoleRelationToGame> =
+            .fetch_all(db),
         sqlx::query_as("SELECT game_id, role_id FROM games_roles WHERE game_id = ANY($1)")
             .bind(&game_ids)
-            .fetch_all(db)
-            .await?;
+            .fetch_all(db),
+    )?;
 
     let mut tags_by_game: HashMap<i32, Vec<TagRelationToGame>> = HashMap::new();
     for rel in tag_rels {
@@ -128,42 +126,65 @@ pub async fn get_server_data_in_db(db: &PgPool, server_id: &str) -> Result<Optio
     };
     let server = map_server_row(&server_row).map_err(HttpError::from)?;
 
-    let game_rows = sqlx::query(&format!(
-        "SELECT {GAME_COLUMNS_NO_THUMBNAIL} FROM games WHERE server_id = $1"
-    ))
-    .bind(server_id)
-    .fetch_all(db)
-    .await?;
-    let games_without_relations = game_rows
-        .iter()
-        .map(map_game_row_no_thumbnail)
-        .collect::<sqlx::Result<Vec<_>>>()
-        .map_err(HttpError::from)?;
-    let games = attach_game_relations(db, games_without_relations).await?;
-
-    let categories: Vec<Category> =
-        sqlx::query_as("SELECT category_id, server_id, name FROM categories WHERE server_id = $1")
+    // The five collection fetches are independent — run them concurrently
+    // (each fetch borrows the pool, so they use separate connections). This is
+    // the dashboard's main read; sequential round-trips dominated its latency.
+    let games_fut = async {
+        let game_rows = sqlx::query(&format!(
+            "SELECT {GAME_COLUMNS_NO_THUMBNAIL} FROM games WHERE server_id = $1"
+        ))
+        .bind(server_id)
+        .fetch_all(db)
+        .await?;
+        let games_without_relations = game_rows
+            .iter()
+            .map(map_game_row_no_thumbnail)
+            .collect::<sqlx::Result<Vec<_>>>()
+            .map_err(HttpError::from)?;
+        attach_game_relations(db, games_without_relations).await
+    };
+    let categories_fut = async {
+        sqlx::query_as::<_, Category>(
+            "SELECT category_id, server_id, name FROM categories WHERE server_id = $1",
+        )
+        .bind(server_id)
+        .fetch_all(db)
+        .await
+        .map_err(HttpError::from)
+    };
+    let tags_fut = async {
+        sqlx::query_as::<_, Tag>("SELECT tag_id, server_id, name FROM tags WHERE server_id = $1")
             .bind(server_id)
             .fetch_all(db)
-            .await?;
-    let tags: Vec<Tag> =
-        sqlx::query_as("SELECT tag_id, server_id, name FROM tags WHERE server_id = $1")
-            .bind(server_id)
-            .fetch_all(db)
-            .await?;
-    let roles: Vec<Role> = sqlx::query_as(
-        "SELECT role_id, server_id, role_category_id, self_assignable, description \
-         FROM roles WHERE server_id = $1",
-    )
-    .bind(server_id)
-    .fetch_all(db)
-    .await?;
-    let role_categories: Vec<RoleCategory> = sqlx::query_as(
-        "SELECT role_category_id, server_id, name FROM roles_categories WHERE server_id = $1",
-    )
-    .bind(server_id)
-    .fetch_all(db)
-    .await?;
+            .await
+            .map_err(HttpError::from)
+    };
+    let roles_fut = async {
+        sqlx::query_as::<_, Role>(
+            "SELECT role_id, server_id, role_category_id, self_assignable, description \
+             FROM roles WHERE server_id = $1",
+        )
+        .bind(server_id)
+        .fetch_all(db)
+        .await
+        .map_err(HttpError::from)
+    };
+    let role_categories_fut = async {
+        sqlx::query_as::<_, RoleCategory>(
+            "SELECT role_category_id, server_id, name FROM roles_categories WHERE server_id = $1",
+        )
+        .bind(server_id)
+        .fetch_all(db)
+        .await
+        .map_err(HttpError::from)
+    };
+    let (games, categories, tags, roles, role_categories) = tokio::try_join!(
+        games_fut,
+        categories_fut,
+        tags_fut,
+        roles_fut,
+        role_categories_fut
+    )?;
 
     Ok(Some(ServerDataDb {
         server_id: server.server_id,
@@ -269,26 +290,30 @@ pub async fn update_game(
         roles: AddedRemovedRoles { added: None, removed: None },
     };
 
-    let game_exists = sqlx::query("SELECT game_id FROM games WHERE game_id = $1 AND server_id = $2")
-        .bind(game_id)
-        .bind(server_id)
-        .fetch_optional(db)
-        .await?;
+    // The snapshot, diff and writes all live inside one transaction, with the
+    // games row locked FOR UPDATE so concurrent updates to the same game
+    // serialize instead of double-inserting relation rows.
+    let mut tx = db.begin().await?;
+    let game_exists = sqlx::query(
+        "SELECT game_id FROM games WHERE game_id = $1 AND server_id = $2 FOR UPDATE",
+    )
+    .bind(game_id)
+    .bind(server_id)
+    .fetch_optional(&mut *tx)
+    .await?;
     if game_exists.is_none() {
         return Err(HttpError::not_found("Game not found."));
     }
     let existing_tag_ids: Vec<i32> =
         sqlx::query_scalar("SELECT tag_id FROM games_tags WHERE game_id = $1")
             .bind(game_id)
-            .fetch_all(db)
+            .fetch_all(&mut *tx)
             .await?;
     let existing_role_ids: Vec<String> =
         sqlx::query_scalar("SELECT role_id FROM games_roles WHERE game_id = $1")
             .bind(game_id)
-            .fetch_all(db)
+            .fetch_all(&mut *tx)
             .await?;
-
-    let mut tx = db.begin().await?;
 
     // Only update fields that were provided (mirrors the TS null/undefined filter).
     let has_update_fields = params.name.is_some()
@@ -331,8 +356,9 @@ pub async fn update_game(
         }
     }
 
-    // Tags diff. NOTE: mirrors the TS exactly — when `tag_ids` is None, every
-    // existing tag is removed, and the delete filters ONLY on tag_id.
+    // Tags diff. NOTE: mirrors the TS in that when `tag_ids` is None, every
+    // existing tag is removed (accepted parity bug); unlike the TS, the delete
+    // below is scoped to this game.
     let tags_to_add: Vec<i32> = match &params.tag_ids {
         Some(tag_ids) => tag_ids
             .iter()
@@ -353,7 +379,7 @@ pub async fn update_game(
             b.push_bind(game_id);
             b.push_bind(*tag_id);
         });
-        qb.push(" RETURNING game_id, tag_id");
+        qb.push(" ON CONFLICT DO NOTHING RETURNING game_id, tag_id");
         let rows = qb.build().fetch_all(&mut *tx).await?;
         let added = rows
             .iter()
@@ -368,9 +394,13 @@ pub async fn update_game(
         res.tags.added = Some(added);
     }
     if !tags_to_remove.is_empty() {
+        // Scoped to the game — the TS delete filtered only on tag_id, which
+        // silently stripped the tag from every other game sharing it.
         let rows = sqlx::query(
-            "DELETE FROM games_tags WHERE tag_id = ANY($1) RETURNING game_id, tag_id",
+            "DELETE FROM games_tags WHERE game_id = $1 AND tag_id = ANY($2) \
+             RETURNING game_id, tag_id",
         )
+        .bind(game_id)
         .bind(&tags_to_remove)
         .fetch_all(&mut *tx)
         .await?;
@@ -408,7 +438,7 @@ pub async fn update_game(
             b.push_bind(game_id);
             b.push_bind(role_id);
         });
-        qb.push(" RETURNING game_id, role_id");
+        qb.push(" ON CONFLICT DO NOTHING RETURNING game_id, role_id");
         let rows = qb.build().fetch_all(&mut *tx).await?;
         let added = rows
             .iter()
@@ -423,9 +453,12 @@ pub async fn update_game(
         res.roles.added = Some(added);
     }
     if !roles_to_remove.is_empty() {
+        // Scoped to the game (see tags note above).
         let rows = sqlx::query(
-            "DELETE FROM games_roles WHERE role_id = ANY($1) RETURNING game_id, role_id",
+            "DELETE FROM games_roles WHERE game_id = $1 AND role_id = ANY($2) \
+             RETURNING game_id, role_id",
         )
+        .bind(game_id)
         .bind(&roles_to_remove)
         .fetch_all(&mut *tx)
         .await?;
@@ -451,22 +484,17 @@ pub async fn delete_game(
     game_id: i32,
     server_id: &str,
 ) -> Result<GameWithoutRelations> {
-    let game_exists = sqlx::query("SELECT game_id FROM games WHERE game_id = $1 AND server_id = $2")
-        .bind(game_id)
-        .bind(server_id)
-        .fetch_optional(db)
-        .await?;
-    if game_exists.is_none() {
-        return Err(HttpError::not_found("Game not found."));
-    }
+    // Single atomic statement: the previous check-then-delete could 500 when a
+    // concurrent delete won the race between the two statements.
     let row = sqlx::query(&format!(
         "DELETE FROM games WHERE game_id = $1 AND server_id = $2 \
          RETURNING {GAME_COLUMNS_WITH_THUMBNAIL}"
     ))
     .bind(game_id)
     .bind(server_id)
-    .fetch_one(db)
-    .await?;
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(|| HttpError::not_found("Game not found."))?;
     map_game_row_with_thumbnail(&row).map_err(HttpError::from)
 }
 
@@ -665,22 +693,6 @@ pub async fn delete_tag(db: &PgPool, tag_id: i32, server_id: &str) -> Result<Vec
 
 // ---------- roles ----------
 
-pub async fn create_role_in_db(db: &PgPool, server_id: &str, role_id: &str) -> Result<Vec<Role>> {
-    let created: std::result::Result<Vec<Role>, sqlx::Error> = sqlx::query_as(
-        "INSERT INTO roles (server_id, role_id) VALUES ($1, $2) \
-         RETURNING role_id, server_id, role_category_id, self_assignable, description",
-    )
-    .bind(server_id)
-    .bind(role_id)
-    .fetch_all(db)
-    .await;
-    match created {
-        Ok(roles) => Ok(roles),
-        // Swallow unique violations (role already registered) like the TS code.
-        Err(err) if pg_error_code(&err).as_deref() == Some(PG_UNIQUE_VIOLATION) => Ok(Vec::new()),
-        Err(err) => Err(err.into()),
-    }
-}
 
 pub async fn get_all_roles_in_server_in_db(db: &PgPool, server_id: &str) -> Result<Vec<Role>> {
     let roles: Vec<Role> = sqlx::query_as(
@@ -709,14 +721,32 @@ pub async fn get_roles_in_server_in_db_by_role_ids(
     Ok(roles)
 }
 
-pub async fn delete_role_from_db(db: &PgPool, server_id: &str, role_id: &str) -> Result<()> {
-    sqlx::query("DELETE FROM roles WHERE role_id = $1 AND server_id = $2")
-        .bind(role_id)
+
+/// Batched INSERT of gateway roles missing from the DB (role sync). Conflicts
+/// are skipped (the TS per-row insert swallowed unique violations the same way).
+pub async fn create_roles_bulk(db: &PgPool, server_id: &str, role_ids: &[String]) -> Result<()> {
+    if role_ids.is_empty() {
+        return Ok(());
+    }
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new("INSERT INTO roles (server_id, role_id) ");
+    qb.push_values(role_ids.iter(), |mut b, role_id| {
+        b.push_bind(server_id);
+        b.push_bind(role_id);
+    });
+    qb.push(" ON CONFLICT DO NOTHING");
+    qb.build().execute(db).await?;
+    Ok(())
+}
+
+/// Batched delete of DB roles that no longer exist in Discord (role sync).
+/// games_roles rows cascade.
+pub async fn delete_roles_bulk(db: &PgPool, server_id: &str, role_ids: &[String]) -> Result<()> {
+    if role_ids.is_empty() {
+        return Ok(());
+    }
+    sqlx::query("DELETE FROM roles WHERE server_id = $1 AND role_id = ANY($2)")
         .bind(server_id)
-        .execute(db)
-        .await?;
-    sqlx::query("DELETE FROM games_roles WHERE role_id = $1")
-        .bind(role_id)
+        .bind(role_ids)
         .execute(db)
         .await?;
     Ok(())
@@ -886,8 +916,8 @@ mod smoke_tests {
         let tag_again = create_tag(&db, sid, "coop").await.unwrap();
         assert_eq!(tag_again[0].tag_id, tag.tag_id, "create_tag must return existing tag");
         let rc = create_role_category(&db, sid, "verification").await.unwrap()[0].clone();
-        create_role_in_db(&db, sid, "111").await.unwrap();
-        create_role_in_db(&db, sid, "111").await.unwrap(); // unique violation swallowed
+        create_roles_bulk(&db, sid, &["111".into()]).await.unwrap();
+        create_roles_bulk(&db, sid, &["111".into()]).await.unwrap(); // conflict skipped
         let roles = get_all_roles_in_server_in_db(&db, sid).await.unwrap();
         assert_eq!(roles.len(), 1);
 
@@ -991,12 +1021,33 @@ mod smoke_tests {
         assert_eq!(data.role_categories.as_ref().unwrap().len(), 1);
         assert!(get_server_data_in_db(&db, "no-such").await.unwrap().is_none());
 
+        // relation removal is scoped to the game: game2 shares the tag, and
+        // removing it from game1 must not strip it from game2 (the TS delete
+        // filtered only on tag_id and corrupted sibling games).
+        let game2 = create_game(&db, sid, "Satisfactory", None, None).await.unwrap();
+        let only_tag = |ids: Vec<i32>| UpdateGameParams {
+            name: None, description: None, category_id: None, thumbnail: None,
+            channels: None, tag_ids: Some(ids), role_ids: None,
+        };
+        update_game(&db, game2.game_id, sid, only_tag(vec![tag.tag_id])).await.unwrap();
+        let removed = update_game(&db, game.game_id, sid, only_tag(vec![])).await.unwrap();
+        assert_eq!(removed.tags.removed.as_ref().unwrap().len(), 1);
+        let game2_tags: Vec<i32> =
+            sqlx::query_scalar("SELECT tag_id FROM games_tags WHERE game_id = $1")
+                .bind(game2.game_id)
+                .fetch_all(&db)
+                .await
+                .unwrap();
+        assert_eq!(game2_tags, vec![tag.tag_id], "sibling game must keep its tag");
+        update_game(&db, game.game_id, sid, only_tag(vec![tag.tag_id])).await.unwrap();
+        delete_game(&db, game2.game_id, sid).await.unwrap();
+
         // deletes
         let deleted = delete_game(&db, game.game_id, sid).await.unwrap();
         assert_eq!(deleted.game_id, game.game_id);
         assert_eq!(delete_tag(&db, tag.tag_id, sid).await.unwrap().len(), 1);
         assert_eq!(delete_category(&db, cat.category_id, sid).await.unwrap().len(), 1);
-        delete_role_from_db(&db, sid, "111").await.unwrap();
+        delete_roles_bulk(&db, sid, &["111".into()]).await.unwrap();
         assert_eq!(delete_role_category(&db, rc.role_category_id, sid).await.unwrap().len(), 1);
         assert!(get_all_roles_in_server_in_db(&db, sid).await.unwrap().is_empty());
     }
