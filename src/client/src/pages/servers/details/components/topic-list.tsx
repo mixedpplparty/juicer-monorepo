@@ -1,8 +1,11 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { List, ListItem } from "juicer-m3/list";
 import { RoleIndicator } from "juicer-m3/role-indicator";
 import { Text } from "juicer-m3/text";
-import type { Game, ServerData } from "juicer-shared";
+import type { ServerData } from "juicer-shared";
 import { Link } from "react-router";
+import { topicsQueryOptions } from "../api/queries";
+import { useDebouncedValue } from "../hooks/use-debounced-value";
 import {
 	type TopicListItemData,
 	useTopicListItems,
@@ -10,18 +13,28 @@ import {
 import { topicListStyles } from "./topic-list.styles";
 
 export interface TopicListProps {
-	topics: Game[];
+	serverId: string;
 	serverData: ServerData;
 	searchQuery: string;
 }
 
-export function TopicList({ topics, serverData, searchQuery }: TopicListProps) {
+export function TopicList({
+	serverId,
+	serverData,
+	searchQuery,
+}: TopicListProps) {
+	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+	const { data: topics } = useSuspenseQuery(
+		topicsQueryOptions(serverId, debouncedSearchQuery),
+	);
 	const topicListItems = useTopicListItems(topics, serverData);
 
 	if (topicListItems.length === 0) {
 		return (
 			<Text as="p" typeRole="body" size="medium" css={topicListStyles.status}>
-				{searchQuery ? "검색 결과가 없습니다." : "등록된 주제가 없습니다."}
+				{debouncedSearchQuery
+					? "검색 결과가 없습니다."
+					: "등록된 주제가 없습니다."}
 			</Text>
 		);
 	}
