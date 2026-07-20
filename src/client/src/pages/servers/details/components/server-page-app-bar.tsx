@@ -54,7 +54,11 @@ export function ServerPageAppBar({
 			}
 			container="transparent"
 			data-scrolled={scroll.isScrolled}
-			css={[appBarStyles.root, appBarStyles.insetInServerPage]}
+			css={[
+				appBarStyles.root,
+				appBarStyles.insetInServerPage,
+				appBarStyles.desktopFullBleedInServerPage,
+			]}
 			leading={
 				<IconButton aria-label={backLabel} render={<Link to={backTo} />}>
 					<ArrowBackIcon />

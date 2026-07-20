@@ -56,7 +56,11 @@ export function TopicAppBarSkeleton() {
 	return (
 		<AppBar
 			container="transparent"
-			css={[appBarStyles.root, appBarStyles.insetInServerPage]}
+			css={[
+				appBarStyles.root,
+				appBarStyles.insetInServerPage,
+				appBarStyles.desktopFullBleedInServerPage,
+			]}
 			leading={
 				<IconButton type="button" aria-label="이전 페이지" disabled>
 					<ArrowBackIcon />

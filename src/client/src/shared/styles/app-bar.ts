@@ -25,4 +25,11 @@ export const appBarStyles = {
 			padding: 0,
 		},
 	}),
+	desktopFullBleedInServerPage: css({
+		[`@media (min-width: ${breakpoints.tablet})`]: {
+			width: "calc(100% + 3rem)",
+			marginInline: "-1.5rem",
+			paddingInline: "1.5rem",
+		},
+	}),
 };

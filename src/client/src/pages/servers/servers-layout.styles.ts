@@ -6,16 +6,21 @@ export const serversLayoutStyles = {
 		display: "grid",
 		minHeight: "100%",
 		[`@media (min-width: ${breakpoints.tablet})`]: {
+			height: "100%",
+			minHeight: 0,
 			gridTemplateColumns: "20rem minmax(0, 1fr)",
+			overflow: "hidden",
 		},
 	}),
 	content: css({
 		minWidth: 0,
 		[`@media (min-width: ${breakpoints.tablet})`]: {
 			display: "block",
-			overflow: "auto",
+			minHeight: 0,
+			overflowX: "hidden",
+			overflowY: "auto",
 			boxSizing: "border-box",
-			padding: "1rem 1rem 0",
+			padding: "0 1rem",
 		},
 	}),
 	contentHiddenOnMobile: css({

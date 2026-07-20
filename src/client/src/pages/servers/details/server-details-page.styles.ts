@@ -10,8 +10,10 @@ export const serverDetailsPageStyles = {
 		flexDirection: "column",
 		padding: "0.5rem 1rem",
 		[`@media (min-width: ${breakpoints.tablet})`]: {
+			height: "auto",
+			minHeight: "calc(100% - 1rem)",
+			marginTop: "1rem",
 			padding: "1.5rem",
-			overflow: "hidden",
 			borderRadius: "1rem 1rem 0 0",
 			backgroundColor: "var(--md-sys-color-surface)",
 		},
