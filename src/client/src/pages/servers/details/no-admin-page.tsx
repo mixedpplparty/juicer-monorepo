@@ -1,8 +1,8 @@
-import { exceptionPageStyles } from "@/pages/exceptions/exception-page.styles";
 import { Card } from "@mixedpplparty/juicer-m3/card";
 import { LockIcon } from "@mixedpplparty/juicer-m3/icons/lock";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useOutletContext } from "react-router";
+import { exceptionPageStyles } from "@/pages/exceptions/exception-page.styles";
 import { ServerPageAppBar } from "./components/server-page-app-bar";
 import type { ServerDetailsOutletContext } from "./server-details-context";
 

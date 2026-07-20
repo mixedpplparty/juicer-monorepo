@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Category } from "juicer-shared";
 import { useState } from "react";
 import { queryKeys } from "@/constants/query-keys";
+import { invalidateServerTopicState } from "@/shared/api/query-invalidation";
 import { createTopicCategory, deleteTopicCategory } from "../api/mutations";
 import { serverSettingsPageStyles } from "./server-settings-content.styles";
 import TopicCategoryDialog from "./topic-category-dialog";
@@ -44,12 +45,7 @@ export function TopicCategorySettings({
 		mutationFn: (categoryId: number) =>
 			deleteTopicCategory({ serverId, categoryId }),
 		onSuccess: async () => {
-			await Promise.all([
-				refreshServer(),
-				queryClient.invalidateQueries({
-					queryKey: queryKeys.topics.byServer(serverId),
-				}),
-			]);
+			await invalidateServerTopicState(queryClient, serverId);
 			setPendingDelete(null);
 			enqueue("주제 카테고리를 삭제했습니다.");
 		},

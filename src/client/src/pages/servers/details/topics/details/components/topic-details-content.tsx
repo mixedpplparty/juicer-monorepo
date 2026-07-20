@@ -1,22 +1,20 @@
-import { queryKeys } from "@/constants/query-keys";
 import { CheckboxListItem, List } from "@mixedpplparty/juicer-m3/list";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TopicDetails, TopicDetailsRole } from "juicer-shared";
+import { invalidateServerRoleState } from "@/shared/api/query-invalidation";
 import { setRoleAssignment } from "../api/mutations";
 import { topicDetailsPageStyles } from "../topic-details-page.styles";
 
 interface TopicDetailsContentProps {
 	serverId: string;
-	topicId: number;
 	topic: TopicDetails;
 }
 
 export function TopicDetailsContent({
 	serverId,
-	topicId,
 	topic,
 }: TopicDetailsContentProps) {
 	return (
@@ -67,12 +65,7 @@ export function TopicDetailsContent({
 						css={topicDetailsPageStyles.roleList}
 					>
 						{topic.roles.map((role) => (
-							<TopicRoleItem
-								key={role.id}
-								serverId={serverId}
-								topicId={topicId}
-								role={role}
-							/>
+							<TopicRoleItem key={role.id} serverId={serverId} role={role} />
 						))}
 					</List>
 				) : (
@@ -113,19 +106,16 @@ function DetailField({ label, children }: DetailFieldProps) {
 
 interface TopicRoleItemProps {
 	serverId: string;
-	topicId: number;
 	role: TopicDetailsRole;
 }
 
-function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
+function TopicRoleItem({ serverId, role }: TopicRoleItemProps) {
 	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
 	const mutation = useMutation({
 		mutationFn: setRoleAssignment,
 		onSuccess: async (_, variables) => {
-			await queryClient.invalidateQueries({
-				queryKey: queryKeys.topicDetails.detail(serverId, topicId),
-			});
+			await invalidateServerRoleState(queryClient, serverId);
 			enqueue(
 				variables.assigned
 					? `${role.name} 역할을 추가했습니다.`

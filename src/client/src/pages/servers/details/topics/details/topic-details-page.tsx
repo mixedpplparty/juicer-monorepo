@@ -41,11 +41,7 @@ function TopicDetailsRoute() {
 				mode="topic"
 			/>
 			<div css={serverDetailsPageStyles.content}>
-				<TopicDetailsContent
-					serverId={serverId}
-					topicId={topicId}
-					topic={topic}
-				/>
+				<TopicDetailsContent serverId={serverId} topic={topic} />
 			</div>
 		</>
 	);

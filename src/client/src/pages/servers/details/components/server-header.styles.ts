@@ -1,5 +1,5 @@
-import breakpoints from "@/shared/styles/breakpoints";
 import { css } from "@emotion/react";
+import breakpoints from "@/shared/styles/breakpoints";
 
 export const serverHeaderStyles = {
 	root: css({

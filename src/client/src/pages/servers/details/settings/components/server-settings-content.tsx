@@ -15,6 +15,7 @@ import type { Role, RoleCategory, ServerData } from "juicer-shared";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 import { useOutletContext } from "react-router";
 import { queryKeys } from "@/constants/query-keys";
+import { invalidateServerRoleState } from "@/shared/api/query-invalidation";
 import { syncServerRoles } from "../../api/mutations";
 import type { ServerDetailsOutletContext } from "../../server-details-context";
 import {
@@ -119,7 +120,7 @@ export function ServerSettingsContent() {
 	const syncMutation = useMutation({
 		mutationFn: syncServerRoles,
 		onSuccess: async (result) => {
-			await refreshServerData();
+			await invalidateServerRoleState(queryClient, serverId);
 			enqueue(
 				`동기화했습니다. 추가 ${result.roles_created.length}개, 삭제 ${result.roles_deleted.length}개`,
 			);
@@ -145,8 +146,9 @@ export function ServerSettingsContent() {
 			roleId: string;
 			roleCategoryId: number | null;
 		}) => updateRoleSettings({ serverId, roleId, roleCategoryId }),
-		onSuccess: (updatedRole) => {
+		onSuccess: async (updatedRole) => {
 			updateCachedRole(updatedRole);
+			await invalidateServerRoleState(queryClient, serverId);
 			enqueue("역할을 옮겼습니다.");
 		},
 		onError: (error) => showError(error, enqueue),
@@ -178,10 +180,7 @@ export function ServerSettingsContent() {
 		onSuccess: async (updatedRole) => {
 			updateCachedRole(updatedRole);
 			setSelectedRole(null);
-			await queryClient.invalidateQueries({
-				queryKey: queryKeys.topicDetails.byServer(serverId),
-				refetchType: "all",
-			});
+			await invalidateServerRoleState(queryClient, serverId);
 			enqueue("역할 설정을 저장했습니다.");
 		},
 		onError: (error) => showError(error, enqueue),
@@ -190,7 +189,7 @@ export function ServerSettingsContent() {
 	const deleteCategoryMutation = useMutation({
 		mutationFn: deleteRoleCategory,
 		onSuccess: async () => {
-			await refreshServerData();
+			await invalidateServerRoleState(queryClient, serverId);
 			setPendingDelete(null);
 			enqueue("역할 분류를 삭제했습니다.");
 		},
