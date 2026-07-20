@@ -1,21 +1,6 @@
-import {
-	createBrowserRouter,
-	type LoaderFunctionArgs,
-	Outlet,
-	redirect,
-} from "react-router";
-import SignInFailedPage from "@/pages/exceptions/sign-in-failed-page";
+import { createBrowserRouter, Outlet, redirect } from "react-router";
 import LandingPage from "@/pages/landing/landing-page";
 import { myInfoQueryOptions } from "@/pages/server-list/api/queries";
-import ServerListEmptyPage from "@/pages/server-list/server-list-empty-page";
-import ServersLayout from "@/pages/server-list/servers-layout";
-import { serverQueryOptions } from "@/pages/server-overview/api/queries";
-import NoAdminPage from "@/pages/server-overview/no-admin-page";
-import ServerDetailsLayout from "@/pages/server-overview/server-details-layout";
-import ServerDetailsPage from "@/pages/server-overview/server-details-page";
-import ServerSettingsPage from "@/pages/server-settings/server-settings-page";
-import TopicDetailsPage from "@/pages/topic-details/topic-details-page";
-import TopicEditPage from "@/pages/topic-edit/topic-edit-page";
 import { HttpError } from "@/shared/api/fetch-json";
 import AuthLoading from "./auth-loading";
 import { queryClient } from "./query-client";
@@ -49,24 +34,6 @@ async function authOnlyLoader() {
 	return null;
 }
 
-async function serverAdminOnlyLoader({ params }: LoaderFunctionArgs) {
-	const serverId = params.serverId;
-
-	if (!serverId) {
-		throw redirect("/servers");
-	}
-
-	const serverData = await queryClient.ensureQueryData(
-		serverQueryOptions(serverId),
-	);
-
-	if (!serverData.admin) {
-		throw redirect(`/servers/${serverId}/no-admin`);
-	}
-
-	return null;
-}
-
 function RouteOutlet() {
 	return <Outlet />;
 }
@@ -92,7 +59,13 @@ export const router = createBrowserRouter([
 					},
 					{
 						path: "sign-in-failed",
-						Component: SignInFailedPage,
+						lazy: async () => {
+							const { default: Component } = await import(
+								"@/pages/exceptions/sign-in-failed-page"
+							);
+
+							return { Component };
+						},
 					},
 				],
 			},
@@ -103,37 +76,89 @@ export const router = createBrowserRouter([
 				children: [
 					{
 						path: "servers",
-						Component: ServersLayout,
+						lazy: async () => {
+							const { default: Component } = await import(
+								"@/pages/server-list/servers-layout"
+							);
+
+							return { Component };
+						},
 						children: [
 							{
 								index: true,
-								Component: ServerListEmptyPage,
+								lazy: async () => {
+									const { default: Component } = await import(
+										"@/pages/server-list/server-list-empty-page"
+									);
+
+									return { Component };
+								},
 							},
 							{
 								path: ":serverId",
-								Component: ServerDetailsLayout,
+								lazy: async () => {
+									const { default: Component } = await import(
+										"@/pages/server-overview/server-details-layout"
+									);
+
+									return { Component };
+								},
 								children: [
 									{
 										index: true,
-										Component: ServerDetailsPage,
+										lazy: async () => {
+											const { default: Component } = await import(
+												"@/pages/server-overview/server-details-page"
+											);
+
+											return { Component };
+										},
 									},
 									{
 										path: "no-admin",
-										Component: NoAdminPage,
+										lazy: async () => {
+											const { default: Component } = await import(
+												"@/pages/server-overview/no-admin-page"
+											);
+
+											return { Component };
+										},
 									},
 									{
 										path: "settings",
-										loader: serverAdminOnlyLoader,
-										Component: ServerSettingsPage,
+										lazy: async () => {
+											const [{ default: Component }, { default: loader }] =
+												await Promise.all([
+													import(
+														"@/pages/server-settings/server-settings-page"
+													),
+													import("./server-admin-only-loader"),
+												]);
+
+											return { Component, loader };
+										},
 									},
 									{
 										path: "topics/:topicId",
-										Component: TopicDetailsPage,
+										lazy: async () => {
+											const { default: Component } = await import(
+												"@/pages/topic-details/topic-details-page"
+											);
+
+											return { Component };
+										},
 									},
 									{
 										path: "topics/:topicId/edit",
-										loader: serverAdminOnlyLoader,
-										Component: TopicEditPage,
+										lazy: async () => {
+											const [{ default: Component }, { default: loader }] =
+												await Promise.all([
+													import("@/pages/topic-edit/topic-edit-page"),
+													import("./server-admin-only-loader"),
+												]);
+
+											return { Component, loader };
+										},
 									},
 								],
 							},
