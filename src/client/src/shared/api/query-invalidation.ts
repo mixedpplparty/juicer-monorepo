@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/constants/query-keys";
+import { serverQueryKeys } from "./query-keys/server-query-keys";
+import { topicQueryKeys } from "./query-keys/topic-query-keys";
 
 /**
  * Invalidates every view derived from Discord role membership or role metadata.
@@ -13,16 +14,16 @@ export function invalidateServerRoleState(
 ) {
 	return Promise.all([
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.serverData(serverId),
+			queryKey: serverQueryKeys.data(serverId),
 		}),
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.myDataInServer(serverId),
+			queryKey: serverQueryKeys.currentMember(serverId),
 		}),
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.topics.byServer(serverId),
+			queryKey: topicQueryKeys.lists.byServer(serverId),
 		}),
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.topicDetails.byServer(serverId),
+			queryKey: topicQueryKeys.details.byServer(serverId),
 		}),
 	]);
 }
@@ -36,13 +37,13 @@ export function invalidateServerTopicState(
 ) {
 	return Promise.all([
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.serverData(serverId),
+			queryKey: serverQueryKeys.data(serverId),
 		}),
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.topics.byServer(serverId),
+			queryKey: topicQueryKeys.lists.byServer(serverId),
 		}),
 		queryClient.invalidateQueries({
-			queryKey: queryKeys.topicDetails.byServer(serverId),
+			queryKey: topicQueryKeys.details.byServer(serverId),
 		}),
 	]);
 }
