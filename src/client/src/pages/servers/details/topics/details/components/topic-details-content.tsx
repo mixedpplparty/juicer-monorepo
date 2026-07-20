@@ -1,11 +1,10 @@
-import { Checkbox } from "@mixedpplparty/juicer-m3/checkbox";
-import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
+import { queryKeys } from "@/constants/query-keys";
+import { CheckboxListItem, List } from "@mixedpplparty/juicer-m3/list";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TopicDetails, TopicDetailsRole } from "juicer-shared";
-import { queryKeys } from "@/constants/query-keys";
 import { setRoleAssignment } from "../api/mutations";
 import { topicDetailsPageStyles } from "../topic-details-page.styles";
 
@@ -141,24 +140,12 @@ function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
 		},
 	});
 	const disabled = mutation.isPending || !role.selfAssignable;
-	const toggleRole = () => {
-		if (!disabled) {
-			mutation.mutate({
-				serverId,
-				roleId: role.id,
-				assigned: !role.assigned,
-			});
-		}
-	};
 
 	return (
-		<ListItem
-			aria-disabled={disabled || undefined}
-			css={[
-				topicDetailsPageStyles.roleItem,
-				disabled && topicDetailsPageStyles.roleItemDisabled,
-			]}
-			onClick={disabled ? undefined : toggleRole}
+		<CheckboxListItem
+			checked={role.assigned}
+			disabled={disabled}
+			css={topicDetailsPageStyles.roleItem}
 			headline={
 				<RoleIndicator
 					roleName={role.name}
@@ -168,22 +155,12 @@ function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
 				/>
 			}
 			supportingText={role.description || undefined}
-			leading={
-				<span css={topicDetailsPageStyles.roleControl}>
-					<Checkbox
-						checked={role.assigned}
-						disabled={disabled}
-						aria-label={`${role.name} 역할 ${role.assigned ? "해제" : "할당"}`}
-						onClick={(event) => event.stopPropagation()}
-						onCheckedChange={(assigned) =>
-							mutation.mutate({
-								serverId,
-								roleId: role.id,
-								assigned,
-							})
-						}
-					/>
-				</span>
+			onCheckedChange={(checked) =>
+				mutation.mutate({
+					serverId,
+					roleId: role.id,
+					assigned: checked,
+				})
 			}
 		/>
 	);

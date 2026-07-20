@@ -46,23 +46,13 @@ export const topicDetailsPageStyles = {
 		padding: 0,
 		borderRadius: "1rem",
 		overflow: "hidden",
+		"& > li + li > .jm3-checkbox-list-item": {
+			borderTop: "1px solid var(--md-sys-color-outline-variant)",
+		},
 	}),
 	roleItem: css({
 		"--jm3-list-item-container": "var(--md-sys-color-surface-container-low)",
 		minHeight: "3.75rem",
-		cursor: "pointer",
-		"& + &": {
-			borderTop: "1px solid var(--md-sys-color-outline-variant)",
-		},
-	}),
-	roleItemDisabled: css({
-		cursor: "not-allowed",
-	}),
-	roleControl: css({
-		width: "3rem",
-		height: "3rem",
-		display: "grid",
-		placeItems: "center",
 	}),
 	emptyRoles: css({
 		margin: 0,
