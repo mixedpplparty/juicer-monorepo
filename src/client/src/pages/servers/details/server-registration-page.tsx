@@ -1,7 +1,7 @@
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createServer } from "./api/mutations";
+import { createServer, syncServerRoles } from "./api/mutations";
 import {
 	myDataInServerQueryOptions,
 	serverQueryOptions,
@@ -18,7 +18,10 @@ export function ServerRegistrationPage({
 }: ServerRegistrationPageProps) {
 	const queryClient = useQueryClient();
 	const registrationMutation = useMutation({
-		mutationFn: () => createServer(serverId),
+		mutationFn: async () => {
+			await createServer(serverId);
+			await syncServerRoles(serverId);
+		},
 		onSuccess: async () => {
 			await Promise.all([
 				queryClient.fetchQuery({

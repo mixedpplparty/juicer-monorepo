@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { useScrollState } from "../../hooks/use-scroll-state";
+import TopicDeleteDialog from "../topics/details/components/topic-delete-dialog";
 import { topicDetailsPageStyles } from "../topics/details/topic-details-page.styles";
 
 interface ServerPageAppBarProps {
@@ -55,10 +56,7 @@ export function ServerPageAppBar({
 			data-scrolled={scroll.isScrolled}
 			css={[appBarStyles.root, appBarStyles.insetInServerPage]}
 			leading={
-				<IconButton
-					aria-label={backLabel}
-					render={<Link to={backTo} />}
-				>
+				<IconButton aria-label={backLabel} render={<Link to={backTo} />}>
 					<ArrowBackIcon />
 				</IconButton>
 			}
@@ -98,14 +96,21 @@ export function TopicAppBar({
 			backLabel={editing ? "주제 상세로 돌아가기" : "주제 목록으로 돌아가기"}
 			actions={
 				admin && !editing ? (
-					<IconButton
-						aria-label="주제 편집"
-						render={
-							<Link to={`/servers/${serverId}/topics/${topicId}/edit`} />
-						}
-					>
-						<EditIcon />
-					</IconButton>
+					<>
+						<IconButton
+							aria-label="주제 편집"
+							render={
+								<Link to={`/servers/${serverId}/topics/${topicId}/edit`} />
+							}
+						>
+							<EditIcon />
+						</IconButton>
+						<TopicDeleteDialog
+							serverId={serverId}
+							topicId={topicId}
+							topicName={topicName}
+						/>
+					</>
 				) : undefined
 			}
 		/>

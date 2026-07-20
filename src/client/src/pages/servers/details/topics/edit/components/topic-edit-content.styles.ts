@@ -25,6 +25,9 @@ export const topicEditPageStyles = {
 			width: "100%",
 		},
 	}),
+	categoryField: css({
+		width: "100%",
+	}),
 	section: css({
 		display: "flex",
 		flexDirection: "column",
@@ -79,5 +82,11 @@ export const topicEditPageStyles = {
 		width: "1.5rem",
 		height: "1.5rem",
 		color: "currentColor",
+	}),
+	fullWidth: css({
+		width: "100%",
+		"& > .jm3-select-field, & .jm3-select-trigger": {
+			width: "100%",
+		},
 	}),
 };

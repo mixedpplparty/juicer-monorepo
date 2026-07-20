@@ -8,6 +8,7 @@ export interface UpdateTopicInput {
 	topicId: number;
 	name: string;
 	description: string | null;
+	categoryId: number | null;
 	channelIds: string[];
 	roleIds: string[];
 }
@@ -17,6 +18,7 @@ export async function updateTopic({
 	topicId,
 	name,
 	description,
+	categoryId,
 	channelIds,
 	roleIds,
 }: UpdateTopicInput): Promise<UpdateGameResponse> {
@@ -27,6 +29,7 @@ export async function updateTopic({
 			json: {
 				name,
 				description,
+				categoryId,
 				channels: channelIds,
 				roleIds,
 			},

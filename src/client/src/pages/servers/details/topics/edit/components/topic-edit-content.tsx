@@ -5,6 +5,7 @@ import { DeleteIcon } from "@mixedpplparty/juicer-m3/icons/delete";
 import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
 import { CircularProgress } from "@mixedpplparty/juicer-m3/progress";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
+import { Select } from "@mixedpplparty/juicer-m3/select";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { TextField } from "@mixedpplparty/juicer-m3/text-field";
@@ -37,6 +38,9 @@ export function TopicEditContent({
 	const { enqueue } = useSnackbar();
 	const [name, setName] = useState(topic.name);
 	const [description, setDescription] = useState(topic.description ?? "");
+	const [categoryId, setCategoryId] = useState<number | null>(
+		topic.category?.categoryId ?? null,
+	);
 	const [channelIds, setChannelIds] = useState(() =>
 		topic.channels.map((channel) => channel.id),
 	);
@@ -45,6 +49,16 @@ export function TopicEditContent({
 	);
 	const [channelDialogOpen, setChannelDialogOpen] = useState(false);
 	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+	const categoryItems = useMemo(
+		() => [
+			{ label: "선택 안 함", value: "none" },
+			...(serverData.serverDataDb?.categories ?? []).map((category) => ({
+				label: category.name,
+				value: String(category.categoryId),
+			})),
+		],
+		[serverData.serverDataDb?.categories],
+	);
 
 	const channelsById = useMemo(
 		() =>
@@ -101,6 +115,7 @@ export function TopicEditContent({
 	const hasChanges =
 		name !== topic.name ||
 		description !== (topic.description ?? "") ||
+		categoryId !== (topic.category?.categoryId ?? null) ||
 		!sameIds(
 			channelIds,
 			topic.channels.map((channel) => channel.id),
@@ -145,6 +160,7 @@ export function TopicEditContent({
 			topicId,
 			name: name.trim(),
 			description: description.trim(),
+			categoryId,
 			channelIds,
 			roleIds,
 		});
@@ -169,6 +185,31 @@ export function TopicEditContent({
 						value={description}
 						onChange={(event) => setDescription(event.currentTarget.value)}
 					/>
+					<Select.Root
+						items={categoryItems}
+						value={categoryId === null ? "none" : String(categoryId)}
+						disabled={mutation.isPending}
+						onValueChange={(value) =>
+							setCategoryId(value && value !== "none" ? Number(value) : null)
+						}
+						css={topicEditPageStyles.fullWidth}
+					>
+						<Select.Label>카테고리 (선택)</Select.Label>
+						<Select.Trigger css={topicEditPageStyles.categoryField}>
+							<Select.Value placeholder="카테고리 선택" />
+							<Select.Icon />
+						</Select.Trigger>
+						<Select.Popup>
+							<Select.List>
+								{categoryItems.map((category) => (
+									<Select.Item key={category.value} value={category.value}>
+										<Select.ItemIndicator />
+										<Select.ItemText>{category.label}</Select.ItemText>
+									</Select.Item>
+								))}
+							</Select.List>
+						</Select.Popup>
+					</Select.Root>
 				</div>
 
 				<AssociationList

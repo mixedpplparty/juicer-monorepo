@@ -14,12 +14,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Role, RoleCategory, ServerData } from "juicer-shared";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 import { useOutletContext } from "react-router";
+import { syncServerRoles } from "../../api/mutations";
 import { serverQueryOptions } from "../../api/queries";
 import type { ServerDetailsOutletContext } from "../../server-details-context";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
-	syncServerRoles,
 	updateRoleSettings,
 	updateServerVerificationRequired,
 } from "../api/mutations";
@@ -28,6 +28,7 @@ import RoleSettingsDialog, {
 	type RoleSettingsValue,
 } from "./role-settings-dialog";
 import { serverSettingsPageStyles } from "./server-settings-content.styles";
+import TopicCategorySettings from "./topic-category-settings";
 
 export function ServerSettingsContent() {
 	const { serverId, serverData } =
@@ -320,6 +321,13 @@ export function ServerSettingsContent() {
 						headline="역할 분류 추가하기"
 					/>
 				</List>
+			</SettingsSection>
+
+			<SettingsSection title="주제 카테고리">
+				<TopicCategorySettings
+					serverId={serverId}
+					categories={serverData.serverDataDb?.categories ?? []}
+				/>
 			</SettingsSection>
 
 			<SettingsSection title="데이터">

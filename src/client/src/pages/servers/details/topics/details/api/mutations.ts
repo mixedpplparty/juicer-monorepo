@@ -20,3 +20,17 @@ export async function setRoleAssignment({
 		"역할을 변경하지 못했습니다.",
 	);
 }
+
+export async function deleteTopic({
+	serverId,
+	topicId,
+}: {
+	serverId: string;
+	topicId: number;
+}): Promise<unknown> {
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}/games/${topicId}`,
+		{ method: "DELETE" },
+		"주제를 삭제하지 못했습니다.",
+	);
+}

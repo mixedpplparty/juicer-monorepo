@@ -1,4 +1,4 @@
-import type { CreateGameResponse } from "juicer-shared";
+import type { CreateGameResponse, SyncRolesResponse } from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
@@ -19,6 +19,14 @@ export function createServer(serverId: string): Promise<CreateServerResponse> {
 		`${backendBase}/discord/servers/${serverId}/create`,
 		{ method: "POST" },
 		"서버를 등록하지 못했습니다.",
+	);
+}
+
+export function syncServerRoles(serverId: string): Promise<SyncRolesResponse> {
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}/sync-roles`,
+		{},
+		"서버 데이터를 동기화하지 못했습니다.",
 	);
 }
 
