@@ -175,9 +175,13 @@ export function ServerSettingsContent() {
 				selfAssignable,
 				description,
 			}),
-		onSuccess: (updatedRole) => {
+		onSuccess: async (updatedRole) => {
 			updateCachedRole(updatedRole);
 			setSelectedRole(null);
+			await queryClient.invalidateQueries({
+				queryKey: ["topicDetails", serverId],
+				refetchType: "all",
+			});
 			enqueue("역할 설정을 저장했습니다.");
 		},
 		onError: (error) => showError(error, enqueue),

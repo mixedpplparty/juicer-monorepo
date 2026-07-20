@@ -134,9 +134,9 @@ export function TopicEditContent({
 				queryClient.refetchQueries({
 					queryKey: topicDetailsQueryOptions(serverId, topicId).queryKey,
 				}),
-				queryClient.refetchQueries({
+				queryClient.invalidateQueries({
 					queryKey: ["topics", serverId],
-					type: "active",
+					refetchType: "all",
 				}),
 			]);
 			enqueue("주제를 저장했습니다.");
