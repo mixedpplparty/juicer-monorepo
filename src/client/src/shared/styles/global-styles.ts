@@ -7,41 +7,33 @@ export const globalStyles = css`
 			"IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
 			"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-		--Schemes-Surface-Container-Highest: #f0dfd8;
-		--Schemes-Surface-Container: #fceae3;
-		--Schemes-Surface-Variant: #f4ded4;
-		--Schemes-Surface: #fff8f6;
-		--Schemes-Primary-Fixed: #ffdbcb;
-		--Schemes-Surface-Container-Low: #fff1eb;
-		--Schemes-Outline-Variant: #d7c2b9;
-
 		background:
 			radial-gradient(
 				circle 50vw at 0% 0%,
-				var(--Schemes-Primary-Fixed),
+				var(--md-sys-color-surface-container-highest),
 				transparent 90%
 			),
 			radial-gradient(
 				circle 50vw at 100% 100%,
-				var(--Schemes-Surface-Container),
+				var(--md-sys-color-surface-container),
 				transparent 90%
 			),
-			var(--Schemes-Surface);
+			var(--md-sys-color-surface);
 		background-attachment: fixed;
 
 		@media (min-width: ${breakpoints.tablet}) {
 			background:
 				radial-gradient(
 					circle 30vw at 100% 18%,
-					var(--Schemes-Surface-Container-Highest),
+					var(--md-sys-color-surface-container-highest),
 					transparent 90%
 				),
 				radial-gradient(
 					circle 50vh at 45% 100%,
-					var(--Schemes-Surface-Variant),
+					var(--md-sys-color-surface-variant),
 					transparent 90%
 				),
-				var(--Schemes-Surface-Container);
+				var(--md-sys-color-surface-container);
 			background-attachment: fixed;
 		}
 	}

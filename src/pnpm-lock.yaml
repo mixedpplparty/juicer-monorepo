@@ -22,8 +22,8 @@ importers:
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.17)(react@19.2.7)
       '@mixedpplparty/juicer-m3':
-        specifier: 1.1.7
-        version: 1.1.7(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: 1.1.8
+        version: 1.1.8(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
@@ -697,8 +697,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mixedpplparty/juicer-m3@1.1.7':
-    resolution: {integrity: sha512-annVDZ+OeEn5kACLkHfFKSuxYems3iCUsJbQt32VTrlQsM4MmZD3aG4orw5axzzb6ip66p6eJu5NXrEiqkyQfA==}
+  '@mixedpplparty/juicer-m3@1.1.8':
+    resolution: {integrity: sha512-4ND3f/h8FIifYluAx2s70kAQ3U24O9tZbny9NznvbeXlgKqaERaaphPyqOK2rcj9dGUtFKizST/pYEU1dlYECA==}
     engines: {node: '>=22'}
     peerDependencies:
       react: ^18.3.0 || ^19.0.0
@@ -2023,7 +2023,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mixedpplparty/juicer-m3@1.1.7(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@mixedpplparty/juicer-m3@1.1.8(@emotion/is-prop-valid@1.4.0)(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@base-ui/react': 1.6.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       motion: 12.42.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

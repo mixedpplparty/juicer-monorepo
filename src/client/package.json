@@ -11,7 +11,7 @@
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
 		"@tanstack/react-query": "^5.101.2",
-		"@mixedpplparty/juicer-m3": "1.1.7",
+		"@mixedpplparty/juicer-m3": "1.1.8",
 		"juicer-shared": "workspace:*",
 		"lucide-react": "^1.24.0",
 		"react": "^19.2.7",

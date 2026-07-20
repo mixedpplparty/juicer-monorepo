@@ -15,7 +15,7 @@ export const serverHeaderStyles = {
 			gap: "2rem",
 			transition: "background-color 150ms ease",
 			'&[data-scrolled="true"]': {
-				backgroundColor: "var(--md-sys-color-surface, var(--Schemes-Surface))",
+				backgroundColor: "var(--md-sys-color-surface)",
 			},
 		},
 	}),

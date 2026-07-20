@@ -13,7 +13,7 @@ export const serverDetailsPageStyles = {
 			padding: "1.5rem",
 			overflow: "hidden",
 			borderRadius: "1rem 1rem 0 0",
-			backgroundColor: "var(--Schemes-Surface)",
+			backgroundColor: "var(--md-sys-color-surface)",
 		},
 	}),
 	content: css({
