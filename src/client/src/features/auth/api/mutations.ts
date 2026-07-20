@@ -10,9 +10,14 @@ export async function logout(): Promise<void> {
 	const response = await fetch(`${backendBase}/discord/auth/revoke`, {
 		method: "POST",
 		credentials: "include",
+		cache: "no-store",
+		redirect: "manual",
 	});
 
-	if (!response.ok) {
+	const revokedWithRedirect =
+		response.status === 302 || response.type === "opaqueredirect";
+
+	if (!response.ok && !revokedWithRedirect) {
 		throw new HttpError(response, "로그아웃하지 못했습니다.");
 	}
 }
