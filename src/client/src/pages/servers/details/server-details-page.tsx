@@ -4,7 +4,9 @@ import ServerHeader from "./components/server-header";
 import ServerInfo from "./components/server-info";
 import type { ServerDetailsOutletContext } from "./server-details-context";
 import { serverDetailsPageStyles } from "./server-details-page.styles";
-import ServerRegistrationPage from "./server-registration-page";
+import ServerRegistrationPage, {
+	ServerRegistrationUnavailablePage,
+} from "./server-registration-page";
 
 export function ServerDetailsPage() {
 	const { serverId, serverData } =
@@ -12,7 +14,11 @@ export function ServerDetailsPage() {
 	const [searchQuery, setSearchQuery] = useState("");
 
 	if (!serverData.serverDataDb) {
-		return <ServerRegistrationPage serverId={serverId} />;
+		return serverData.admin ? (
+			<ServerRegistrationPage serverId={serverId} />
+		) : (
+			<ServerRegistrationUnavailablePage />
+		);
 	}
 
 	return (

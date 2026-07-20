@@ -90,4 +90,33 @@ export function ServerRegistrationPage({
 	);
 }
 
+export function ServerRegistrationUnavailablePage() {
+	return (
+		<section
+			css={serverRegistrationPageStyles.root}
+			aria-labelledby="server-registration-unavailable-title"
+		>
+			<div css={serverRegistrationPageStyles.copy}>
+				<Text
+					as="h1"
+					id="server-registration-unavailable-title"
+					typeRole="headline"
+					size="medium"
+				>
+					서버 등록이 필요해요
+				</Text>
+				<Text
+					as="p"
+					typeRole="body"
+					size="large"
+					css={serverRegistrationPageStyles.description}
+				>
+					서버 관리자만 이 서버를 juicer에 등록할 수 있어요. 서버 관리자에게
+					등록을 요청해 주세요.
+				</Text>
+			</div>
+		</section>
+	);
+}
+
 export default ServerRegistrationPage;
