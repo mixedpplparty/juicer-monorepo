@@ -3,11 +3,23 @@ import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
+interface CreateServerResponse {
+	message: string;
+}
+
 export interface CreateTopicInput {
 	serverId: string;
 	name: string;
 	description: string | null;
 	categoryId: number | null;
+}
+
+export function createServer(serverId: string): Promise<CreateServerResponse> {
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}/create`,
+		{ method: "POST" },
+		"서버를 등록하지 못했습니다.",
+	);
 }
 
 export async function createTopic({
