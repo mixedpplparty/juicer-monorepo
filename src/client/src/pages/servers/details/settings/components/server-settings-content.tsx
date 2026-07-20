@@ -45,10 +45,10 @@ export function ServerSettingsContent() {
 	const dbRoles = serverData.serverDataDb?.roles ?? [];
 	const roleCategories = serverData.serverDataDb?.roleCategories ?? [];
 	const verificationCategory = roleCategories.find(
-		(category) => category.name === "verification",
+		(category) => category.roleCategoryId === 1,
 	);
 	const visibleCategories = roleCategories.filter(
-		(category) => category.name !== "verification",
+		(category) => category.roleCategoryId !== 1,
 	);
 
 	const roles = useMemo<RoleSettingsValue[]>(() => {
@@ -373,7 +373,7 @@ export function ServerSettingsContent() {
 				categories={roleCategories.map((category) => ({
 					id: category.roleCategoryId,
 					name:
-						category.name === "verification"
+						category.roleCategoryId === 1
 							? "juicer 이용에 필요한 역할"
 							: category.name,
 				}))}
