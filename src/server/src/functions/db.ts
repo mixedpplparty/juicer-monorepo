@@ -457,7 +457,6 @@ export const deleteRoleCategory = async ({
 		const [category] = await tx
 			.select({
 				roleCategoryId: roleCategories.roleCategoryId,
-				name: roleCategories.name,
 			})
 			.from(roleCategories)
 			.where(
@@ -473,7 +472,7 @@ export const deleteRoleCategory = async ({
 				message: "Role category not found in this server.",
 			});
 		}
-		if (category.name.trim().toLowerCase() === "verification") {
+		if (category.roleCategoryId === 1) {
 			throw new HTTPException(400, {
 				message: "Cannot delete the verification role category.",
 			});

@@ -13,7 +13,7 @@ export const appBarStyles = {
 		padding: "0 1rem",
 		transition: "background-color 150ms ease",
 		'&[data-scrolled="true"]': {
-			backgroundColor: "var(--md-sys-color-surface, var(--Schemes-Surface))",
+			backgroundColor: "var(--md-sys-color-surface)",
 		},
 	}),
 	insetInServerPage: css({
@@ -23,6 +23,13 @@ export const appBarStyles = {
 			width: "100%",
 			margin: 0,
 			padding: 0,
+		},
+	}),
+	desktopFullBleedInServerPage: css({
+		[`@media (min-width: ${breakpoints.tablet})`]: {
+			width: "calc(100% + 3rem)",
+			marginInline: "-1.5rem",
+			paddingInline: "1.5rem",
 		},
 	}),
 };

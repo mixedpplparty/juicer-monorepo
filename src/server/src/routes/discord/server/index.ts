@@ -55,7 +55,7 @@ app.post("/:serverId/create", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const serverDataDb = await createServer(serverId);
-		// Each server owns a reserved verification role category.
+		// verification is always ID 1
 		const verificationRoleCategory = await createRoleCategory({
 			serverId,
 			name: "verification",

@@ -27,12 +27,18 @@ export function LandingContent() {
 				aria-label="Discord로 로그인하기"
 				nativeButton={false}
 			>
-				<img
-					src="/discord-logo.svg"
-					alt=""
-					aria-hidden="true"
-					css={landingPageStyles.discordLogo}
-				/>
+				<picture>
+					<source
+						media="(prefers-color-scheme: dark)"
+						srcSet="/discord-logo-black.svg"
+					/>
+					<img
+						src="/discord-logo.svg"
+						alt=""
+						aria-hidden="true"
+						css={landingPageStyles.discordLogo}
+					/>
+				</picture>
 				<span>로 로그인하기</span>
 			</Button>
 		</section>

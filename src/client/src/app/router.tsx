@@ -1,20 +1,22 @@
-import LandingPage from "@/pages/landing/landing-page";
-import { serverQueryOptions } from "@/pages/servers/details/api/queries";
-import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
-import ServerDetailsPage from "@/pages/servers/details/server-details-page";
-import ServerSettingsPage from "@/pages/servers/details/settings/server-settings-page";
-import TopicDetailsPage from "@/pages/servers/details/topics/details/topic-details-page";
-import TopicEditPage from "@/pages/servers/details/topics/edit/topic-edit-page";
-import { myInfoQueryOptions } from "@/pages/servers/list/api/queries";
-import ServerListEmptyPage from "@/pages/servers/list/server-list-empty-page";
-import ServersLayout from "@/pages/servers/servers-layout";
-import { HttpError } from "@/shared/api/fetch-json";
 import {
 	createBrowserRouter,
 	type LoaderFunctionArgs,
 	Outlet,
 	redirect,
 } from "react-router";
+import SignInFailedPage from "@/pages/exceptions/sign-in-failed-page";
+import LandingPage from "@/pages/landing/landing-page";
+import { myInfoQueryOptions } from "@/pages/server-list/api/queries";
+import ServerListEmptyPage from "@/pages/server-list/server-list-empty-page";
+import ServersLayout from "@/pages/server-list/servers-layout";
+import { serverQueryOptions } from "@/pages/server-overview/api/queries";
+import NoAdminPage from "@/pages/server-overview/no-admin-page";
+import ServerDetailsLayout from "@/pages/server-overview/server-details-layout";
+import ServerDetailsPage from "@/pages/server-overview/server-details-page";
+import ServerSettingsPage from "@/pages/server-settings/server-settings-page";
+import TopicDetailsPage from "@/pages/topic-details/topic-details-page";
+import TopicEditPage from "@/pages/topic-edit/topic-edit-page";
+import { HttpError } from "@/shared/api/fetch-json";
 import AuthLoading from "./auth-loading";
 import { queryClient } from "./query-client";
 import RouteErrorBoundary from "./route-error-boundary";
@@ -59,7 +61,7 @@ async function serverAdminOnlyLoader({ params }: LoaderFunctionArgs) {
 	);
 
 	if (!serverData.admin) {
-		throw redirect(`/servers/${serverId}`);
+		throw redirect(`/servers/${serverId}/no-admin`);
 	}
 
 	return null;
@@ -88,6 +90,10 @@ export const router = createBrowserRouter([
 						index: true,
 						Component: LandingPage,
 					},
+					{
+						path: "sign-in-failed",
+						Component: SignInFailedPage,
+					},
 				],
 			},
 			{
@@ -110,6 +116,10 @@ export const router = createBrowserRouter([
 									{
 										index: true,
 										Component: ServerDetailsPage,
+									},
+									{
+										path: "no-admin",
+										Component: NoAdminPage,
 									},
 									{
 										path: "settings",

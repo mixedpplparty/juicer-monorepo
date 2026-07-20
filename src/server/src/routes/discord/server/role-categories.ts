@@ -25,11 +25,6 @@ app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 		true,
 	);
 	if (manageGuildPermission) {
-		if (body.name.trim().toLowerCase() === "verification") {
-			throw new HTTPException(400, {
-				message: "The verification role category is managed by the server.",
-			});
-		}
 		const roleCategory = await createRoleCategory({
 			serverId: serverId as string,
 			name: body.name.trim(),
