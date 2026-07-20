@@ -1,5 +1,13 @@
+import {
+	createBrowserRouter,
+	type LoaderFunctionArgs,
+	Outlet,
+	redirect,
+} from "react-router";
+import SignInFailedPage from "@/pages/exceptions/sign-in-failed-page";
 import LandingPage from "@/pages/landing/landing-page";
 import { serverQueryOptions } from "@/pages/servers/details/api/queries";
+import NoAdminPage from "@/pages/servers/details/no-admin-page";
 import ServerDetailsLayout from "@/pages/servers/details/server-details-layout";
 import ServerDetailsPage from "@/pages/servers/details/server-details-page";
 import ServerSettingsPage from "@/pages/servers/details/settings/server-settings-page";
@@ -9,12 +17,6 @@ import { myInfoQueryOptions } from "@/pages/servers/list/api/queries";
 import ServerListEmptyPage from "@/pages/servers/list/server-list-empty-page";
 import ServersLayout from "@/pages/servers/servers-layout";
 import { HttpError } from "@/shared/api/fetch-json";
-import {
-	createBrowserRouter,
-	type LoaderFunctionArgs,
-	Outlet,
-	redirect,
-} from "react-router";
 import AuthLoading from "./auth-loading";
 import { queryClient } from "./query-client";
 import RouteErrorBoundary from "./route-error-boundary";
@@ -59,7 +61,7 @@ async function serverAdminOnlyLoader({ params }: LoaderFunctionArgs) {
 	);
 
 	if (!serverData.admin) {
-		throw redirect(`/servers/${serverId}`);
+		throw redirect(`/servers/${serverId}/no-admin`);
 	}
 
 	return null;
@@ -88,6 +90,10 @@ export const router = createBrowserRouter([
 						index: true,
 						Component: LandingPage,
 					},
+					{
+						path: "sign-in-failed",
+						Component: SignInFailedPage,
+					},
 				],
 			},
 			{
@@ -110,6 +116,10 @@ export const router = createBrowserRouter([
 									{
 										index: true,
 										Component: ServerDetailsPage,
+									},
+									{
+										path: "no-admin",
+										Component: NoAdminPage,
 									},
 									{
 										path: "settings",
