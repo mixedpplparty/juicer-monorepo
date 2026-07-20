@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { MyInfo } from "juicer-shared";
+import { queryKeys } from "@/constants/query-keys";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
@@ -14,6 +15,6 @@ function fetchMyInfo(signal: AbortSignal): Promise<MyInfo> {
 
 export const myInfoQueryOptions = () =>
 	queryOptions({
-		queryKey: ["myInfo"],
+		queryKey: queryKeys.myInfo,
 		queryFn: ({ signal }) => fetchMyInfo(signal),
 	});

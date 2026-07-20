@@ -14,8 +14,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Role, RoleCategory, ServerData } from "juicer-shared";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 import { useOutletContext } from "react-router";
+import { queryKeys } from "@/constants/query-keys";
 import { syncServerRoles } from "../../api/mutations";
-import { serverQueryOptions } from "../../api/queries";
 import type { ServerDetailsOutletContext } from "../../server-details-context";
 import {
 	createRoleCategory,
@@ -84,11 +84,11 @@ export function ServerSettingsContent() {
 
 	const refreshServerData = () =>
 		queryClient.refetchQueries({
-			queryKey: serverQueryOptions(serverId).queryKey,
+			queryKey: queryKeys.serverData(serverId),
 		});
 	const updateCachedRole = (updatedRole: Role) => {
 		queryClient.setQueryData<ServerData>(
-			serverQueryOptions(serverId).queryKey,
+			queryKeys.serverData(serverId),
 			(current) => {
 				if (!current?.serverDataDb?.roles) {
 					return current;
@@ -179,7 +179,7 @@ export function ServerSettingsContent() {
 			updateCachedRole(updatedRole);
 			setSelectedRole(null);
 			await queryClient.invalidateQueries({
-				queryKey: ["topicDetails", serverId],
+				queryKey: queryKeys.topicDetails.byServer(serverId),
 				refetchType: "all",
 			});
 			enqueue("역할 설정을 저장했습니다.");

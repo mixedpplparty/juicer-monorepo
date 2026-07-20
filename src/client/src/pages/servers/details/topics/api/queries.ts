@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { TopicDetails } from "juicer-shared";
+import { queryKeys } from "@/constants/query-keys";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
@@ -18,6 +19,6 @@ async function fetchTopicDetails(
 
 export const topicDetailsQueryOptions = (serverId: string, topicId: number) =>
 	queryOptions({
-		queryKey: ["topicDetails", serverId, topicId],
+		queryKey: queryKeys.topicDetails.detail(serverId, topicId),
 		queryFn: ({ signal }) => fetchTopicDetails(serverId, topicId, signal),
 	});

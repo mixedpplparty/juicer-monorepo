@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { Game, MyDataInServer, ServerData } from "juicer-shared";
+import { queryKeys } from "@/constants/query-keys";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
@@ -41,18 +42,18 @@ function fetchTopics(
 
 export const serverQueryOptions = (serverId: string) =>
 	queryOptions({
-		queryKey: ["serverData", serverId],
+		queryKey: queryKeys.serverData(serverId),
 		queryFn: ({ signal }) => fetchServerData(serverId, signal),
 	});
 
 export const myDataInServerQueryOptions = (serverId: string) =>
 	queryOptions({
-		queryKey: ["myDataInServer", serverId],
+		queryKey: queryKeys.myDataInServer(serverId),
 		queryFn: ({ signal }) => fetchMyDataInServer(serverId, signal),
 	});
 
 export const topicsQueryOptions = (serverId: string, query: string) =>
 	queryOptions({
-		queryKey: ["topics", serverId, query],
+		queryKey: queryKeys.topics.list(serverId, query),
 		queryFn: ({ signal }) => fetchTopics(serverId, query, signal),
 	});

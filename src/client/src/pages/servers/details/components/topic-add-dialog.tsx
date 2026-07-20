@@ -6,6 +6,7 @@ import { TextField } from "@mixedpplparty/juicer-m3/text-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ServerData } from "juicer-shared";
 import { type FormEvent, useRef, useState } from "react";
+import { queryKeys } from "@/constants/query-keys";
 import { createTopic } from "../api/mutations";
 import { useUnsavedChangesWarning } from "../hooks/use-unsaved-changes-warning";
 import { topicAddDialogStyles } from "./topic-add-dialog.styles";
@@ -48,7 +49,7 @@ export function TopicAddDialog({
 		mutationFn: createTopic,
 		onSuccess: async () => {
 			await queryClient.refetchQueries({
-				queryKey: ["topics", serverId],
+				queryKey: queryKeys.topics.byServer(serverId),
 				type: "active",
 			});
 			resetForm();

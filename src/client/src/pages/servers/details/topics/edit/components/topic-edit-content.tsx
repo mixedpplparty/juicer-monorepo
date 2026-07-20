@@ -13,8 +13,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ServerData, TopicDetails } from "juicer-shared";
 import { SaveIcon } from "lucide-react";
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import { queryKeys } from "@/constants/query-keys";
 import { useUnsavedChangesWarning } from "../../../hooks/use-unsaved-changes-warning";
-import { topicDetailsQueryOptions } from "../../api/queries";
 import { updateTopic } from "../api/mutations";
 import TopicAssociationDialog, {
 	type TopicAssociationOption,
@@ -132,10 +132,10 @@ export function TopicEditContent({
 		onSuccess: async () => {
 			await Promise.all([
 				queryClient.refetchQueries({
-					queryKey: topicDetailsQueryOptions(serverId, topicId).queryKey,
+					queryKey: queryKeys.topicDetails.detail(serverId, topicId),
 				}),
 				queryClient.invalidateQueries({
-					queryKey: ["topics", serverId],
+					queryKey: queryKeys.topics.byServer(serverId),
 					refetchType: "all",
 				}),
 			]);

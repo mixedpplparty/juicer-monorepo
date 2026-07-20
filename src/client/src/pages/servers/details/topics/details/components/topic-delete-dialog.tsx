@@ -5,7 +5,7 @@ import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { topicDetailsQueryOptions } from "../../api/queries";
+import { queryKeys } from "@/constants/query-keys";
 import { deleteTopic } from "../api/mutations";
 import { topicDeleteDialogStyles } from "./topic-delete-dialog.styles";
 
@@ -28,10 +28,10 @@ export function TopicDeleteDialog({
 		mutationFn: deleteTopic,
 		onSuccess: async () => {
 			queryClient.removeQueries({
-				queryKey: topicDetailsQueryOptions(serverId, topicId).queryKey,
+				queryKey: queryKeys.topicDetails.detail(serverId, topicId),
 			});
 			await queryClient.invalidateQueries({
-				queryKey: ["topics", serverId],
+				queryKey: queryKeys.topics.byServer(serverId),
 			});
 			enqueue("주제를 삭제했습니다.");
 			navigate(`/servers/${serverId}`, { replace: true });

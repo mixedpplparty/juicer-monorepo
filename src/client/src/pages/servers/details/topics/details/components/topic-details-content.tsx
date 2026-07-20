@@ -5,7 +5,7 @@ import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TopicDetails, TopicDetailsRole } from "juicer-shared";
-import { topicDetailsQueryOptions } from "../../api/queries";
+import { queryKeys } from "@/constants/query-keys";
 import { setRoleAssignment } from "../api/mutations";
 import { topicDetailsPageStyles } from "../topic-details-page.styles";
 
@@ -125,7 +125,7 @@ function TopicRoleItem({ serverId, topicId, role }: TopicRoleItemProps) {
 		mutationFn: setRoleAssignment,
 		onSuccess: async (_, variables) => {
 			await queryClient.invalidateQueries({
-				queryKey: topicDetailsQueryOptions(serverId, topicId).queryKey,
+				queryKey: queryKeys.topicDetails.detail(serverId, topicId),
 			});
 			enqueue(
 				variables.assigned
