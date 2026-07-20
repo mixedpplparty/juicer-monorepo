@@ -31,12 +31,6 @@ export const loadingSkeletonStyles = {
 		flex: "0 0 2.5rem",
 		borderRadius: "50%",
 	}),
-	largeCircle: css({
-		width: "4rem",
-		height: "4rem",
-		flex: "0 0 4rem",
-		borderRadius: "50%",
-	}),
 	serverList: css({
 		padding: 0,
 	}),

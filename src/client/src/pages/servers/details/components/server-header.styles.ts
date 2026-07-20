@@ -1,5 +1,5 @@
-import { css } from "@emotion/react";
 import breakpoints from "@/shared/styles/breakpoints";
+import { css } from "@emotion/react";
 
 export const serverHeaderStyles = {
 	root: css({
@@ -44,9 +44,11 @@ export const serverHeaderStyles = {
 		alignItems: "center",
 		gap: "0.75rem",
 		minWidth: 0,
+		paddingTop: "1rem",
 		[`@media (min-width: ${breakpoints.tablet})`]: {
 			order: 0,
 			flex: "1 1 auto",
+			paddingTop: 0,
 		},
 	}),
 	serverText: css({
@@ -55,14 +57,10 @@ export const serverHeaderStyles = {
 		flex: "1 1 auto",
 		flexDirection: "column",
 		overflow: "hidden",
-		paddingTop: "1rem",
 		"& > *": {
 			overflow: "hidden",
 			textOverflow: "ellipsis",
 			whiteSpace: "nowrap",
-		},
-		[`@media (min-width: ${breakpoints.tablet})`]: {
-			padding: 0,
 		},
 	}),
 	serverName: css({

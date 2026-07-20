@@ -42,7 +42,7 @@ export function ServerHeaderSkeleton() {
 				<Skeleton css={loadingSkeletonStyles.headerSearch} />
 			</div>
 			<div css={loadingSkeletonStyles.serverDetails}>
-				<Skeleton css={loadingSkeletonStyles.largeCircle} />
+				<Skeleton css={loadingSkeletonStyles.circle} />
 				<div css={loadingSkeletonStyles.serverText}>
 					<Skeleton css={loadingSkeletonStyles.titleLine} />
 					<Skeleton css={loadingSkeletonStyles.shortLine} />
@@ -104,7 +104,7 @@ export function MyServerProfileSkeleton() {
 			css={loadingSkeletonStyles.profileCard}
 		>
 			<div css={loadingSkeletonStyles.profileRow}>
-				<Skeleton css={loadingSkeletonStyles.largeCircle} />
+				<Skeleton css={loadingSkeletonStyles.circle} />
 				<Skeleton css={loadingSkeletonStyles.mediumLine} />
 			</div>
 			<div css={loadingSkeletonStyles.chips}>
