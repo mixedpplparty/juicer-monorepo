@@ -15,6 +15,7 @@ use crate::discord::bot;
 use crate::error::{HttpError, Result};
 use crate::models::SetRoleSelfAssignableRequestBody;
 use crate::state::AppState;
+use crate::validation::{normalized_description, ROLE_DESCRIPTION_MAX};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -129,12 +130,17 @@ async fn update_role(
     let authed =
         bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
     if authed.manage_guild_permission {
+        // present-but-empty clears the description; absent keeps it
+        let description = body
+            .description
+            .map(|value| normalized_description(value, ROLE_DESCRIPTION_MAX))
+            .transpose()?;
         let role = db::update_role_info(
             &state.db,
             &role_id,
             &server_id,
             body.self_assignable,
-            body.description,
+            description,
         )
         .await?;
         return Ok((StatusCode::OK, Json(role)));

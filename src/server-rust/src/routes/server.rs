@@ -1,6 +1,10 @@
 //! Port of `../server/src/routes/discord/server/index.ts`.
 
-use axum::extract::{Path, State};
+use std::collections::HashSet;
+
+use axum::extract::{Path, Request, State};
+use axum::middleware::Next;
+use axum::response::Response;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use axum_extra::extract::CookieJar;
@@ -12,6 +16,7 @@ use crate::error::{HttpError, Result};
 use crate::models::{CreateServerResponse, GuildMemberResponse, ServerData, SyncRolesResponse, UpdateServerVerificationRequiredRequestBody};
 use crate::routes::{categories, games, role_categories, roles, search, tags};
 use crate::state::AppState;
+use crate::validation::is_verification_satisfied;
 
 /// Read the `discord_access_token` cookie; missing behaves like the TS code
 /// passing `undefined` through (downstream OAuth call fails with 401).
@@ -33,6 +38,53 @@ pub fn router() -> Router<AppState> {
         .nest("/{serverId}/roles", roles::router())
         .nest("/{serverId}/search", search::router())
         .nest("/{serverId}/tags", tags::router())
+}
+
+/// 403s every /{serverId} route for members missing verification roles.
+/// Admins bypass; servers without a DB row or configured roles are unaffected.
+pub async fn verification_guard(
+    State(state): State<AppState>,
+    Path(params): Path<std::collections::HashMap<String, String>>,
+    jar: CookieJar,
+    req: Request,
+    next: Next,
+) -> Result<Response> {
+    let Some(server_id) = params.get("serverId") else {
+        return Ok(next.run(req).await);
+    };
+    let (verification_required, required_role_ids) =
+        db::get_verification_requirement(&state.db, server_id).await?;
+    if verification_required && !required_role_ids.is_empty() {
+        let token = access_token(&jar);
+        let authed =
+            bot::authenticate_and_authorize_user(&state, server_id, &token, false, false).await?;
+        let member_roles: HashSet<String> =
+            authed.member.roles.iter().map(|id| id.to_string()).collect();
+        let mut satisfied = is_verification_satisfied(
+            true,
+            &required_role_ids,
+            &member_roles,
+            authed.manage_guild_permission,
+        );
+        // a stale member cache must not lock out a freshly verified member
+        if !satisfied {
+            let authed =
+                bot::authenticate_and_authorize_user(&state, server_id, &token, false, true)
+                    .await?;
+            let member_roles: HashSet<String> =
+                authed.member.roles.iter().map(|id| id.to_string()).collect();
+            satisfied = is_verification_satisfied(
+                true,
+                &required_role_ids,
+                &member_roles,
+                authed.manage_guild_permission,
+            );
+        }
+        if !satisfied {
+            return Err(HttpError::forbidden("Server verification required."));
+        }
+    }
+    Ok(next.run(req).await)
 }
 
 /// GET /{serverId} — server data from Discord and the DB.
@@ -68,9 +120,7 @@ async fn create_server(
         bot::authenticate_and_authorize_user(&state, &server_id, &access_token, true, true)
             .await?;
     if authed.manage_guild_permission {
-        db::create_server(&state.db, &server_id).await?;
-        // verification is always ID 1
-        db::create_role_category(&state.db, &server_id, "verification").await?;
+        db::create_server_with_verification_category(&state.db, &server_id).await?;
         return Ok(Json(json!({
             "message": "Server created. Roles need to be synced."
         })));

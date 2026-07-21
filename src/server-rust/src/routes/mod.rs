@@ -19,7 +19,13 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .nest("/discord/auth", auth::router())
         .nest("/discord/user", user::router())
-        .nest("/discord/servers", server::router())
+        .nest(
+            "/discord/servers",
+            server::router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                server::verification_guard,
+            )),
+        )
         .nest("/swagger", swagger::router())
         .nest("/docs", swagger::docs_router())
         .with_state(state)

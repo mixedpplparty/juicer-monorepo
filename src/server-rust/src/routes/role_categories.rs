@@ -14,6 +14,7 @@ use crate::discord::bot;
 use crate::error::{HttpError, Result};
 use crate::models::{AssignRoleCategoryToRoleRequestBody, NameRequiredRequestBody};
 use crate::state::AppState;
+use crate::validation::{is_valid_discord_id, validated_name, CATEGORY_NAME_MAX};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -38,7 +39,8 @@ async fn create_role_category(
     let authed =
         bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
     if authed.manage_guild_permission {
-        let role_category = db::create_role_category(&state.db, &server_id, &body.name).await?;
+        let name = validated_name(&body.name, CATEGORY_NAME_MAX, "Name")?;
+        let role_category = db::create_role_category(&state.db, &server_id, &name, false).await?;
         return Ok((StatusCode::OK, Json(role_category)));
     }
     Err(HttpError::forbidden(
@@ -54,12 +56,6 @@ async fn delete_role_category(
     let token = access_token(&jar);
     let authed =
         bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
-    // Verification role category is always ID 1.
-    if role_category_id == 1 {
-        return Err(HttpError::bad_request(
-            "Cannot delete verification role category.",
-        ));
-    }
     if authed.manage_guild_permission {
         let role_category =
             db::delete_role_category(&state.db, role_category_id, &server_id).await?;
@@ -80,6 +76,12 @@ async fn assign_role_category(
     let authed =
         bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
     if authed.manage_guild_permission {
+        if !is_valid_discord_id(&body.role_id) {
+            return Err(HttpError::bad_request("Invalid role ID."));
+        }
+        if body.role_category_id.is_some_and(|id| id <= 0) {
+            return Err(HttpError::bad_request("Invalid role category ID."));
+        }
         let role_category = db::update_role_category_of_role(
             &state.db,
             &body.role_id,

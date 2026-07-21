@@ -49,8 +49,8 @@ pub async fn delete_role_from_db(db: &PgPool, server_id: &str, role_id: &str) ->
 pub async fn create_category(db: &PgPool, server_id: &str, name: &str) -> Result<Vec<Category>>;
 pub async fn delete_category(db: &PgPool, category_id: i32, server_id: &str) -> Result<Vec<Category>>;
 pub async fn map_category_to_game(db: &PgPool, game_id: i32, server_id: &str, category_id: i32) -> Result<Vec<GameWithoutRelations>>;
-pub async fn create_role_category(db: &PgPool, server_id: &str, name: &str) -> Result<Vec<RoleCategory>>;
-pub async fn delete_role_category(db: &PgPool, role_category_id: i32, server_id: &str) -> Result<Vec<RoleCategory>>;
+pub async fn create_role_category(db: &PgPool, server_id: &str, name: &str, is_verification: bool) -> Result<Vec<RoleCategory>>;
+pub async fn delete_role_category(db: &PgPool, role_category_id: i32, server_id: &str) -> Result<Vec<RoleCategory>>; // 400 when the category is flagged is_verification
 pub async fn update_role_category_of_role(db: &PgPool, role_id: &str, role_category_id: Option<i32>, server_id: &str) -> Result<Vec<Role>>;
 pub async fn find_games_by_category_name(db: &PgPool, server_id: &str, category_name: &str) -> Result<Vec<Game>>;
 pub async fn find_games_by_tags(db: &PgPool, server_id: &str, tag_names: &[String]) -> Result<Vec<Game>>;
@@ -66,7 +66,7 @@ Tables (existing schema, snake_case columns): `servers(server_id text PK, create
 `games(game_id serial PK, server_id, category_id, name, description, thumbnail bytea, channels text[])`,
 `categories(category_id serial PK, server_id, name)`, `tags(tag_id serial PK, server_id, name)`,
 `roles(role_id text PK, server_id, role_category_id, self_assignable bool, description)`,
-`roles_categories(role_category_id serial PK, server_id, name)`,
+`roles_categories(role_category_id serial PK, server_id, name, is_verification bool default false)`,
 `games_roles(game_id, role_id)`, `games_tags(game_id, tag_id)`.
 List payloads must EXCLUDE the thumbnail column (`Game`/`GameWithoutRelations.thumbnail = None`).
 `ServerDataDb.games[*].games_tags/games_roles` are loaded with separate queries and grouped in Rust.
@@ -135,13 +135,13 @@ Secure=config.is_production(), Max-Age=expires_in, Path=/.
 Route inventory (must match ../server/src/routes exactly):
 - auth.rs: GET /me; GET /callback; POST /refresh; POST /revoke; GET /remove-cookies
 - user.rs: GET /me -> MyInfo (userData passthrough + guilds)
-- server.rs: GET /{serverId}; POST /{serverId}/create (also creates "verification" role category); GET /{serverId}/me (member_to_response); GET /{serverId}/sync-roles; PUT /{serverId} (verificationRequired); nests categories/games/role-categories/roles/search/tags under /{serverId}/...
+- server.rs: GET /{serverId}; POST /{serverId}/create (atomically creates the server row and its is_verification-flagged "verification" role category); GET /{serverId}/me (member_to_response); GET /{serverId}/sync-roles; PUT /{serverId} (verificationRequired); nests categories/games/role-categories/roles/search/tags under /{serverId}/...
 - games.rs: POST /create; PUT /{gameId}; DELETE /{gameId}; POST /{gameId}/categories/add; POST /{gameId}/tags/tag; POST /{gameId}/tags/{tagId}/untag; PUT /{gameId}/thumbnail/update (multipart field "file", validate mime image/*, 100..=1_048_576 bytes); GET /{gameId}/thumbnail (binary body, Cache-Control: private, max-age=300; auth with require_manage=false, force_fetch=false)
 - roles.rs: GET /  (admin; returns { serverRoles, myRoles: member role ids }); POST /{roleId}/assign; POST /{roleId}/unassign; POST /{roleId}/update
-- role_categories.rs: POST /create; DELETE /{roleCategoryId} (id 1 = verification → 400); POST /assign
+- role_categories.rs: POST /create; DELETE /{roleCategoryId} (is_verification flag → 400); POST /assign
 - tags.rs: GET /; POST /create; DELETE /{tagId}
 - categories.rs: POST /create; DELETE /{categoryId}
-- search.rs: GET /all?query=
+- search.rs: GET /all?query= (matches game name/tag/category plus Discord channel and role names — issue #40)
 - swagger.rs: serve the OpenAPI JSON (port of ../server/src/routes/swagger.ts) at GET /swagger; /docs returns a minimal swagger-ui HTML page (CDN-free is not required here; a simple unpkg swagger-ui-dist HTML is fine).
 
 All "Admin required" handlers must keep the exact 403 message "User does not have manage server permission."
@@ -167,3 +167,24 @@ All "Admin required" handlers must keep the exact 403 message "User does not hav
 - Multipart thumbnail uploads have a 4 MB transport cap (axum body limit,
   raised from the 2 MB default); payload validation still enforces
   100..=1_048_576 bytes with a 400 like the zod schema.
+
+## Later API changes (issues #40/#46/#47/#48, PR #44 review)
+
+- Verification role category is a distinct DB-flagged row (`is_verification`),
+  not "roleCategoryId 1". `ensure_verification_category_schema` runs at boot:
+  adds the column if missing and backfills the oldest "verification"-named
+  category per legacy server.
+- Verification guard: with `verificationRequired` on and verification roles
+  configured, every `/discord/servers/{serverId}` route returns 403
+  ("Server verification required.") unless the member holds ALL verification
+  roles or has ManageGuild.
+- Mutation validation: names are trimmed (empty → 400; limits 255 game /
+  100 category / 100 role-category / 50 tag chars); descriptions trimmed,
+  limited (2000 game / 500 role) and normalized to null when empty;
+  channel/role IDs must be snowflakes, tag/category IDs positive; ID lists are
+  deduplicated (max 100).
+- Game mutations verify referenced categories/tags/roles belong to the server
+  (400 otherwise), channels exist in the guild, and roles are real, non-managed
+  and never @everyone. Checks run inside the mutation's transaction.
+- Multi-statement writes (server+verification create, game update, role sync,
+  role category assign) are transactional — partial failure rolls back fully.

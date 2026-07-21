@@ -13,13 +13,17 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use crate::db::{self, UpdateGameParams};
-use crate::discord::bot::authenticate_and_authorize_user;
+use crate::discord::bot::{authenticate_and_authorize_user, validate_guild_channels_and_roles};
 use crate::error::{HttpError, Result};
 use crate::models::{
     AddCategoryToGameRequestBody, CreateGameRequestBody, ModifyTagsOfGameRequestBody,
     UpdateGameRequestBody,
 };
 use crate::state::AppState;
+use crate::validation::{
+    normalized_description, validated_db_ids, validated_discord_ids, validated_name,
+    DESCRIPTION_MAX, GAME_NAME_MAX,
+};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -56,6 +60,8 @@ async fn create_game(
 ) -> Result<Response> {
     let token = access_token(&jar);
     authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
+    let name = validated_name(&body.name, GAME_NAME_MAX, "Name")?;
+    let description = normalized_description(body.description, DESCRIPTION_MAX)?;
     // TS: body.categoryId ? (categoryId === 0 ? null : Number(categoryId)) : null
     let category_id = match body.category_id {
         Some(0) | None => None,
@@ -64,8 +70,8 @@ async fn create_game(
     let game = db::create_game(
         &state.db,
         &server_id,
-        &body.name,
-        body.description.as_deref(),
+        &name,
+        description.as_deref(),
         category_id,
     )
     .await?;
@@ -80,6 +86,31 @@ async fn update_game(
 ) -> Result<Response> {
     let token = access_token(&jar);
     authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
+    // absent fields mean "leave unchanged"
+    let name = body
+        .name
+        .map(|name| validated_name(&name, GAME_NAME_MAX, "Name"))
+        .transpose()?;
+    let description = normalized_description(body.description, DESCRIPTION_MAX)?;
+    let channels = body
+        .channels
+        .map(|ids| validated_discord_ids(ids, "channel"))
+        .transpose()?;
+    let tag_ids = body
+        .tag_ids
+        .map(|ids| validated_db_ids(ids, "tag"))
+        .transpose()?;
+    let role_ids = body
+        .role_ids
+        .map(|ids| validated_discord_ids(ids, "role"))
+        .transpose()?;
+    validate_guild_channels_and_roles(
+        &state,
+        &server_id,
+        channels.as_deref(),
+        role_ids.as_deref(),
+    )
+    .await?;
     // The TS JSON handler can never carry a real File in `thumbnail`, so it
     // always resolved to null (not updated) — same here.
     let game = db::update_game(
@@ -87,13 +118,13 @@ async fn update_game(
         game_id,
         &server_id,
         UpdateGameParams {
-            name: body.name,
-            description: body.description,
+            name,
+            description,
             category_id: body.category_id,
             thumbnail: None,
-            channels: body.channels,
-            tag_ids: body.tag_ids,
-            role_ids: body.role_ids,
+            channels,
+            tag_ids,
+            role_ids,
         },
     )
     .await?;
@@ -150,10 +181,11 @@ async fn tag_game(
 ) -> Result<Response> {
     let token = access_token(&jar);
     authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
+    let requested_tag_ids = validated_db_ids(body.tag_ids, "tag")?;
     // merge existing tag ids with the requested ones, removing duplicates
     // while preserving first-seen order (TS: [...new Set([...existing, ...body])]).
     let mut unique_tag_ids = existing_tag_ids(&state, &server_id, game_id).await?;
-    for tag_id in body.tag_ids {
+    for tag_id in requested_tag_ids {
         if !unique_tag_ids.contains(&tag_id) {
             unique_tag_ids.push(tag_id);
         }

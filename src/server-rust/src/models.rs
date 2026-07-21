@@ -34,6 +34,9 @@ pub struct RoleCategory {
     pub role_category_id: i32,
     pub server_id: String,
     pub name: String,
+    /// Marks the server's distinct verification role category (PR #44 review /
+    /// issue #45) — replaces the old "roleCategoryId === 1" convention.
+    pub is_verification: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]

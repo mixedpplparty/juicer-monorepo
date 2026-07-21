@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use sqlx::postgres::PgRow;
-use sqlx::{PgPool, Postgres, QueryBuilder, Row};
+use sqlx::{PgExecutor, PgPool, Postgres, QueryBuilder, Row};
 
 use crate::error::{HttpError, Result};
 use crate::models::*;
@@ -112,6 +112,38 @@ async fn attach_game_relations(
         .collect())
 }
 
+// ---------- startup schema guard ----------
+
+/// Idempotent: schema is owned by drizzle-kit in `../server`, but this keeps
+/// the Rust server bootable against a database migrated before the
+/// is_verification column existed, and backfills the flag for legacy servers
+/// (their auto-created category is the oldest one named "verification").
+pub async fn ensure_verification_category_schema(db: &PgPool) -> Result<()> {
+    let mut tx = db.begin().await?;
+    sqlx::query(
+        "ALTER TABLE roles_categories \
+         ADD COLUMN IF NOT EXISTS is_verification boolean NOT NULL DEFAULT false",
+    )
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query(
+        "UPDATE roles_categories SET is_verification = true \
+         WHERE role_category_id IN ( \
+             SELECT MIN(rc.role_category_id) FROM roles_categories rc \
+             WHERE rc.name = 'verification' \
+               AND NOT EXISTS ( \
+                   SELECT 1 FROM roles_categories flagged \
+                   WHERE flagged.server_id = rc.server_id AND flagged.is_verification \
+               ) \
+             GROUP BY rc.server_id \
+         )",
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(())
+}
+
 // ---------- servers ----------
 
 pub async fn get_server_data_in_db(db: &PgPool, server_id: &str) -> Result<Option<ServerDataDb>> {
@@ -171,7 +203,8 @@ pub async fn get_server_data_in_db(db: &PgPool, server_id: &str) -> Result<Optio
     };
     let role_categories_fut = async {
         sqlx::query_as::<_, RoleCategory>(
-            "SELECT role_category_id, server_id, name FROM roles_categories WHERE server_id = $1",
+            "SELECT role_category_id, server_id, name, is_verification \
+             FROM roles_categories WHERE server_id = $1",
         )
         .bind(server_id)
         .fetch_all(db)
@@ -198,24 +231,39 @@ pub async fn get_server_data_in_db(db: &PgPool, server_id: &str) -> Result<Optio
     }))
 }
 
-pub async fn create_server(db: &PgPool, server_id: &str) -> Result<CreateServerResponse> {
+/// Creates the server row and its verification role category atomically — if
+/// either insert fails, neither is kept.
+pub async fn create_server_with_verification_category(
+    db: &PgPool,
+    server_id: &str,
+) -> Result<CreateServerResponse> {
+    let mut tx = db.begin().await?;
     let row = sqlx::query(
         "INSERT INTO servers (server_id) VALUES ($1) \
          RETURNING server_id, created_at, verification_required",
     )
     .bind(server_id)
-    .fetch_one(db)
+    .fetch_one(&mut *tx)
     .await;
-    match row {
-        Ok(row) => map_server_row(&row).map_err(HttpError::from),
+    let server = match row {
+        Ok(row) => map_server_row(&row).map_err(HttpError::from)?,
         Err(err) => {
             tracing::error!(error = %err, "Error while creating server.");
             if pg_error_code(&err).as_deref() == Some(PG_UNIQUE_VIOLATION) {
                 return Err(HttpError::bad_request("Server already exists."));
             }
-            Err(HttpError::internal("Unknown error while creating server."))
+            return Err(HttpError::internal("Unknown error while creating server."));
         }
-    }
+    };
+    sqlx::query(
+        "INSERT INTO roles_categories (server_id, name, is_verification) \
+         VALUES ($1, 'verification', true)",
+    )
+    .bind(server_id)
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(server)
 }
 
 pub async fn update_server_verification_required(
@@ -239,6 +287,78 @@ pub async fn update_server_verification_required(
 
 // ---------- games ----------
 
+// FKs only guarantee the referenced rows exist somewhere — these checks pin
+// them to the requesting server. Executor-generic so they can run inside the
+// caller's transaction and share its snapshot.
+async fn ensure_category_belongs_to_server<'e>(
+    executor: impl PgExecutor<'e>,
+    server_id: &str,
+    category_id: i32,
+) -> Result<()> {
+    let exists: Option<i32> = sqlx::query_scalar(
+        "SELECT category_id FROM categories WHERE category_id = $1 AND server_id = $2",
+    )
+    .bind(category_id)
+    .bind(server_id)
+    .fetch_optional(executor)
+    .await?;
+    if exists.is_none() {
+        return Err(HttpError::bad_request(
+            "Category does not belong to this server.",
+        ));
+    }
+    Ok(())
+}
+
+async fn ensure_tags_belong_to_server<'e>(
+    executor: impl PgExecutor<'e>,
+    server_id: &str,
+    tag_ids: &[i32],
+) -> Result<()> {
+    if tag_ids.is_empty() {
+        return Ok(());
+    }
+    let count: i64 = sqlx::query_scalar(
+        "SELECT count(DISTINCT tag_id) FROM tags WHERE server_id = $1 AND tag_id = ANY($2)",
+    )
+    .bind(server_id)
+    .bind(tag_ids)
+    .fetch_one(executor)
+    .await?;
+    let unique: std::collections::HashSet<i32> = tag_ids.iter().copied().collect();
+    if count != unique.len() as i64 {
+        return Err(HttpError::bad_request(
+            "One or more tags do not belong to this server.",
+        ));
+    }
+    Ok(())
+}
+
+async fn ensure_roles_belong_to_server<'e>(
+    executor: impl PgExecutor<'e>,
+    server_id: &str,
+    role_ids: &[String],
+) -> Result<()> {
+    if role_ids.is_empty() {
+        return Ok(());
+    }
+    let count: i64 = sqlx::query_scalar(
+        "SELECT count(DISTINCT role_id) FROM roles WHERE server_id = $1 AND role_id = ANY($2)",
+    )
+    .bind(server_id)
+    .bind(role_ids)
+    .fetch_one(executor)
+    .await?;
+    let unique: std::collections::HashSet<&str> =
+        role_ids.iter().map(|role_id| role_id.as_str()).collect();
+    if count != unique.len() as i64 {
+        return Err(HttpError::bad_request(
+            "One or more roles are not synced with this server. Sync roles first.",
+        ));
+    }
+    Ok(())
+}
+
 pub async fn create_game(
     db: &PgPool,
     server_id: &str,
@@ -246,6 +366,10 @@ pub async fn create_game(
     description: Option<&str>,
     category_id: Option<i32>,
 ) -> Result<GameWithoutRelations> {
+    let mut tx = db.begin().await?;
+    if let Some(category_id) = category_id {
+        ensure_category_belongs_to_server(&mut *tx, server_id, category_id).await?;
+    }
     let row = sqlx::query(&format!(
         "INSERT INTO games (server_id, name, description, category_id) \
          VALUES ($1, $2, $3, $4) RETURNING {GAME_COLUMNS_WITH_THUMBNAIL}"
@@ -254,10 +378,14 @@ pub async fn create_game(
     .bind(name)
     .bind(description)
     .bind(category_id)
-    .fetch_one(db)
+    .fetch_one(&mut *tx)
     .await;
     match row {
-        Ok(row) => map_game_row_with_thumbnail(&row).map_err(HttpError::from),
+        Ok(row) => {
+            let game = map_game_row_with_thumbnail(&row).map_err(HttpError::from)?;
+            tx.commit().await?;
+            Ok(game)
+        }
         Err(err) => {
             tracing::error!(error = %err, "Error while creating game.");
             if pg_error_code(&err).as_deref() == Some(PG_NOT_NULL_VIOLATION) {
@@ -290,9 +418,9 @@ pub async fn update_game(
         roles: AddedRemovedRoles { added: None, removed: None },
     };
 
-    // The snapshot, diff and writes all live inside one transaction, with the
-    // games row locked FOR UPDATE so concurrent updates to the same game
-    // serialize instead of double-inserting relation rows.
+    // The checks, snapshot, diff and writes all live inside one transaction,
+    // with the games row locked FOR UPDATE so concurrent updates to the same
+    // game serialize instead of double-inserting relation rows.
     let mut tx = db.begin().await?;
     let game_exists = sqlx::query(
         "SELECT game_id FROM games WHERE game_id = $1 AND server_id = $2 FOR UPDATE",
@@ -303,6 +431,15 @@ pub async fn update_game(
     .await?;
     if game_exists.is_none() {
         return Err(HttpError::not_found("Game not found."));
+    }
+    if let Some(category_id) = params.category_id {
+        ensure_category_belongs_to_server(&mut *tx, server_id, category_id).await?;
+    }
+    if let Some(tag_ids) = &params.tag_ids {
+        ensure_tags_belong_to_server(&mut *tx, server_id, tag_ids).await?;
+    }
+    if let Some(role_ids) = &params.role_ids {
+        ensure_roles_belong_to_server(&mut *tx, server_id, role_ids).await?;
     }
     let existing_tag_ids: Vec<i32> =
         sqlx::query_scalar("SELECT tag_id FROM games_tags WHERE game_id = $1")
@@ -508,6 +645,8 @@ pub async fn map_category_to_game(
     server_id: &str,
     category_id: i32,
 ) -> Result<Vec<GameWithoutRelations>> {
+    let mut tx = db.begin().await?;
+    ensure_category_belongs_to_server(&mut *tx, server_id, category_id).await?;
     let rows = sqlx::query(&format!(
         "UPDATE games SET category_id = $3 WHERE game_id = $1 AND server_id = $2 \
          RETURNING {GAME_COLUMNS_WITH_THUMBNAIL}"
@@ -515,8 +654,12 @@ pub async fn map_category_to_game(
     .bind(game_id)
     .bind(server_id)
     .bind(category_id)
-    .fetch_all(db)
+    .fetch_all(&mut *tx)
     .await?;
+    if rows.is_empty() {
+        return Err(HttpError::not_found("Game not found."));
+    }
+    tx.commit().await?;
     rows.iter()
         .map(map_game_row_with_thumbnail)
         .collect::<sqlx::Result<Vec<_>>>()
@@ -589,6 +732,56 @@ pub async fn find_games_by_tags(
          WHERE g.server_id = $1 AND gt.tag_id = ANY($2)")
     .bind(server_id)
     .bind(&tag_ids)
+    .fetch_all(db)
+    .await?;
+    let games = rows
+        .iter()
+        .map(map_game_row_no_thumbnail)
+        .collect::<sqlx::Result<Vec<_>>>()
+        .map_err(HttpError::from)?;
+    attach_game_relations(db, games).await
+}
+
+pub async fn find_games_by_channel_ids(
+    db: &PgPool,
+    server_id: &str,
+    channel_ids: &[String],
+) -> Result<Vec<Game>> {
+    if channel_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let rows = sqlx::query(&format!(
+        "SELECT {GAME_COLUMNS_NO_THUMBNAIL} FROM games \
+         WHERE server_id = $1 AND channels && $2"
+    ))
+    .bind(server_id)
+    .bind(channel_ids)
+    .fetch_all(db)
+    .await?;
+    let games = rows
+        .iter()
+        .map(map_game_row_no_thumbnail)
+        .collect::<sqlx::Result<Vec<_>>>()
+        .map_err(HttpError::from)?;
+    attach_game_relations(db, games).await
+}
+
+pub async fn find_games_by_role_ids(
+    db: &PgPool,
+    server_id: &str,
+    role_ids: &[String],
+) -> Result<Vec<Game>> {
+    if role_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let rows = sqlx::query(&format!(
+        "SELECT DISTINCT {GAME_COLUMNS_NO_THUMBNAIL} FROM games \
+         WHERE server_id = $1 AND game_id IN ( \
+             SELECT game_id FROM games_roles WHERE role_id = ANY($2) \
+         )"
+    ))
+    .bind(server_id)
+    .bind(role_ids)
     .fetch_all(db)
     .await?;
     let games = rows
@@ -728,7 +921,11 @@ pub async fn get_roles_in_server_in_db_by_role_ids(
 
 /// Batched INSERT of gateway roles missing from the DB (role sync). Conflicts
 /// are skipped (the TS per-row insert swallowed unique violations the same way).
-pub async fn create_roles_bulk(db: &PgPool, server_id: &str, role_ids: &[String]) -> Result<()> {
+pub async fn create_roles_bulk<'e>(
+    executor: impl PgExecutor<'e>,
+    server_id: &str,
+    role_ids: &[String],
+) -> Result<()> {
     if role_ids.is_empty() {
         return Ok(());
     }
@@ -738,20 +935,24 @@ pub async fn create_roles_bulk(db: &PgPool, server_id: &str, role_ids: &[String]
         b.push_bind(role_id);
     });
     qb.push(" ON CONFLICT DO NOTHING");
-    qb.build().execute(db).await?;
+    qb.build().execute(executor).await?;
     Ok(())
 }
 
 /// Batched delete of DB roles that no longer exist in Discord (role sync).
 /// games_roles rows cascade.
-pub async fn delete_roles_bulk(db: &PgPool, server_id: &str, role_ids: &[String]) -> Result<()> {
+pub async fn delete_roles_bulk<'e>(
+    executor: impl PgExecutor<'e>,
+    server_id: &str,
+    role_ids: &[String],
+) -> Result<()> {
     if role_ids.is_empty() {
         return Ok(());
     }
     sqlx::query("DELETE FROM roles WHERE server_id = $1 AND role_id = ANY($2)")
         .bind(server_id)
         .bind(role_ids)
-        .execute(db)
+        .execute(executor)
         .await?;
     Ok(())
 }
@@ -830,13 +1031,15 @@ pub async fn create_role_category(
     db: &PgPool,
     server_id: &str,
     name: &str,
+    is_verification: bool,
 ) -> Result<Vec<RoleCategory>> {
     let created: Vec<RoleCategory> = sqlx::query_as(
-        "INSERT INTO roles_categories (server_id, name) VALUES ($1, $2) \
-         RETURNING role_category_id, server_id, name",
+        "INSERT INTO roles_categories (server_id, name, is_verification) VALUES ($1, $2, $3) \
+         RETURNING role_category_id, server_id, name, is_verification",
     )
     .bind(server_id)
     .bind(name)
+    .bind(is_verification)
     .fetch_all(db)
     .await?;
     Ok(created)
@@ -848,14 +1051,54 @@ pub async fn delete_role_category(
     server_id: &str,
 ) -> Result<Vec<RoleCategory>> {
     let deleted: Vec<RoleCategory> = sqlx::query_as(
-        "DELETE FROM roles_categories WHERE role_category_id = $1 AND server_id = $2 \
-         RETURNING role_category_id, server_id, name",
+        "DELETE FROM roles_categories \
+         WHERE role_category_id = $1 AND server_id = $2 AND NOT is_verification \
+         RETURNING role_category_id, server_id, name, is_verification",
     )
     .bind(role_category_id)
     .bind(server_id)
     .fetch_all(db)
     .await?;
+    if deleted.is_empty() {
+        let is_verification: Option<bool> = sqlx::query_scalar(
+            "SELECT is_verification FROM roles_categories \
+             WHERE role_category_id = $1 AND server_id = $2",
+        )
+        .bind(role_category_id)
+        .bind(server_id)
+        .fetch_optional(db)
+        .await?;
+        if is_verification == Some(true) {
+            return Err(HttpError::bad_request(
+                "Cannot delete verification role category.",
+            ));
+        }
+    }
     Ok(deleted)
+}
+
+/// Role IDs a member must ALL hold when verification is on.
+pub async fn get_verification_requirement(
+    db: &PgPool,
+    server_id: &str,
+) -> Result<(bool, Vec<String>)> {
+    let verification_required: Option<bool> =
+        sqlx::query_scalar("SELECT verification_required FROM servers WHERE server_id = $1")
+            .bind(server_id)
+            .fetch_optional(db)
+            .await?;
+    if verification_required != Some(true) {
+        return Ok((false, Vec::new()));
+    }
+    let required_role_ids: Vec<String> = sqlx::query_scalar(
+        "SELECT r.role_id FROM roles r \
+         JOIN roles_categories rc ON rc.role_category_id = r.role_category_id \
+         WHERE r.server_id = $1 AND rc.server_id = $1 AND rc.is_verification",
+    )
+    .bind(server_id)
+    .fetch_all(db)
+    .await?;
+    Ok((true, required_role_ids))
 }
 
 pub async fn update_role_category_of_role(
@@ -864,6 +1107,22 @@ pub async fn update_role_category_of_role(
     role_category_id: Option<i32>,
     server_id: &str,
 ) -> Result<Vec<Role>> {
+    let mut tx = db.begin().await?;
+    if let Some(role_category_id) = role_category_id {
+        let exists: Option<i32> = sqlx::query_scalar(
+            "SELECT role_category_id FROM roles_categories \
+             WHERE role_category_id = $1 AND server_id = $2",
+        )
+        .bind(role_category_id)
+        .bind(server_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if exists.is_none() {
+            return Err(HttpError::bad_request(
+                "Role category does not belong to this server.",
+            ));
+        }
+    }
     // A single parameterized statement covers both assign (Some) and unassign
     // (None -> NULL), matching the TS branches.
     let rows: Vec<Role> = sqlx::query_as(
@@ -873,8 +1132,9 @@ pub async fn update_role_category_of_role(
     .bind(role_id)
     .bind(server_id)
     .bind(role_category_id)
-    .fetch_all(db)
+    .fetch_all(&mut *tx)
     .await?;
+    tx.commit().await?;
     Ok(rows)
 }
 
@@ -891,24 +1151,28 @@ mod smoke_tests {
             return;
         };
         let db = PgPool::connect(&url).await.expect("connect");
+        ensure_verification_category_schema(&db).await.expect("schema guard");
         let sid = "smoke-server";
-        // Clean slate for reruns.
-        sqlx::query("DELETE FROM servers WHERE server_id = $1")
-            .bind(sid)
-            .execute(&db)
-            .await
-            .unwrap();
+        // Clean slate for reruns (roles_categories has no ON DELETE CASCADE, so
+        // it must go before servers).
         sqlx::query("DELETE FROM roles_categories WHERE server_id = $1")
             .bind(sid)
             .execute(&db)
             .await
             .unwrap();
+        sqlx::query("DELETE FROM servers WHERE server_id = $1")
+            .bind(sid)
+            .execute(&db)
+            .await
+            .unwrap();
 
-        // servers: create + duplicate -> 400
-        let server = create_server(&db, sid).await.expect("create_server");
+        // servers: create (with verification category, atomically) + duplicate -> 400
+        let server = create_server_with_verification_category(&db, sid)
+            .await
+            .expect("create_server");
         assert_eq!(server.server_id, sid);
         assert!(!server.verification_required);
-        let dup = create_server(&db, sid).await.unwrap_err();
+        let dup = create_server_with_verification_category(&db, sid).await.unwrap_err();
         assert_eq!(dup.status.as_u16(), 400);
         assert_eq!(dup.message, "Server already exists.");
 
@@ -919,7 +1183,20 @@ mod smoke_tests {
         let tag = create_tag(&db, sid, "coop").await.unwrap()[0].clone();
         let tag_again = create_tag(&db, sid, "coop").await.unwrap();
         assert_eq!(tag_again[0].tag_id, tag.tag_id, "create_tag must return existing tag");
-        let rc = create_role_category(&db, sid, "verification").await.unwrap()[0].clone();
+        // Server creation auto-created the flagged verification category.
+        let rc = sqlx::query_as::<_, RoleCategory>(
+            "SELECT role_category_id, server_id, name, is_verification \
+             FROM roles_categories WHERE server_id = $1",
+        )
+        .bind(sid)
+        .fetch_one(&db)
+        .await
+        .unwrap();
+        assert_eq!(rc.name, "verification");
+        assert!(rc.is_verification);
+        // The verification category is protected by its flag, not by ID 1.
+        let protected = delete_role_category(&db, rc.role_category_id, sid).await.unwrap_err();
+        assert_eq!(protected.status.as_u16(), 400);
         create_roles_bulk(&db, sid, &["111".into()]).await.unwrap();
         create_roles_bulk(&db, sid, &["111".into()]).await.unwrap(); // conflict skipped
         let roles = get_all_roles_in_server_in_db(&db, sid).await.unwrap();
@@ -938,7 +1215,19 @@ mod smoke_tests {
         assert_eq!(r.description, None, "explicit null must clear description");
 
         update_role_category_of_role(&db, "111", Some(rc.role_category_id), sid).await.unwrap();
+        // Verification requirement reads roles in the verification category.
+        let (required, ids) = get_verification_requirement(&db, sid).await.unwrap();
+        assert!(required);
+        assert_eq!(ids, vec!["111".to_string()]);
+        // Cross-server category IDs are rejected (issue #48-adjacent).
+        let foreign = update_role_category_of_role(&db, "111", Some(999_999), sid)
+            .await
+            .unwrap_err();
+        assert_eq!(foreign.status.as_u16(), 400);
         update_role_category_of_role(&db, "111", None, sid).await.unwrap();
+        let (required, ids) = get_verification_requirement(&db, sid).await.unwrap();
+        assert!(required);
+        assert!(ids.is_empty());
 
         // games: create, update with tags/roles diff, search, thumbnail, delete
         let game = create_game(&db, sid, "Factorio", Some("automation"), Some(cat.category_id))
@@ -1025,6 +1314,27 @@ mod smoke_tests {
         .unwrap_err();
         assert_eq!(missing.status.as_u16(), 404);
 
+        // unknown/foreign tags, roles and categories are rejected
+        let bad_tag = update_game(
+            &db, game.game_id, sid,
+            UpdateGameParams { name: None, description: None, category_id: None,
+                thumbnail: None, channels: None, tag_ids: Some(vec![999_999]), role_ids: None },
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(bad_tag.status.as_u16(), 400);
+        let bad_role = update_game(
+            &db, game.game_id, sid,
+            UpdateGameParams { name: None, description: None, category_id: None,
+                thumbnail: None, channels: None, tag_ids: None,
+                role_ids: Some(vec!["424242".into()]) },
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(bad_role.status.as_u16(), 400);
+        let bad_category = create_game(&db, sid, "Foreign", None, Some(999_999)).await.unwrap_err();
+        assert_eq!(bad_category.status.as_u16(), 400);
+
         assert_eq!(find_games_by_name(&db, sid, "factorio").await.unwrap().len(), 1);
         assert_eq!(find_games_by_tags(&db, sid, &["coop".into()]).await.unwrap().len(), 1);
         assert_eq!(find_games_by_category_name(&db, sid, "rpg").await.unwrap().len(), 1);
@@ -1074,7 +1384,19 @@ mod smoke_tests {
         assert_eq!(delete_tag(&db, tag.tag_id, sid).await.unwrap().len(), 1);
         assert_eq!(delete_category(&db, cat.category_id, sid).await.unwrap().len(), 1);
         delete_roles_bulk(&db, sid, &["111".into()]).await.unwrap();
-        assert_eq!(delete_role_category(&db, rc.role_category_id, sid).await.unwrap().len(), 1);
+        // Ordinary role categories can still be created and deleted.
+        let misc = create_role_category(&db, sid, "misc", false).await.unwrap()[0].clone();
+        assert!(!misc.is_verification);
+        assert_eq!(delete_role_category(&db, misc.role_category_id, sid).await.unwrap().len(), 1);
+        // The verification category stays undeletable through the API; remove
+        // it directly for cleanup.
+        let still_protected = delete_role_category(&db, rc.role_category_id, sid).await.unwrap_err();
+        assert_eq!(still_protected.status.as_u16(), 400);
+        sqlx::query("DELETE FROM roles_categories WHERE server_id = $1")
+            .bind(sid)
+            .execute(&db)
+            .await
+            .unwrap();
         assert!(get_all_roles_in_server_in_db(&db, sid).await.unwrap().is_empty());
     }
 }

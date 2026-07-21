@@ -11,6 +11,7 @@ use crate::discord::bot::authenticate_and_authorize_user;
 use crate::error::{HttpError, Result};
 use crate::models::{NameRequiredRequestBody, Tag};
 use crate::state::AppState;
+use crate::validation::{validated_name, TAG_NAME_MAX};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -46,7 +47,8 @@ async fn create_tag(
     let authed =
         authenticate_and_authorize_user(&state, &server_id, &access_token, true, true).await?;
     if authed.manage_guild_permission {
-        let tag = db::create_tag(&state.db, &server_id, &body.name).await?;
+        let name = validated_name(&body.name, TAG_NAME_MAX, "Name")?;
+        let tag = db::create_tag(&state.db, &server_id, &name).await?;
         return Ok(Json(tag));
     }
     Err(HttpError::forbidden(

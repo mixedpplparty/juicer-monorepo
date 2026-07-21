@@ -189,9 +189,17 @@ export const GameInfo = () => {
 			return true;
 		}
 		// if verification is required, check if I have the verification role
+		const verificationCategoryIds = new Set(
+			_serverData.serverDataDb?.roleCategories
+				?.filter((category) => category.isVerification)
+				.map((category) => category.roleCategoryId),
+		);
 		for (const role of Object.values(rolesCombined)) {
-			if (role.roleCategoryId === 1 && !_iHaveRole(_serverData, role.roleId)) {
-				// verification role category is always ID 1
+			if (
+				role.roleCategoryId !== null &&
+				verificationCategoryIds.has(role.roleCategoryId) &&
+				!_iHaveRole(_serverData, role.roleId)
+			) {
 				return false;
 			}
 		}

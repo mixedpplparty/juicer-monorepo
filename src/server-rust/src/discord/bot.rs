@@ -296,6 +296,126 @@ fn role_icon_url(role: &DiscordRole) -> Option<String> {
 
 // ---------- public API ----------
 
+/// Cache-first (REST fallback) snapshot of a guild's channels and roles.
+pub struct GuildEntities {
+    pub guild_id: GuildId,
+    /// (id, name)
+    pub channels: Vec<(String, String)>,
+    /// (id, name, managed)
+    pub roles: Vec<(String, String, bool)>,
+}
+
+pub async fn get_guild_channels_and_roles(
+    state: &AppState,
+    server_id: &str,
+) -> Result<GuildEntities> {
+    let guild_id = parse_guild_id(server_id)?;
+
+    // Clone out of the cache without holding the guard across an await point.
+    let cached: Option<GuildEntities> = {
+        state.discord_cache.guild(guild_id).and_then(|guild| {
+            if guild.channels.is_empty() && guild.roles.is_empty() {
+                return None;
+            }
+            Some(GuildEntities {
+                guild_id,
+                channels: guild
+                    .channels
+                    .values()
+                    .map(|channel| (channel.id.to_string(), channel.name.clone()))
+                    .collect(),
+                roles: guild
+                    .roles
+                    .values()
+                    .map(|role| (role.id.to_string(), role.name.clone(), role.managed))
+                    .collect(),
+            })
+        })
+    };
+    if let Some(entities) = cached {
+        return Ok(entities);
+    }
+
+    let (channels, roles) = tokio::join!(
+        state.discord_http.get_channels(guild_id),
+        state.discord_http.get_guild_roles(guild_id),
+    );
+    let map_err = |err: serenity::Error| {
+        if is_discord_status(&err, StatusCode::NOT_FOUND)
+            || is_discord_status(&err, StatusCode::FORBIDDEN)
+        {
+            server_not_found()
+        } else {
+            err.into()
+        }
+    };
+    let channels = channels.map_err(map_err)?;
+    let roles = roles.map_err(map_err)?;
+    Ok(GuildEntities {
+        guild_id,
+        channels: channels
+            .iter()
+            .map(|channel| (channel.id.to_string(), channel.name.clone()))
+            .collect(),
+        roles: roles
+            .iter()
+            .map(|role| (role.id.to_string(), role.name.clone(), role.managed))
+            .collect(),
+    })
+}
+
+/// Channels must exist in the guild; roles must be real, non-managed, and
+/// never @everyone (whose ID equals the guild ID).
+pub async fn validate_guild_channels_and_roles(
+    state: &AppState,
+    server_id: &str,
+    channel_ids: Option<&[String]>,
+    role_ids: Option<&[String]>,
+) -> Result<()> {
+    let needs_channels = channel_ids.is_some_and(|ids| !ids.is_empty());
+    let needs_roles = role_ids.is_some_and(|ids| !ids.is_empty());
+    if !needs_channels && !needs_roles {
+        return Ok(());
+    }
+    let entities = get_guild_channels_and_roles(state, server_id).await?;
+    if let Some(channel_ids) = channel_ids {
+        let known: std::collections::HashSet<&str> =
+            entities.channels.iter().map(|(id, _)| id.as_str()).collect();
+        for channel_id in channel_ids {
+            if !known.contains(channel_id.as_str()) {
+                return Err(HttpError::bad_request(
+                    "One or more channels do not exist in this server.",
+                ));
+            }
+        }
+    }
+    if let Some(role_ids) = role_ids {
+        let everyone_id = entities.guild_id.to_string();
+        let managed_by_id: std::collections::HashMap<&str, bool> = entities
+            .roles
+            .iter()
+            .map(|(id, _, managed)| (id.as_str(), *managed))
+            .collect();
+        for role_id in role_ids {
+            match managed_by_id.get(role_id.as_str()) {
+                None => {
+                    return Err(HttpError::bad_request(
+                        "One or more roles do not exist in this server.",
+                    ));
+                }
+                Some(managed) => {
+                    if *managed || *role_id == everyone_id {
+                        return Err(HttpError::bad_request(
+                            "Managed roles and @everyone cannot be associated with a topic.",
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 pub async fn authenticate_and_authorize_user(
     state: &AppState,
     server_id: &str,
@@ -620,12 +740,12 @@ pub async fn sync_roles_with_db_and_discord(
         .map(|role| role.role_id.clone())
         .collect();
 
-    // Two set-based statements instead of one INSERT/DELETE per role — a big
-    // guild's first sync was an N+1 write burst against a 10-connection pool.
-    tokio::try_join!(
-        db::create_roles_bulk(&state.db, server_id, &roles_created),
-        db::delete_roles_bulk(&state.db, server_id, &roles_deleted),
-    )?;
+    // Two set-based statements in one transaction: either the whole diff
+    // applies or none of it does.
+    let mut tx = state.db.begin().await?;
+    db::create_roles_bulk(&mut *tx, server_id, &roles_created).await?;
+    db::delete_roles_bulk(&mut *tx, server_id, &roles_deleted).await?;
+    tx.commit().await?;
 
     Ok(SyncRolesResponse { roles_created, roles_deleted })
 }

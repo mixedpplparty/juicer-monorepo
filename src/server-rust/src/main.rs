@@ -6,6 +6,7 @@ mod middleware;
 mod models;
 mod routes;
 mod state;
+mod validation;
 
 use std::sync::Arc;
 
@@ -29,6 +30,10 @@ async fn main() {
         .connect(&config.database_url())
         .await
         .expect("failed to connect to Postgres");
+
+    db::ensure_verification_category_schema(&db)
+        .await
+        .expect("failed to ensure verification category schema");
 
     // Serenity gateway client: Guilds intent only, mirroring the old bot.
     let mut discord_client =
