@@ -12,9 +12,10 @@ use serde::Deserialize;
 use crate::db;
 use crate::discord::bot::{authenticate_and_authorize_user, get_guild_channels_and_roles};
 use crate::error::Result;
-use crate::models::Game;
+use crate::models::{Game, TopicSearchResult};
 use crate::state::AppState;
 use crate::validation::filter_ids_by_name_match;
+use crate::views::project_topic_search_results;
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/all", get(search_all))
@@ -27,35 +28,41 @@ pub(crate) struct SearchQuery {
 
 #[utoipa::path(get, path = "/discord/servers/{serverId}/search/all", tag = "search",
     params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("query" = Option<String>, Query, description = "Matches topic name, tag, category, channel and role names; empty returns all topics")),
-    responses((status = 200, body = Vec<Game>), (status = 403, description = "Missing manage permission or server verification required")),
+    responses((status = 200, body = Vec<TopicSearchResult>), (status = 403, description = "Missing manage permission or server verification required")),
     security(("discord_cookie" = [])))]
 pub(crate) async fn search_all(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     Query(params): Query<SearchQuery>,
     jar: CookieJar,
-) -> Result<Json<Vec<Game>>> {
+) -> Result<Json<Vec<TopicSearchResult>>> {
     let access_token = jar
         .get("discord_access_token")
         .map(|c| c.value().to_string())
         .unwrap_or_default();
-    authenticate_and_authorize_user(&state, &server_id, &access_token, false, true).await?;
+    let authed =
+        authenticate_and_authorize_user(&state, &server_id, &access_token, false, true).await?;
+    let member_role_ids: std::collections::HashSet<String> =
+        authed.member.roles.iter().map(|id| id.to_string()).collect();
+    let entities = get_guild_channels_and_roles(&state, &server_id).await?;
 
     // Match TS: `if (!query)` — missing OR empty string both mean "all games".
     let query = match params.query.filter(|q| !q.is_empty()) {
         None => {
             let games = db::get_all_games_in_server(&state.db, &server_id).await?;
-            return Ok(Json(games));
+            return Ok(Json(project_topic_search_results(
+                games,
+                &entities,
+                &member_role_ids,
+            )));
         }
         Some(query) => query,
     };
-
-    let entities = get_guild_channels_and_roles(&state, &server_id).await?;
     let matched_channel_ids = filter_ids_by_name_match(
         entities
             .channels
             .iter()
-            .map(|(id, name)| (id.clone(), name.as_str())),
+            .map(|channel| (channel.id.clone(), channel.name.as_str())),
         &query,
     );
     let matched_role_ids = filter_ids_by_name_match(
@@ -87,5 +94,9 @@ pub(crate) async fn search_all(
         .chain(games_by_roles)
         .filter(|game| seen_ids.insert(game.game.game_id))
         .collect();
-    Ok(Json(unique_games))
+    Ok(Json(project_topic_search_results(
+        unique_games,
+        &entities,
+        &member_role_ids,
+    )))
 }

@@ -13,13 +13,15 @@ use serde_json::json;
 use crate::db;
 use crate::discord::bot;
 use crate::error::{HttpError, Result};
-use crate::models::{Role, SetRoleSelfAssignableRequestBody, UpdateRoleSettingsRequest};
+use crate::models::{Role, RoleSettingsView, SetRoleSelfAssignableRequestBody, UpdateRoleSettingsRequest};
 use crate::state::AppState;
 use crate::validation::{normalized_description, ROLE_DESCRIPTION_MAX};
+use crate::views::build_role_settings_view;
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_roles))
+        .route("/settings", get(get_role_settings))
         .route("/{roleId}", patch(update_role_settings))
         .route("/{roleId}/assign", post(assign_role))
         .route("/{roleId}/unassign", post(unassign_role))
@@ -207,4 +209,32 @@ pub(crate) async fn update_role_settings(
     )
     .await?;
     Ok(Json(role))
+}
+
+/// GET /settings — admin view model for the role settings menu (issue #50):
+/// Discord/DB roles joined and policy (visibility, editability, deletability)
+/// applied server-side.
+#[utoipa::path(get, path = "/discord/servers/{serverId}/roles/settings", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = RoleSettingsView), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_role_settings(
+    State(state): State<AppState>,
+    Path(server_id): Path<String>,
+    jar: CookieJar,
+) -> Result<Json<RoleSettingsView>> {
+    let token = access_token(&jar);
+    let (authed, metadata) = tokio::join!(
+        bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true),
+        db::get_server_role_metadata(&state.db, &server_id),
+    );
+    authed?;
+    let (db_roles, role_categories) = metadata?;
+    let entities = bot::get_guild_channels_and_roles(&state, &server_id).await?;
+    Ok(Json(build_role_settings_view(
+        &server_id,
+        &db_roles,
+        &role_categories,
+        &entities.roles,
+    )))
 }

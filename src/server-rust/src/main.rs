@@ -8,6 +8,7 @@ mod models;
 mod routes;
 mod state;
 mod validation;
+mod views;
 
 use std::sync::Arc;
 

@@ -297,6 +297,12 @@ fn role_icon_url(role: &DiscordRole) -> Option<String> {
 // ---------- public API ----------
 
 /// Cache-first (REST fallback) snapshot of a guild's channels and roles.
+pub struct GuildChannelLite {
+    pub id: String,
+    pub name: String,
+    pub is_text: bool,
+}
+
 pub struct GuildRoleLite {
     pub id: String,
     pub name: String,
@@ -307,8 +313,7 @@ pub struct GuildRoleLite {
 
 pub struct GuildEntities {
     pub guild_id: GuildId,
-    /// (id, name)
-    pub channels: Vec<(String, String)>,
+    pub channels: Vec<GuildChannelLite>,
     pub roles: Vec<GuildRoleLite>,
 }
 
@@ -329,7 +334,11 @@ pub async fn get_guild_channels_and_roles(
                 channels: guild
                     .channels
                     .values()
-                    .map(|channel| (channel.id.to_string(), channel.name.clone()))
+                    .map(|channel| GuildChannelLite {
+                        id: channel.id.to_string(),
+                        name: channel.name.clone(),
+                        is_text: channel.kind == ChannelType::Text,
+                    })
                     .collect(),
                 roles: guild
                     .roles
@@ -367,7 +376,11 @@ pub async fn get_guild_channels_and_roles(
         guild_id,
         channels: channels
             .iter()
-            .map(|channel| (channel.id.to_string(), channel.name.clone()))
+            .map(|channel| GuildChannelLite {
+                id: channel.id.to_string(),
+                name: channel.name.clone(),
+                is_text: channel.kind == ChannelType::Text,
+            })
             .collect(),
         roles: roles
             .iter()
@@ -397,7 +410,7 @@ pub async fn validate_guild_channels_and_roles(
     let entities = get_guild_channels_and_roles(state, server_id).await?;
     if let Some(channel_ids) = channel_ids {
         let known: std::collections::HashSet<&str> =
-            entities.channels.iter().map(|(id, _)| id.as_str()).collect();
+            entities.channels.iter().map(|channel| channel.id.as_str()).collect();
         for channel_id in channel_ids {
             if !known.contains(channel_id.as_str()) {
                 return Err(HttpError::bad_request(

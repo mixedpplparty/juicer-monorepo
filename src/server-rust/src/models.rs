@@ -282,6 +282,89 @@ pub struct MessageOnSuccess {
     pub detail: String,
 }
 
+// ---------- server-computed view models ----------
+
+/// Role entry of a search result (issue #49) — same projection as the details
+/// endpoint, minus the settings-only fields.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct TopicSearchRole {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+    pub assigned: bool,
+}
+
+/// Item of GET /search/all (issue #49): channel names and role assignment are
+/// resolved server-side so the client needs no joins or placeholder names.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct TopicSearchResult {
+    pub game_id: i32,
+    pub name: String,
+    pub channels: Vec<TopicDetailsChannel>,
+    pub roles: Vec<TopicSearchRole>,
+}
+
+/// Role category entry of the role-settings view (issue #50).
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct RoleSettingsCategory {
+    pub id: i32,
+    pub name: String,
+    /// "verification" for the server's distinct verification category,
+    /// "normal" otherwise.
+    pub kind: String,
+    pub deletable: bool,
+}
+
+/// Role entry of the role-settings view (issue #50). Unsynced roles and
+/// @everyone are excluded; managed roles are included but not editable.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct RoleSettingsRole {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+    pub category_id: Option<i32>,
+    pub self_assignable: bool,
+    pub description: Option<String>,
+    pub editable: bool,
+}
+
+/// GET /roles/settings (issue #50): the admin view model for the role
+/// settings menu, with filtering/editability policy applied server-side.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct RoleSettingsView {
+    pub categories: Vec<RoleSettingsCategory>,
+    pub roles: Vec<RoleSettingsRole>,
+}
+
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct AssociableRole {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+}
+
+/// GET /games/associables (issue #51): channels/roles a topic may be
+/// associated with, using the same policy the update validation enforces.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct AssociableOptions {
+    pub channels: Vec<TopicDetailsChannel>,
+    pub roles: Vec<AssociableRole>,
+}
+
 // ---------- Request bodies ----------
 
 #[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
