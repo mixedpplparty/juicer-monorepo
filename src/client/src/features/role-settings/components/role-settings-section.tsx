@@ -121,10 +121,9 @@ export function RoleSettingsSection({
 					role={selectedRole}
 					categories={settings.roleCategories.map((category) => ({
 						id: category.roleCategoryId,
-						name:
-							category.roleCategoryId === 1
-								? "juicer 이용에 필요한 역할"
-								: category.name,
+						name: category.isVerification
+							? "juicer 이용에 필요한 역할"
+							: category.name,
 					}))}
 					pending={settings.roleSettingsMutation.isPending}
 					onOpenChange={(open) => !open && settings.setSelectedRole(null)}

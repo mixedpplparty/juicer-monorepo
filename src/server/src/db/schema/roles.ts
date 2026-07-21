@@ -39,6 +39,7 @@ export const roleCategories = pgTable(
 			.notNull()
 			.references(() => servers.serverId),
 		name: varchar("name", { length: 100 }).notNull(),
+		isVerification: boolean("is_verification").notNull().default(false),
 	},
 	(table) => [index("role_categories_server_id_idx").on(table.serverId)],
 );

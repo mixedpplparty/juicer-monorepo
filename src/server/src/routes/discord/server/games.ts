@@ -10,7 +10,7 @@ import {
 	type TopicDetails,
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
-} from "juicer-shared/dist/types/index.js";
+} from "../../../types/zod.js";
 import {
 	createGame,
 	deleteGame,

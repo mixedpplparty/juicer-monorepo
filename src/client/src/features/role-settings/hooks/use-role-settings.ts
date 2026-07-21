@@ -34,10 +34,10 @@ export function useRoleSettings({
 	const dbRoles = serverData.serverDataDb?.roles ?? [];
 	const roleCategories = serverData.serverDataDb?.roleCategories ?? [];
 	const verificationCategory = roleCategories.find(
-		(category) => category.roleCategoryId === 1,
+		(category) => category.isVerification,
 	);
 	const visibleCategories = roleCategories.filter(
-		(category) => category.roleCategoryId !== 1,
+		(category) => !category.isVerification,
 	);
 	const roles = useMemo<RoleSettingsValue[]>(() => {
 		const dbRolesById = new Map(dbRoles.map((role) => [role.roleId, role]));

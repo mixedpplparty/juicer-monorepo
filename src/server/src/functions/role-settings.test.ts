@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { UpdateRoleSettingsRequestBody } from "juicer-shared/dist/types/index.js";
+import { UpdateRoleSettingsRequestBody } from "../types/zod.js";
 import { buildRoleSettingsUpdate } from "./role-settings.js";
 
 describe("UpdateRoleSettingsRequestBody", () => {
