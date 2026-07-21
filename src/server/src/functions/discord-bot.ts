@@ -20,7 +20,7 @@ import type {
 	FilteredServerDataDiscord,
 	ServerDataDiscordChannel,
 	SyncRolesResponse,
-} from "juicer-shared/dist/types/index.js";
+} from "../types/zod.js";
 import {
 	createRoleInDb,
 	deleteRoleFromDb,

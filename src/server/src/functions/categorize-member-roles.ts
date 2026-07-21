@@ -4,7 +4,7 @@ import type {
 	Role as DatabaseRole,
 	RoleCategory,
 	ServerMemberRole,
-} from "juicer-shared/dist/types/index.js";
+} from "../types/zod.js";
 
 export interface CategorizeMemberRolesOptions {
 	serverId: string;

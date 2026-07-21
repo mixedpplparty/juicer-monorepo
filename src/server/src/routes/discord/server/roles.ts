@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import {
 	SetRoleSelfAssignableRequestBody,
 	UpdateRoleSettingsRequestBody,
-} from "juicer-shared/dist/types/index.js";
+} from "../../../types/zod.js";
 import {
 	getRoleInServerInDbByRoleIds,
 	updateRoleSettings,

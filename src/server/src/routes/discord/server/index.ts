@@ -3,8 +3,8 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import type { MyDataInServer } from "juicer-shared/dist/types/index.js";
-import { UpdateServerVerificationRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import type { MyDataInServer } from "../../../types/zod.js";
+import { UpdateServerVerificationRequiredRequestBody } from "../../../types/zod.js";
 import { categorizeMemberRoles } from "../../../functions/categorize-member-roles.js";
 import {
 	createRoleCategory,

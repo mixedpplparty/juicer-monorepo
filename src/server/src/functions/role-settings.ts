@@ -1,4 +1,4 @@
-import type { UpdateRoleSettingsRequest } from "juicer-shared/dist/types/index.js";
+import type { UpdateRoleSettingsRequest } from "../types/zod.js";
 
 export interface RoleSettingsUpdate {
 	roleCategoryId?: number | null;

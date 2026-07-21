@@ -18,3 +18,5 @@ shared/dist
 **/!.env.example
 *.log
 **/.log
+# Rust build artifacts (server-rust builds inside the container)
+server-rust/target

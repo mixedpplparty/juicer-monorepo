@@ -1,52 +1,29 @@
 # syntax=docker/dockerfile:1
-FROM node:lts-alpine AS base
-
-# Enable pnpm via corepack (uses the version pinned in package.json "packageManager")
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME/bin:$PATH"
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN corepack enable
-
-FROM base AS builder
-
-# vulnerability mitigations
-RUN apk update && apk upgrade --no-cache
-RUN apk add --no-cache gcompat unzip
+# Rust backend (axum). Build context is ./src/, crate at ./server-rust.
+FROM rust:1-slim-bookworm AS builder
 
 WORKDIR /app
 
-# Install dependencies first so this layer stays cached unless the manifests or
-# lockfile change. The pnpm content-addressable store lives in a BuildKit cache
-# mount (PNPM_HOME=/pnpm -> store at /pnpm/store), so packages are not
-# re-downloaded on every build.
-COPY package.json tsconfig.json pnpm*yaml ./
-COPY server/package.json ./server/
-COPY shared/package.json ./shared/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --ignore-scripts
+# Build with BuildKit cache mounts for the cargo registry and target dir so
+# dependency compilation is reused across builds.
+COPY server-rust ./server-rust
+RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=cargo-target,target=/app/server-rust/target \
+    cargo build --release --manifest-path server-rust/Cargo.toml \
+    && cp server-rust/target/release/juicer-server /app/juicer-server
 
-# Copy the rest of the source code (after install so source edits don't bust the
-# dependency layer).
-# Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
-COPY server ./server
-COPY shared ./shared
+FROM debian:bookworm-slim AS runner
 
-RUN pnpm run build:shared
-#RUN pnpm run build:server
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-FROM base AS runner
-WORKDIR /app
+RUN groupadd --system --gid 1001 appgroup \
+    && useradd --system --uid 1001 --gid appgroup appuser
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 hono
+COPY --from=builder --chown=appuser:appgroup /app/juicer-server /app/juicer-server
 
-RUN npm install -g bun
-
-COPY --from=builder --chown=hono:nodejs /app/node_modules /app/node_modules
-COPY --from=builder --chown=hono:nodejs /app/server /app/server
-COPY --from=builder --chown=hono:nodejs /app/shared /app/shared
-COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
-
-USER hono
+USER appuser
 EXPOSE 8000
 
-CMD ["bun", "run", "/app/server/src/index.ts"]
+CMD ["/app/juicer-server"]

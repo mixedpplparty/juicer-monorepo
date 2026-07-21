@@ -117,22 +117,22 @@ export function RoleSettingsSection({
 			/>
 			{selectedRole ? (
 				<RoleSettingsDialog
-					key={selectedRole.id}
 					role={selectedRole}
 					categories={settings.roleCategories.map((category) => ({
 						id: category.roleCategoryId,
-						name:
-							category.roleCategoryId === 1
-								? "juicer 이용에 필요한 역할"
-								: category.name,
+						name: category.isVerification
+							? "juicer 이용에 필요한 역할"
+							: category.name,
 					}))}
 					pending={settings.roleSettingsMutation.isPending}
 					onOpenChange={(open) => !open && settings.setSelectedRole(null)}
 					onSubmit={(value) => {
-						settings.roleSettingsMutation.mutate({
-							role: selectedRole,
-							...value,
-						});
+						if (selectedRole) {
+							settings.roleSettingsMutation.mutate({
+								role: selectedRole,
+								...value,
+							});
+						}
 					}}
 				/>
 			) : null}
