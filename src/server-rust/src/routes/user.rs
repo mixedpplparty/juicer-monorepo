@@ -15,7 +15,10 @@ pub fn router() -> Router<AppState> {
 }
 
 /// GET /discord/user/me — Discord user data passthrough + mutual guilds.
-async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Json<MyInfo>> {
+#[utoipa::path(get, path = "/discord/user/me", tag = "user", operation_id = "userMe",
+    responses((status = 200, body = MyInfo), (status = 401, description = "Not authenticated")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Json<MyInfo>> {
     let access_token = jar
         .get("discord_access_token")
         .map(|c| c.value().to_string())

@@ -61,7 +61,10 @@ fn removal_cookie(name: &'static str) -> Cookie<'static> {
 }
 
 // only userData
-async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
+#[utoipa::path(get, path = "/discord/auth/me", tag = "auth", operation_id = "authMe",
+    responses((status = 200, description = "Raw Discord user data"), (status = 401, description = "Not authenticated")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
     let access_token = jar
         .get(ACCESS_TOKEN_COOKIE)
         .map(|c| c.value().to_string())
@@ -71,11 +74,14 @@ async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
 }
 
 #[derive(Deserialize)]
-struct CallbackQuery {
+pub(crate) struct CallbackQuery {
     code: Option<String>,
 }
 
-async fn callback(
+#[utoipa::path(get, path = "/discord/auth/callback", tag = "auth",
+    params(("code" = Option<String>, Query, description = "OAuth authorization code")),
+    responses((status = 302, description = "Redirect after sign-in (cookies set on success)")))]
+pub(crate) async fn callback(
     State(state): State<AppState>,
     jar: CookieJar,
     Query(query): Query<CallbackQuery>,
@@ -109,7 +115,10 @@ async fn callback(
     Ok((jar, found(&state.config.redirect_after_sign_in_uri)).into_response())
 }
 
-async fn refresh(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
+#[utoipa::path(post, path = "/discord/auth/refresh", tag = "auth",
+    responses((status = 200, description = "Tokens refreshed; cookies updated"), (status = 401, description = "Missing/invalid refresh token")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn refresh(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
     // The TS code passed the (possibly missing) cookie straight through and let
     // the OAuth call fail; mirror that by defaulting to an empty token.
     let refresh_token = jar
@@ -144,7 +153,10 @@ async fn refresh(State(state): State<AppState>, jar: CookieJar) -> Result<Respon
     Ok((jar, found(&state.config.redirect_after_sign_in_uri)).into_response())
 }
 
-async fn revoke(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
+#[utoipa::path(post, path = "/discord/auth/revoke", tag = "auth",
+    responses((status = 200, description = "Token revoked; cookies removed"), (status = 401, description = "Not authenticated")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn revoke(State(state): State<AppState>, jar: CookieJar) -> Result<Response> {
     let access_token = jar
         .get(ACCESS_TOKEN_COOKIE)
         .map(|c| c.value().to_string())
@@ -161,7 +173,9 @@ async fn revoke(State(state): State<AppState>, jar: CookieJar) -> Result<Respons
     Ok((jar, found(&state.config.redirect_after_sign_in_uri)).into_response())
 }
 
-async fn remove_cookies(jar: CookieJar) -> Result<Response> {
+#[utoipa::path(get, path = "/discord/auth/remove-cookies", tag = "auth",
+    responses((status = 200, description = "Auth cookies removed")))]
+pub(crate) async fn remove_cookies(jar: CookieJar) -> Result<Response> {
     let jar = jar
         .remove(removal_cookie(ACCESS_TOKEN_COOKIE))
         .remove(removal_cookie(REFRESH_TOKEN_COOKIE));

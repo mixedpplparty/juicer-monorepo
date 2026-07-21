@@ -35,3 +35,10 @@ purpose only; don't delete it until migrations move (e.g. to `sqlx migrate`).
 
 `CONTRACT.md` documents the module contract and the intentional behavioral
 divergences from the TS backend.
+
+## API docs (utoipa)
+
+The OpenAPI document is generated from `#[utoipa::path]` annotations on the
+route handlers and served at `GET /swagger`, with a swagger-ui page at
+`GET /docs`. Both routes are hidden when `ENVIRONMENT=production`; set
+`ENABLE_API_DOCS=true` (or `false`) to override in either direction.

@@ -89,7 +89,11 @@ pub async fn verification_guard(
 }
 
 /// GET /{serverId} — server data from Discord and the DB.
-async fn get_server_data(
+#[utoipa::path(get, path = "/discord/servers/{serverId}", tag = "servers",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = ServerData), (status = 404, description = "Server not found"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_server_data(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -111,7 +115,11 @@ async fn get_server_data(
 
 /// Admin required.
 /// POST /{serverId}/create — create server (also creates the "verification" role category).
-async fn create_server(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/create", tag = "servers",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, description = "Server and verification role category created"), (status = 400, description = "Server already exists"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn create_server(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -132,7 +140,11 @@ async fn create_server(
 }
 
 /// GET /{serverId}/me — my roles in the server, grouped by role category.
-async fn get_my_data_in_server(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/me", tag = "servers",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = MyDataInServer), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_my_data_in_server(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -176,7 +188,11 @@ async fn get_my_data_in_server(
 
 /// Admin required.
 /// GET /{serverId}/sync-roles — sync roles between the DB and Discord.
-async fn sync_roles(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/sync-roles", tag = "servers",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = SyncRolesResponse), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn sync_roles(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -196,7 +212,12 @@ async fn sync_roles(
 
 /// Admin required.
 /// PUT /{serverId} — update `verificationRequired`.
-async fn update_server(
+#[utoipa::path(put, path = "/discord/servers/{serverId}", tag = "servers",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = UpdateServerVerificationRequiredRequestBody,
+    responses((status = 200, body = Vec<CreateServerResponse>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn update_server(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,

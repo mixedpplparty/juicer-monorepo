@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 // ---------- DB entities ----------
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct CreateServerResponse {
@@ -18,7 +18,7 @@ pub struct CreateServerResponse {
     pub verification_required: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct Category {
@@ -27,7 +27,7 @@ pub struct Category {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct RoleCategory {
@@ -39,7 +39,7 @@ pub struct RoleCategory {
     pub is_verification: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct Tag {
@@ -48,7 +48,7 @@ pub struct Tag {
     pub server_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct Role {
@@ -59,7 +59,7 @@ pub struct Role {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct TagRelationToGame {
@@ -67,7 +67,7 @@ pub struct TagRelationToGame {
     pub tag_id: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct RoleRelationToGame {
@@ -78,7 +78,7 @@ pub struct RoleRelationToGame {
 /// Game row without the junction-table relations. The heavy `thumbnail` bytea is
 /// never included in list payloads (served via the dedicated thumbnail endpoint),
 /// so it is always `null` here except straight after an update that returned it.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct GameWithoutRelations {
@@ -87,17 +87,20 @@ pub struct GameWithoutRelations {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
+    #[schema(value_type = Option<String>)]
     pub description: Option<Option<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
+    #[schema(value_type = Option<i32>)]
     pub category_id: Option<Option<i32>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional, type = "Array<number> | null")]
+    #[schema(value_type = Option<Vec<i32>>)]
     pub thumbnail: Option<Option<Vec<u8>>>,
     pub channels: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct Game {
@@ -108,7 +111,7 @@ pub struct Game {
     pub games_roles: Option<Vec<RoleRelationToGame>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ServerDataDb {
@@ -125,7 +128,7 @@ pub struct ServerDataDb {
 
 // ---------- Discord-derived types ----------
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct FilteredGuild {
@@ -140,7 +143,7 @@ pub struct FilteredGuild {
     pub member_count: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ServerDataDiscordRole2 {
@@ -153,7 +156,7 @@ pub struct ServerDataDiscordRole2 {
     pub me_in_role: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ServerDataDiscordChannel {
@@ -161,7 +164,7 @@ pub struct ServerDataDiscordChannel {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct FilteredServerDataDiscord {
@@ -176,7 +179,7 @@ pub struct FilteredServerDataDiscord {
     pub channels: Option<Vec<ServerDataDiscordChannel>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ServerData {
@@ -188,16 +191,17 @@ pub struct ServerData {
 /// Raw Discord user object (`/users/@me`) passed through untouched.
 pub type ApiUser = serde_json::Value;
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct MyInfo {
     #[ts(type = "any")]
+    #[schema(value_type = Object)]
     pub user_data: ApiUser,
     pub guilds: Vec<FilteredGuild>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ServerMemberRole {
@@ -206,7 +210,7 @@ pub struct ServerMemberRole {
     pub color: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct CategorizedRoleGroup {
@@ -216,7 +220,7 @@ pub struct CategorizedRoleGroup {
 }
 
 /// Shape the client consumes from `GET /discord/servers/:serverId/me`.
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct MyDataInServer {
@@ -228,7 +232,7 @@ pub struct MyDataInServer {
     pub categorized_roles: Vec<CategorizedRoleGroup>,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct TopicDetailsChannel {
@@ -236,7 +240,7 @@ pub struct TopicDetailsChannel {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct TopicDetailsRole {
@@ -249,7 +253,7 @@ pub struct TopicDetailsRole {
 }
 
 /// Shape the client consumes from `GET /discord/servers/:serverId/games/:gameId`.
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct TopicDetails {
@@ -262,7 +266,7 @@ pub struct TopicDetails {
     pub roles: Vec<TopicDetailsRole>,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct SyncRolesResponse {
     pub roles_created: Vec<String>,
@@ -272,7 +276,7 @@ pub struct SyncRolesResponse {
 /// Kept for the exported TS bindings even though the Rust side responds with
 /// ad-hoc json! bodies.
 #[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct MessageOnSuccess {
     pub detail: String,
@@ -280,7 +284,7 @@ pub struct MessageOnSuccess {
 
 // ---------- Request bodies ----------
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct CreateGameRequestBody {
@@ -293,7 +297,7 @@ pub struct CreateGameRequestBody {
     pub category_id: Option<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct UpdateGameRequestBody {
@@ -317,7 +321,7 @@ pub struct UpdateGameRequestBody {
     pub role_ids: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct UpdateGameResponse {
@@ -326,42 +330,42 @@ pub struct UpdateGameResponse {
     pub roles: AddedRemovedRoles,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct AddedRemovedTags {
     pub added: Option<Vec<TagRelationToGame>>,
     pub removed: Option<Vec<TagRelationToGame>>,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct AddedRemovedRoles {
     pub added: Option<Vec<RoleRelationToGame>>,
     pub removed: Option<Vec<RoleRelationToGame>>,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct NameRequiredRequestBody {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct AddCategoryToGameRequestBody {
     pub category_id: i32,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct ModifyTagsOfGameRequestBody {
     pub tag_ids: Vec<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct AssignRoleCategoryToRoleRequestBody {
@@ -369,7 +373,7 @@ pub struct AssignRoleCategoryToRoleRequestBody {
     pub role_id: String,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct SetRoleSelfAssignableRequestBody {
@@ -380,24 +384,27 @@ pub struct SetRoleSelfAssignableRequestBody {
     /// (mirrors drizzle skipping `undefined` but writing `null`).
     #[serde(default, deserialize_with = "double_option")]
     #[ts(optional, type = "string | null")]
+    #[schema(value_type = Option<String>)]
     pub description: Option<Option<String>>,
 }
 
 /// PATCH /roles/{roleId} body — absent fields are left unchanged; a JSON null
 /// clears (roleCategoryId/description). Unknown keys are rejected like the
 /// strict zod schema on the old backend.
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct UpdateRoleSettingsRequest {
     #[serde(default, deserialize_with = "double_option")]
     #[ts(optional, type = "number | null")]
+    #[schema(value_type = Option<i32>)]
     pub role_category_id: Option<Option<i32>>,
     #[serde(default)]
     #[ts(optional)]
     pub self_assignable: Option<bool>,
     #[serde(default, deserialize_with = "double_option")]
     #[ts(optional, type = "string | null")]
+    #[schema(value_type = Option<String>)]
     pub description: Option<Option<String>>,
 }
 
@@ -411,7 +418,7 @@ where
     serde::Deserialize::deserialize(de).map(Some)
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct UpdateServerVerificationRequiredRequestBody {

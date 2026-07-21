@@ -34,7 +34,11 @@ fn access_token(jar: &CookieJar) -> String {
 
 // Admin required
 // Get all roles within guild (server).
-async fn get_all_roles(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/roles/", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, description = "serverRoles + myRoles"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_all_roles(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -53,7 +57,11 @@ async fn get_all_roles(
     })))
 }
 
-async fn assign_role(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/roles/{roleId}/assign", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("roleId" = String, Path, description = "Discord role ID")),
+    responses((status = 200, description = "Role assigned"), (status = 400, description = "Role not self-assignable"), (status = 404, description = "Role not synced"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn assign_role(
     State(state): State<AppState>,
     Path((server_id, role_id)): Path<(String, String)>,
     jar: CookieJar,
@@ -87,7 +95,11 @@ async fn assign_role(
     ))
 }
 
-async fn unassign_role(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/roles/{roleId}/unassign", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("roleId" = String, Path, description = "Discord role ID")),
+    responses((status = 200, description = "Role unassigned"), (status = 400, description = "Role not self-assignable"), (status = 404, description = "Role not synced"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn unassign_role(
     State(state): State<AppState>,
     Path((server_id, role_id)): Path<(String, String)>,
     jar: CookieJar,
@@ -121,7 +133,12 @@ async fn unassign_role(
     ))
 }
 
-async fn update_role(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/roles/{roleId}/update", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("roleId" = String, Path, description = "Discord role ID")),
+    request_body = SetRoleSelfAssignableRequestBody,
+    responses((status = 200, body = Vec<Role>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn update_role(
     State(state): State<AppState>,
     Path((server_id, role_id)): Path<(String, String)>,
     jar: CookieJar,
@@ -152,7 +169,12 @@ async fn update_role(
 }
 
 /// PATCH /{roleId} — partial role settings update (admin required).
-async fn update_role_settings(
+#[utoipa::path(patch, path = "/discord/servers/{serverId}/roles/{roleId}", tag = "roles",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("roleId" = String, Path, description = "Discord role ID")),
+    request_body = UpdateRoleSettingsRequest,
+    responses((status = 200, body = Role), (status = 400, description = "Validation failed"), (status = 404, description = "Role not found in this server"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn update_role_settings(
     State(state): State<AppState>,
     Path((server_id, role_id)): Path<(String, String)>,
     jar: CookieJar,

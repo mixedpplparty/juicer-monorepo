@@ -21,11 +21,15 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(Debug, Deserialize)]
-struct SearchQuery {
+pub(crate) struct SearchQuery {
     query: Option<String>,
 }
 
-async fn search_all(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/search/all", tag = "search",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("query" = Option<String>, Query, description = "Matches topic name, tag, category, channel and role names; empty returns all topics")),
+    responses((status = 200, body = Vec<Game>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn search_all(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     Query(params): Query<SearchQuery>,

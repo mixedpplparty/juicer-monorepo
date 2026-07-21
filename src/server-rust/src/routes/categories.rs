@@ -25,7 +25,12 @@ fn access_token(jar: &CookieJar) -> String {
         .unwrap_or_default()
 }
 
-async fn create_category(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/categories/create", tag = "categories",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = NameRequiredRequestBody,
+    responses((status = 200, body = Vec<Category>), (status = 400, description = "Validation failed"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn create_category(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -44,7 +49,11 @@ async fn create_category(
     ))
 }
 
-async fn delete_category(
+#[utoipa::path(delete, path = "/discord/servers/{serverId}/categories/{categoryId}", tag = "categories",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("categoryId" = i32, Path, description = "Category ID")),
+    responses((status = 200, body = Vec<Category>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn delete_category(
     State(state): State<AppState>,
     Path((server_id, category_id)): Path<(String, i32)>,
     jar: CookieJar,

@@ -19,8 +19,9 @@ use crate::discord::bot::{
 };
 use crate::error::{HttpError, Result};
 use crate::models::{
-    AddCategoryToGameRequestBody, CreateGameRequestBody, ModifyTagsOfGameRequestBody,
-    TopicDetails, TopicDetailsChannel, TopicDetailsRole, UpdateGameRequestBody,
+    AddCategoryToGameRequestBody, CreateGameRequestBody, GameWithoutRelations,
+    ModifyTagsOfGameRequestBody, TopicDetails, TopicDetailsChannel, TopicDetailsRole,
+    UpdateGameRequestBody, UpdateGameResponse,
 };
 use crate::state::AppState;
 use crate::validation::{
@@ -56,7 +57,11 @@ fn access_token(jar: &CookieJar) -> String {
 }
 
 /// GET /{gameId} — topic details with resolved channel/role names.
-async fn get_game_details(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/games/{gameId}", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    responses((status = 200, body = TopicDetails), (status = 404, description = "Game not found"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_game_details(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -131,7 +136,12 @@ async fn get_game_details(
     }))
 }
 
-async fn create_game(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/games/create", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = CreateGameRequestBody,
+    responses((status = 200, body = GameWithoutRelations), (status = 400, description = "Validation failed"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn create_game(
     State(state): State<AppState>,
     Path((server_id,)): Path<(String,)>,
     jar: CookieJar,
@@ -157,7 +167,12 @@ async fn create_game(
     Ok(Json(game).into_response())
 }
 
-async fn update_game(
+#[utoipa::path(put, path = "/discord/servers/{serverId}/games/{gameId}", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    request_body = UpdateGameRequestBody,
+    responses((status = 200, body = UpdateGameResponse), (status = 400, description = "Validation failed"), (status = 404, description = "Game not found"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn update_game(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -210,7 +225,11 @@ async fn update_game(
     Ok(Json(game).into_response())
 }
 
-async fn delete_game(
+#[utoipa::path(delete, path = "/discord/servers/{serverId}/games/{gameId}", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    responses((status = 200, body = GameWithoutRelations), (status = 404, description = "Game not found"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn delete_game(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -221,7 +240,12 @@ async fn delete_game(
     Ok(Json(game).into_response())
 }
 
-async fn add_category_to_game(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/games/{gameId}/categories/add", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    request_body = AddCategoryToGameRequestBody,
+    responses((status = 200, body = Vec<GameWithoutRelations>), (status = 400, description = "Category does not belong to this server"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn add_category_to_game(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -252,7 +276,12 @@ async fn existing_tag_ids(state: &AppState, server_id: &str, game_id: i32) -> Re
 
 // add tags to game
 // changes after migration: tags need to be created first in the tags route
-async fn tag_game(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/games/{gameId}/tags/tag", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    request_body = ModifyTagsOfGameRequestBody,
+    responses((status = 200, body = UpdateGameResponse), (status = 400, description = "Validation failed"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn tag_game(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -287,7 +316,11 @@ async fn tag_game(
     Ok(Json(tag).into_response())
 }
 
-async fn untag_game(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/games/{gameId}/tags/{tagId}/untag", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID"), ("tagId" = i32, Path, description = "Tag ID")),
+    responses((status = 200, body = UpdateGameResponse), (status = 404, description = "Tag is not assigned to this game"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn untag_game(
     State(state): State<AppState>,
     Path((server_id, game_id, tag_id)): Path<(String, i32, i32)>,
     jar: CookieJar,
@@ -321,7 +354,12 @@ async fn untag_game(
     Ok(Json(tag).into_response())
 }
 
-async fn update_thumbnail(
+#[utoipa::path(put, path = "/discord/servers/{serverId}/games/{gameId}/thumbnail/update", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    request_body(content_type = "multipart/form-data", description = "Form field \"file\": image, 100 B to 1 MiB"),
+    responses((status = 200, body = Vec<GameWithoutRelations>), (status = 400, description = "Invalid thumbnail image"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn update_thumbnail(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -397,7 +435,11 @@ fn sniff_image_mime(bytes: &[u8]) -> &'static str {
     }
 }
 
-async fn get_thumbnail(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/games/{gameId}/thumbnail", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("gameId" = i32, Path, description = "Topic (game) ID")),
+    responses((status = 200, description = "Thumbnail image bytes"), (status = 404, description = "Thumbnail not found"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_thumbnail(
     State(state): State<AppState>,
     Path((server_id, game_id)): Path<(String, i32)>,
     jar: CookieJar,

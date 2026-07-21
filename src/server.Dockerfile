@@ -1,6 +1,13 @@
 # syntax=docker/dockerfile:1
 # Rust backend (axum). Build context is ./src/, crate at ./server-rust.
-FROM rust:1-slim-bookworm AS builder
+#
+# The whole stack is rustls-based (no OpenSSL) and the alpine builder produces
+# a fully static musl binary, so the runtime image is `scratch`: nothing but
+# the binary and the CA bundle (~a tenth of the previous debian-slim image).
+FROM rust:1-alpine AS builder
+
+# musl-dev for ring's C sources; ca-certificates only to copy into the runner.
+RUN apk add --no-cache musl-dev ca-certificates
 
 WORKDIR /app
 
@@ -8,22 +15,18 @@ WORKDIR /app
 # dependency compilation is reused across builds.
 COPY server-rust ./server-rust
 RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry \
-    --mount=type=cache,id=cargo-target,target=/app/server-rust/target \
+    --mount=type=cache,id=cargo-target-musl,target=/app/server-rust/target \
     cargo build --release --manifest-path server-rust/Cargo.toml \
     && cp server-rust/target/release/juicer-server /app/juicer-server
 
-FROM debian:bookworm-slim AS runner
+FROM scratch AS runner
 
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# TLS roots are compiled in via webpki-roots; the system bundle is included
+# anyway so a future switch to native certs cannot fail silently.
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /app/juicer-server /juicer-server
 
-RUN groupadd --system --gid 1001 appgroup \
-    && useradd --system --uid 1001 --gid appgroup appuser
-
-COPY --from=builder --chown=appuser:appgroup /app/juicer-server /app/juicer-server
-
-USER appuser
+USER 1001:1001
 EXPOSE 8000
 
-CMD ["/app/juicer-server"]
+CMD ["/juicer-server"]
