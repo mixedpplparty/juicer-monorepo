@@ -11,6 +11,9 @@ pub struct Config {
     pub redirect_after_sign_in_uri: String,
     pub redirect_after_sign_in_failed_uri: String,
     pub environment: String,
+    /// Whether /swagger and /docs are mounted. `ENABLE_API_DOCS` overrides
+    /// ("true"/"1" or "false"/"0"); unset defaults to hidden in production.
+    pub api_docs_enabled: Option<bool>,
     pub pg_host: String,
     pub pg_port: u16,
     pub pg_user: String,
@@ -38,6 +41,11 @@ impl Config {
             redirect_after_sign_in_uri: env("REDIRECT_AFTER_SIGN_IN_URI"),
             redirect_after_sign_in_failed_uri: env("REDIRECT_AFTER_SIGN_IN_FAILED_URI"),
             environment: env("ENVIRONMENT"),
+            api_docs_enabled: match env("ENABLE_API_DOCS").to_ascii_lowercase().as_str() {
+                "true" | "1" => Some(true),
+                "false" | "0" => Some(false),
+                _ => None,
+            },
             // The old backend used POSTGRES_DB as the host too ("fix for
             // ECONNREFUSED"); honor POSTGRES_HOST if set, else fall back the same way.
             pg_host: std::env::var("POSTGRES_HOST").unwrap_or_else(|_| env("POSTGRES_DB")),
@@ -57,5 +65,47 @@ impl Config {
 
     pub fn is_production(&self) -> bool {
         self.environment == "production"
+    }
+
+    pub fn docs_enabled(&self) -> bool {
+        self.api_docs_enabled.unwrap_or(!self.is_production())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(environment: &str, api_docs_enabled: Option<bool>) -> Config {
+        Config {
+            allowed_origins: Vec::new(),
+            discord_bot_token: String::new(),
+            discord_api_endpoint: String::new(),
+            discord_client_id: String::new(),
+            discord_client_secret: String::new(),
+            redirect_uri: None,
+            redirect_after_sign_in_uri: String::new(),
+            redirect_after_sign_in_failed_uri: String::new(),
+            environment: environment.to_string(),
+            api_docs_enabled,
+            pg_host: String::new(),
+            pg_port: 5432,
+            pg_user: String::new(),
+            pg_password: String::new(),
+            pg_database: String::new(),
+        }
+    }
+
+    #[test]
+    fn docs_hidden_in_production_by_default() {
+        assert!(config("development", None).docs_enabled());
+        assert!(config("", None).docs_enabled());
+        assert!(!config("production", None).docs_enabled());
+    }
+
+    #[test]
+    fn enable_api_docs_overrides_environment() {
+        assert!(config("production", Some(true)).docs_enabled());
+        assert!(!config("development", Some(false)).docs_enabled());
     }
 }

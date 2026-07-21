@@ -12,7 +12,7 @@ use axum_extra::extract::CookieJar;
 use crate::db;
 use crate::discord::bot;
 use crate::error::{HttpError, Result};
-use crate::models::{AssignRoleCategoryToRoleRequestBody, NameRequiredRequestBody};
+use crate::models::{AssignRoleCategoryToRoleRequestBody, NameRequiredRequestBody, Role, RoleCategory};
 use crate::state::AppState;
 use crate::validation::{is_valid_discord_id, validated_name, CATEGORY_NAME_MAX};
 
@@ -29,7 +29,12 @@ fn access_token(jar: &CookieJar) -> String {
         .unwrap_or_default()
 }
 
-async fn create_role_category(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/role-categories/create", tag = "role-categories",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = NameRequiredRequestBody,
+    responses((status = 200, body = Vec<RoleCategory>), (status = 400, description = "Validation failed"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn create_role_category(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -48,7 +53,11 @@ async fn create_role_category(
     ))
 }
 
-async fn delete_role_category(
+#[utoipa::path(delete, path = "/discord/servers/{serverId}/role-categories/{roleCategoryId}", tag = "role-categories",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("roleCategoryId" = i32, Path, description = "Role category ID")),
+    responses((status = 200, body = Vec<RoleCategory>), (status = 400, description = "Cannot delete verification role category"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn delete_role_category(
     State(state): State<AppState>,
     Path((server_id, role_category_id)): Path<(String, i32)>,
     jar: CookieJar,
@@ -66,7 +75,12 @@ async fn delete_role_category(
     ))
 }
 
-async fn assign_role_category(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/role-categories/assign", tag = "role-categories",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = AssignRoleCategoryToRoleRequestBody,
+    responses((status = 200, body = Vec<Role>), (status = 400, description = "Category does not belong to this server"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn assign_role_category(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,

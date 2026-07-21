@@ -16,7 +16,7 @@ use axum::Router;
 use crate::state::AppState;
 
 pub fn router(state: AppState) -> Router {
-    Router::new()
+    let mut router = Router::new()
         .nest("/discord/auth", auth::router())
         .nest("/discord/user", user::router())
         .nest(
@@ -25,8 +25,13 @@ pub fn router(state: AppState) -> Router {
                 state.clone(),
                 server::verification_guard,
             )),
-        )
-        .nest("/swagger", swagger::router())
-        .nest("/docs", swagger::docs_router())
-        .with_state(state)
+        );
+    // API docs are hidden in production unless ENABLE_API_DOCS says otherwise.
+    if state.config.docs_enabled() {
+        tracing::info!("API docs enabled at /docs (spec at /swagger)");
+        router = router
+            .nest("/swagger", swagger::router())
+            .nest("/docs", swagger::docs_router());
+    }
+    router.with_state(state)
 }

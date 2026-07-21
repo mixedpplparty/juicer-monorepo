@@ -26,7 +26,11 @@ fn access_token(jar: &CookieJar) -> String {
         .unwrap_or_default()
 }
 
-async fn get_tags(
+#[utoipa::path(get, path = "/discord/servers/{serverId}/tags/", tag = "tags",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = Vec<Tag>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_tags(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -37,7 +41,12 @@ async fn get_tags(
     Ok(Json(tags))
 }
 
-async fn create_tag(
+#[utoipa::path(post, path = "/discord/servers/{serverId}/tags/create", tag = "tags",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    request_body = NameRequiredRequestBody,
+    responses((status = 200, body = Vec<Tag>), (status = 400, description = "Validation failed"), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn create_tag(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
@@ -56,7 +65,11 @@ async fn create_tag(
     ))
 }
 
-async fn delete_tag(
+#[utoipa::path(delete, path = "/discord/servers/{serverId}/tags/{tagId}", tag = "tags",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID"), ("tagId" = i32, Path, description = "Tag ID")),
+    responses((status = 200, body = Vec<Tag>), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn delete_tag(
     State(state): State<AppState>,
     Path((server_id, tag_id)): Path<(String, i32)>,
     jar: CookieJar,
