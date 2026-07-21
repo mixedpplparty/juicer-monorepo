@@ -113,7 +113,7 @@ pub fn member_to_response(member: &Member) -> GuildMemberResponse; // avatar/ban
 ```rust
 pub fn apply(router: axum::Router, config: std::sync::Arc<crate::config::Config>) -> axum::Router;
 ```
-- CORS (tower-http): origins = config.allowed_origins, credentials true, methods GET/POST/PUT/DELETE, headers Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With.
+- CORS (tower-http): origins = config.allowed_origins, credentials true, methods GET/POST/PUT/PATCH/DELETE, headers Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With.
 - CSRF middleware (axum::middleware::from_fn): for non-GET/HEAD/OPTIONS requests, allow if `Sec-Fetch-Site` is `same-origin`/`same-site`/`none`, or `Origin` header ∈ allowed_origins; else 403.
 - Rate limit: 250 req / 60s fixed window, keyed by cookie `discord_access_token`, else `x-forwarded-for`, else `x-real-ip`, else peer IP (ConnectInfo<SocketAddr>). In-house: `Mutex<HashMap<String, (Instant, u32)>>` in a static/Extension; 429 with `RateLimit-*` draft-6 style headers on limit.
 - `tower_http::trace::TraceLayer::new_for_http()` for request logging.
