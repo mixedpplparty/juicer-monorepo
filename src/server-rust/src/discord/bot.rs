@@ -713,10 +713,15 @@ async fn modify_roles_of_user(
         Ok(None)
     }))
     .await;
+    // Collect every success before propagating an error: on a partial failure
+    // the roles that DID change must still reach the cache below.
     let mut changed: Vec<RoleId> = Vec::new();
+    let mut first_error: Option<HttpError> = None;
     for result in results {
-        if let Some(role_id) = result? {
-            changed.push(role_id);
+        match result {
+            Ok(Some(role_id)) => changed.push(role_id),
+            Ok(None) => {}
+            Err(err) => first_error = first_error.or(Some(err)),
         }
     }
     // Refresh the TTL member cache with the applied changes so read paths that
@@ -727,7 +732,10 @@ async fn modify_roles_of_user(
         apply_role_changes(&mut member.roles, &changed, add);
         member_cache_put(guild.id, user_id, &member);
     }
-    Ok(())
+    match first_error {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
 }
 
 /// Apply added/removed role IDs to a member's role list (deduplicated).
