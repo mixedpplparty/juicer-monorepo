@@ -20,6 +20,7 @@ export function RoleSettingsSection({
 	serverData,
 }: RoleSettingsSectionProps) {
 	const settings = useRoleSettings({ serverId, serverData });
+	const selectedRole = settings.selectedRole;
 
 	return (
 		<>
@@ -108,31 +109,33 @@ export function RoleSettingsSection({
 			</List>
 
 			<RoleCategoryDialog
+				key={settings.creatingCategory ? "open" : "closed"}
 				open={settings.creatingCategory}
 				pending={settings.createCategoryMutation.isPending}
 				onOpenChange={settings.setCreatingCategory}
 				onSubmit={(name) => settings.createCategoryMutation.mutate(name)}
 			/>
-			<RoleSettingsDialog
-				role={settings.selectedRole}
-				categories={settings.roleCategories.map((category) => ({
-					id: category.roleCategoryId,
-					name:
-						category.roleCategoryId === 1
-							? "juicer 이용에 필요한 역할"
-							: category.name,
-				}))}
-				pending={settings.roleSettingsMutation.isPending}
-				onOpenChange={(open) => !open && settings.setSelectedRole(null)}
-				onSubmit={(value) => {
-					if (settings.selectedRole) {
+			{selectedRole ? (
+				<RoleSettingsDialog
+					key={selectedRole.id}
+					role={selectedRole}
+					categories={settings.roleCategories.map((category) => ({
+						id: category.roleCategoryId,
+						name:
+							category.roleCategoryId === 1
+								? "juicer 이용에 필요한 역할"
+								: category.name,
+					}))}
+					pending={settings.roleSettingsMutation.isPending}
+					onOpenChange={(open) => !open && settings.setSelectedRole(null)}
+					onSubmit={(value) => {
 						settings.roleSettingsMutation.mutate({
-							role: settings.selectedRole,
+							role: selectedRole,
 							...value,
 						});
-					}
-				}}
-			/>
+					}}
+				/>
+			) : null}
 			<DeleteRoleCategoryDialog
 				roleCategory={settings.pendingDelete}
 				pending={settings.deleteCategoryMutation.isPending}

@@ -1,11 +1,23 @@
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
+import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ServerData, TopicDetails } from "juicer-shared";
-import { type FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import {
 	TopicAssociationDialog,
 	type TopicAssociationOption,
 } from "@/features/topic-associations";
-import { useTopicEditor } from "../hooks/use-topic-editor";
+import { topicQueryKeys } from "@/shared/api/query-keys/topic-query-keys";
+import { useUnsavedChangesWarning } from "@/shared/browser/use-unsaved-changes-warning";
+import { updateTopic } from "../api/mutations";
+import {
+	getTopicEditDefaultValues,
+	normalizeIds,
+	normalizeTopicEditValues,
+	noTopicCategoryValue,
+	type TopicEditFormValues,
+} from "../topic-edit-form";
 import TopicAssociationList from "./topic-association-list";
 import { topicEditPageStyles } from "./topic-edit-content.styles";
 import TopicFields from "./topic-fields";
@@ -24,9 +36,67 @@ export function TopicEditContent({
 	topicId,
 	topic,
 }: TopicEditContentProps) {
-	const editor = useTopicEditor({ serverId, topicId, topic });
+	const queryClient = useQueryClient();
+	const { enqueue } = useSnackbar();
+	const form = useForm<TopicEditFormValues>({
+		defaultValues: getTopicEditDefaultValues(topic),
+		mode: "onChange",
+	});
+	const channelIds = useWatch({ control: form.control, name: "channelIds" });
+	const roleIds = useWatch({ control: form.control, name: "roleIds" });
+	const { isDirty, isSubmitting, isValid } = form.formState;
 	const [channelDialogOpen, setChannelDialogOpen] = useState(false);
 	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+
+	useUnsavedChangesWarning(isDirty);
+
+	const mutation = useMutation({
+		mutationFn: updateTopic,
+	});
+	const isPending = mutation.isPending || isSubmitting;
+	const setChannelIds = (ids: string[]) =>
+		form.setValue("channelIds", normalizeIds(ids), { shouldDirty: true });
+	const setRoleIds = (ids: string[]) =>
+		form.setValue("roleIds", normalizeIds(ids), { shouldDirty: true });
+	const submit = form.handleSubmit(async (values) => {
+		if (mutation.isPending) {
+			return;
+		}
+
+		const normalizedValues = normalizeTopicEditValues(values);
+
+		try {
+			await mutation.mutateAsync({
+				serverId,
+				topicId,
+				name: normalizedValues.name,
+				description: normalizedValues.description,
+				categoryId:
+					normalizedValues.categoryId === noTopicCategoryValue
+						? null
+						: Number(normalizedValues.categoryId),
+				channelIds: normalizedValues.channelIds,
+				roleIds: normalizedValues.roleIds,
+			});
+			await Promise.all([
+				queryClient.refetchQueries({
+					queryKey: topicQueryKeys.details.detail(serverId, topicId),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: topicQueryKeys.lists.byServer(serverId),
+					refetchType: "all",
+				}),
+			]);
+			form.reset(normalizedValues);
+			enqueue("주제를 저장했습니다.");
+		} catch (error) {
+			enqueue(
+				error instanceof Error ? error.message : "주제를 저장하지 못했습니다.",
+				{ title: "오류" },
+			);
+		}
+	});
+
 	const categoryItems = useMemo(
 		() => [
 			{ label: "선택 안 함", value: "none" },
@@ -89,45 +159,33 @@ export function TopicEditContent({
 			}));
 	}, [serverData.serverDataDb?.roles, serverData.serverDataDiscord.roles]);
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		editor.submit();
-	};
-
 	return (
 		<div css={topicEditPageStyles.root}>
-			<form css={topicEditPageStyles.form} onSubmit={handleSubmit}>
+			<form css={topicEditPageStyles.form} onSubmit={submit}>
 				<TopicFields
-					name={editor.name}
-					description={editor.description}
-					categoryId={editor.categoryId}
+					control={form.control}
 					categoryItems={categoryItems}
-					disabled={editor.isPending}
-					onNameChange={editor.setName}
-					onDescriptionChange={editor.setDescription}
-					onCategoryIdChange={editor.setCategoryId}
+					disabled={isPending}
 				/>
 				<TopicAssociationList
 					title="연관 채널"
 					addLabel="연관 채널 추가하기"
-					items={editor.channelIds.flatMap((channelId) => {
+					items={channelIds.flatMap((channelId) => {
 						const channel = channelsById.get(channelId);
 						return channel
 							? [{ id: channel.id, headline: `#${channel.name}` }]
 							: [];
 					})}
-					disabled={editor.isPending}
+					disabled={isPending}
 					onAdd={() => setChannelDialogOpen(true)}
 					onRemove={(channelId) =>
-						editor.setChannelIds((current) =>
-							current.filter((id) => id !== channelId),
-						)
+						setChannelIds(channelIds.filter((id) => id !== channelId))
 					}
 				/>
 				<TopicAssociationList
 					title="연관 역할"
 					addLabel="연관 역할 추가하기"
-					items={editor.roleIds.flatMap((roleId) => {
+					items={roleIds.flatMap((roleId) => {
 						const role = rolesById.get(roleId);
 						return role
 							? [
@@ -145,19 +203,15 @@ export function TopicEditContent({
 								]
 							: [];
 					})}
-					disabled={editor.isPending}
+					disabled={isPending}
 					onAdd={() => setRoleDialogOpen(true)}
 					onRemove={(roleId) =>
-						editor.setRoleIds((current) =>
-							current.filter((id) => id !== roleId),
-						)
+						setRoleIds(roleIds.filter((id) => id !== roleId))
 					}
 				/>
 				<TopicSaveButton
-					pending={editor.isPending}
-					disabled={
-						editor.isPending || !editor.name.trim() || !editor.hasChanges
-					}
+					pending={isPending}
+					disabled={isPending || !isDirty || !isValid}
 				/>
 			</form>
 
@@ -165,19 +219,19 @@ export function TopicEditContent({
 				open={channelDialogOpen}
 				title="연관 채널 선택"
 				options={channelOptions}
-				selectedIds={editor.channelIds}
-				disabled={editor.isPending}
+				selectedIds={channelIds}
+				disabled={isPending}
 				onOpenChange={setChannelDialogOpen}
-				onConfirm={editor.setChannelIds}
+				onConfirm={setChannelIds}
 			/>
 			<TopicAssociationDialog
 				open={roleDialogOpen}
 				title="연관 역할 선택"
 				options={roleOptions}
-				selectedIds={editor.roleIds}
-				disabled={editor.isPending}
+				selectedIds={roleIds}
+				disabled={isPending}
 				onOpenChange={setRoleDialogOpen}
-				onConfirm={editor.setRoleIds}
+				onConfirm={setRoleIds}
 			/>
 		</div>
 	);

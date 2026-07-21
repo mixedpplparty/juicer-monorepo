@@ -1,8 +1,12 @@
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
-import { TextField } from "@mixedpplparty/juicer-m3/text-field";
-import { type FormEvent, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { FormInput } from "@/shared/forms/form-input";
 import { topicCategoryDialogStyles } from "./topic-category-dialog.styles";
+
+interface TopicCategoryFormValues {
+	name: string;
+}
 
 interface TopicCategoryDialogProps {
 	open: boolean;
@@ -17,21 +21,20 @@ export function TopicCategoryDialog({
 	onOpenChange,
 	onSubmit,
 }: TopicCategoryDialogProps) {
-	const [name, setName] = useState("");
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm<TopicCategoryFormValues>({
+		defaultValues: { name: "" },
+		mode: "onChange",
+	});
 
-	useEffect(() => {
-		if (open) {
-			setName("");
+	const submit = handleSubmit(({ name }) => {
+		if (!pending) {
+			onSubmit(name.trim());
 		}
-	}, [open]);
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const trimmedName = name.trim();
-		if (trimmedName && !pending) {
-			onSubmit(trimmedName);
-		}
-	};
+	});
 
 	return (
 		<Dialog.Root
@@ -39,17 +42,21 @@ export function TopicCategoryDialog({
 			onOpenChange={(nextOpen) => !pending && onOpenChange(nextOpen)}
 		>
 			<Dialog.Popup>
-				<form css={topicCategoryDialogStyles.form} onSubmit={handleSubmit}>
+				<form css={topicCategoryDialogStyles.form} onSubmit={submit}>
 					<Dialog.Title>주제 카테고리 추가</Dialog.Title>
 					<Dialog.Content>
-						<TextField
+						<FormInput
+							control={control}
+							name="name"
 							label="이름"
 							variant="filled"
 							required
 							disabled={pending}
-							value={name}
 							css={topicCategoryDialogStyles.field}
-							onChange={(event) => setName(event.currentTarget.value)}
+							rules={{
+								validate: (value) =>
+									value.trim().length > 0 || "이름을 입력해주세요.",
+							}}
 						/>
 					</Dialog.Content>
 					<Dialog.Actions>
@@ -61,7 +68,7 @@ export function TopicCategoryDialog({
 						>
 							취소
 						</Button>
-						<Button type="submit" disabled={pending || !name.trim()}>
+						<Button type="submit" disabled={pending || !isValid}>
 							{pending ? "추가 중…" : "추가"}
 						</Button>
 					</Dialog.Actions>

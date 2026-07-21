@@ -42,6 +42,7 @@ function TopicEditRoute() {
 			/>
 			<div css={serverDetailsPageStyles.content}>
 				<TopicEditContent
+					key={topicId}
 					serverId={serverId}
 					serverData={serverData}
 					topicId={topicId}

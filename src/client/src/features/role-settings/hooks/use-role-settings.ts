@@ -10,7 +10,7 @@ import {
 	deleteRoleCategory,
 	updateRoleSettings,
 } from "../api/mutations";
-import type { RoleSettingsValue } from "../components/role-settings-dialog";
+import type { RoleSettingsValue } from "../model/role-settings-form";
 
 interface UseRoleSettingsOptions {
 	serverId: string;
