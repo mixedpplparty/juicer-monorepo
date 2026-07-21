@@ -49,7 +49,13 @@ pub fn apply(router: Router, config: Arc<Config>) -> Router {
                 .filter_map(|origin| origin.parse::<HeaderValue>().ok()),
         ))
         .allow_credentials(true)
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+        ])
         .allow_headers([
             header::ACCEPT,
             header::ACCEPT_LANGUAGE,
