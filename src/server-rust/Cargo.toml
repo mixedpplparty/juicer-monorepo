@@ -3,6 +3,14 @@ name = "juicer-server"
 version = "0.1.0"
 edition = "2021"
 
+# Small release binary for the container image: strip symbols, thin LTO and a
+# single codegen unit. (No panic = "abort" — a handler panic must not take the
+# whole server down.)
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+
 [dependencies]
 axum = { version = "0.8", features = ["multipart", "macros"] }
 axum-extra = { version = "0.10", features = ["cookie"] }
