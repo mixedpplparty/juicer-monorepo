@@ -297,12 +297,19 @@ fn role_icon_url(role: &DiscordRole) -> Option<String> {
 // ---------- public API ----------
 
 /// Cache-first (REST fallback) snapshot of a guild's channels and roles.
+pub struct GuildRoleLite {
+    pub id: String,
+    pub name: String,
+    pub managed: bool,
+    /// hex color "#rrggbb"
+    pub color: String,
+}
+
 pub struct GuildEntities {
     pub guild_id: GuildId,
     /// (id, name)
     pub channels: Vec<(String, String)>,
-    /// (id, name, managed)
-    pub roles: Vec<(String, String, bool)>,
+    pub roles: Vec<GuildRoleLite>,
 }
 
 pub async fn get_guild_channels_and_roles(
@@ -327,7 +334,12 @@ pub async fn get_guild_channels_and_roles(
                 roles: guild
                     .roles
                     .values()
-                    .map(|role| (role.id.to_string(), role.name.clone(), role.managed))
+                    .map(|role| GuildRoleLite {
+                        id: role.id.to_string(),
+                        name: role.name.clone(),
+                        managed: role.managed,
+                        color: role_hex_color(role),
+                    })
                     .collect(),
             })
         })
@@ -359,7 +371,12 @@ pub async fn get_guild_channels_and_roles(
             .collect(),
         roles: roles
             .iter()
-            .map(|role| (role.id.to_string(), role.name.clone(), role.managed))
+            .map(|role| GuildRoleLite {
+                id: role.id.to_string(),
+                name: role.name.clone(),
+                managed: role.managed,
+                color: role_hex_color(role),
+            })
             .collect(),
     })
 }
@@ -394,7 +411,7 @@ pub async fn validate_guild_channels_and_roles(
         let managed_by_id: std::collections::HashMap<&str, bool> = entities
             .roles
             .iter()
-            .map(|(id, _, managed)| (id.as_str(), *managed))
+            .map(|role| (role.id.as_str(), role.managed))
             .collect();
         for role_id in role_ids {
             match managed_by_id.get(role_id.as_str()) {
@@ -748,23 +765,4 @@ pub async fn sync_roles_with_db_and_discord(
     tx.commit().await?;
 
     Ok(SyncRolesResponse { roles_created, roles_deleted })
-}
-
-pub fn member_to_response(member: &Member) -> GuildMemberResponse {
-    GuildMemberResponse {
-        // Guild-specific avatar, like discord.js `member.avatarURL()`.
-        avatar_url: member.avatar_url(),
-        banner_url: member.user.banner_url(),
-        // Guild avatar ?? user avatar ?? default, like `member.displayAvatarURL()`.
-        display_avatar_url: Some(member.face()),
-        display_banner_url: member.user.banner_url(),
-        // serenity has no avatar-decoration URL helper; the client tolerates null.
-        avatar_decoration_url: None,
-        roles: member.roles.iter().map(|role_id| role_id.to_string()).collect(),
-        id: member.user.id.to_string(),
-        nick: member.nick.clone(),
-        // nick ?? global display name ?? username, like discord.js displayName.
-        display_name: member.display_name().to_string(),
-        joined_at: member.joined_at.map(|timestamp| timestamp.to_string()),
-    }
 }

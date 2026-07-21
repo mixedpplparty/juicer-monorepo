@@ -7,13 +7,16 @@ import {
 	CreateGameRequestBody,
 	ModifyTagsOfGameRequestBody,
 	ThumbnailImage,
+	type TopicDetails,
 	UpdateGameRequestBody,
 	UpdateGameThumbnailRequestBody,
-} from "juicer-shared/dist/types/index.js";
+} from "../../../types/zod.js";
 import {
 	createGame,
 	deleteGame,
+	getGameDetailsInDb,
 	getGameThumbnail,
+	getRoleInServerInDbByRoleIds,
 	getServerDataInDb,
 	mapCategoryToGame,
 	updateGame,
@@ -22,6 +25,67 @@ import {
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
 const app = new Hono();
+
+app.get("/:gameId", async (c) => {
+	const serverId = c.req.param("serverId") as string;
+	const gameId = Number(c.req.param("gameId"));
+	const accessToken = getCookie(c, "discord_access_token");
+
+	if (!Number.isInteger(gameId)) {
+		throw new HTTPException(400, { message: "Invalid game ID." });
+	}
+
+	const [game, { member }] = await Promise.all([
+		getGameDetailsInDb({ serverId, gameId }),
+		authenticateAndAuthorizeUser(serverId, accessToken as string, false, false),
+	]);
+
+	if (!game) {
+		throw new HTTPException(404, { message: "Game not found." });
+	}
+
+	const roleIds = game.gamesRoles.map(({ roleId }) => roleId);
+	const [roleMetadata, discordRoles, discordChannels] = await Promise.all([
+		roleIds.length > 0
+			? getRoleInServerInDbByRoleIds({ serverId, roleIds })
+			: Promise.resolve([]),
+		member.guild.roles.fetch(),
+		member.guild.channels.fetch(),
+	]);
+	const metadataByRoleId = new Map(
+		roleMetadata.map((role) => [role.roleId, role]),
+	);
+
+	const response: TopicDetails = {
+		gameId: game.gameId,
+		serverId: game.serverId,
+		name: game.name,
+		description: game.description ?? null,
+		category: game.category ?? null,
+		channels: (game.channels ?? []).flatMap((channelId) => {
+			const channel = discordChannels.get(channelId);
+			return channel ? [{ id: channel.id, name: channel.name }] : [];
+		}),
+		roles: roleIds.flatMap((roleId) => {
+			const role = discordRoles.get(roleId);
+			const metadata = metadataByRoleId.get(roleId);
+			return role && metadata
+				? [
+						{
+							id: role.id,
+							name: role.name,
+							color: role.hexColor,
+							description: metadata.description,
+							selfAssignable: metadata.selfAssignable,
+							assigned: member.roles.cache.has(role.id),
+						},
+					]
+				: [];
+		}),
+	};
+
+	return c.json(response, 200);
+});
 
 app.post("/create", zValidator("json", CreateGameRequestBody), async (c) => {
 	const serverId = c.req.param("serverId");

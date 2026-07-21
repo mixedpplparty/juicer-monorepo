@@ -5,7 +5,7 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::routing::{get, post};
+use axum::routing::{get, patch, post};
 use axum::{Json, Router};
 use axum_extra::extract::CookieJar;
 use serde_json::json;
@@ -13,13 +13,14 @@ use serde_json::json;
 use crate::db;
 use crate::discord::bot;
 use crate::error::{HttpError, Result};
-use crate::models::SetRoleSelfAssignableRequestBody;
+use crate::models::{Role, SetRoleSelfAssignableRequestBody, UpdateRoleSettingsRequest};
 use crate::state::AppState;
 use crate::validation::{normalized_description, ROLE_DESCRIPTION_MAX};
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_roles))
+        .route("/{roleId}", patch(update_role_settings))
         .route("/{roleId}/assign", post(assign_role))
         .route("/{roleId}/unassign", post(unassign_role))
         .route("/{roleId}/update", post(update_role))
@@ -148,4 +149,40 @@ async fn update_role(
     Err(HttpError::forbidden(
         "User does not have manage server permission.",
     ))
+}
+
+/// PATCH /{roleId} — partial role settings update (admin required).
+async fn update_role_settings(
+    State(state): State<AppState>,
+    Path((server_id, role_id)): Path<(String, String)>,
+    jar: CookieJar,
+    Json(body): Json<UpdateRoleSettingsRequest>,
+) -> Result<Json<Role>> {
+    let token = access_token(&jar);
+    bot::authenticate_and_authorize_user(&state, &server_id, &token, true, true).await?;
+    if body.role_category_id.is_none()
+        && body.self_assignable.is_none()
+        && body.description.is_none()
+    {
+        return Err(HttpError::bad_request("At least one role setting is required."));
+    }
+    if let Some(Some(category_id)) = body.role_category_id {
+        if category_id <= 0 {
+            return Err(HttpError::bad_request("Invalid role category ID."));
+        }
+    }
+    let description = body
+        .description
+        .map(|value| normalized_description(value, ROLE_DESCRIPTION_MAX))
+        .transpose()?;
+    let role = db::update_role_settings(
+        &state.db,
+        &role_id,
+        &server_id,
+        body.role_category_id,
+        body.self_assignable,
+        description,
+    )
+    .await?;
+    Ok(Json(role))
 }

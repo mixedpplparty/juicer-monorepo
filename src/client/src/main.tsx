@@ -1,27 +1,29 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Global } from "@emotion/react";
+import { SnackbarProvider } from "@mixedpplparty/juicer-m3/snackbar";
+import App from "@/app/app";
+import { queryClient } from "@/app/query-client";
+import globalStyles from "@/shared/styles/global-styles";
+import "@mixedpplparty/juicer-m3/styles.css";
+import { ThemeProvider } from "@mixedpplparty/juicer-m3/theme";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
-import ToastProvider from "./contexts/ToastContext";
 
-const _queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			// Heavy endpoints (full server data) were refetching on every mount and
-			// window focus because RQ defaults to staleTime 0. Treat data as fresh
-			// briefly so navigation reuses the cache instead of re-hitting the API,
-			// and don't refetch on focus. Mutations invalidate explicitly.
-			staleTime: 30_000,
-			gcTime: 5 * 60_000,
-			refetchOnWindowFocus: false,
-			retry: 1,
-		},
-	},
-});
-createRoot(document.getElementById("root")!).render(
-	<QueryClientProvider client={_queryClient}>
-		<ToastProvider>
-			<App />
-		</ToastProvider>
-	</QueryClientProvider>,
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+	throw new Error("Root element not found");
+}
+
+createRoot(rootElement).render(
+	<StrictMode>
+		<Global styles={globalStyles} />
+		<QueryClientProvider client={queryClient}>
+			<ThemeProvider theme="system" id="theme-provider-root" scope="document">
+				<SnackbarProvider>
+					<App />
+				</SnackbarProvider>
+			</ThemeProvider>
+		</QueryClientProvider>
+	</StrictMode>,
 );

@@ -3,11 +3,14 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { UpdateServerVerificationRequiredRequestBody } from "juicer-shared/dist/types/index.js";
+import type { MyDataInServer } from "../../../types/zod.js";
+import { UpdateServerVerificationRequiredRequestBody } from "../../../types/zod.js";
+import { categorizeMemberRoles } from "../../../functions/categorize-member-roles.js";
 import {
 	createRoleCategory,
 	createServer,
 	getServerDataInDb,
+	getServerRoleMetadata,
 	updateServerVerificationRequired,
 } from "../../../functions/db.js";
 import {
@@ -52,7 +55,7 @@ app.post("/:serverId/create", async (c) => {
 	);
 	if (manageGuildPermission) {
 		const serverDataDb = await createServer(serverId);
-		//verification is always ID 1
+		// verification is always ID 1
 		const verificationRoleCategory = await createRoleCategory({
 			serverId,
 			name: "verification",
@@ -78,11 +81,24 @@ app.post("/:serverId/create", async (c) => {
 app.get("/:serverId/me", async (c) => {
 	const serverId = c.req.param("serverId");
 	const accessToken = getCookie(c, "discord_access_token");
-	const { member } = await authenticateAndAuthorizeUser(
+	const [{ member }, roleMetadata] = await Promise.all([
+		authenticateAndAuthorizeUser(serverId, accessToken as string),
+		getServerRoleMetadata(serverId),
+	]);
+	const categorizedRoles = categorizeMemberRoles({
 		serverId,
-		accessToken as string,
-	);
-	return c.json(member);
+		memberRoles: member.roles.cache.values(),
+		databaseRoles: roleMetadata.roles,
+		roleCategories: roleMetadata.roleCategories,
+	});
+	const response = {
+		id: member.id,
+		displayName: member.displayName,
+		displayAvatarURL: member.displayAvatarURL(),
+		categorizedRoles,
+	} satisfies MyDataInServer;
+
+	return c.json(response);
 });
 
 // Admin required

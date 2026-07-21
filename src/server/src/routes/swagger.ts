@@ -2,6 +2,103 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
+type OpenApiObject = Record<string, unknown>;
+
+const HTTP_METHODS = new Set([
+	"delete",
+	"get",
+	"head",
+	"options",
+	"patch",
+	"post",
+	"put",
+	"trace",
+]);
+
+const isObject = (value: unknown): value is OpenApiObject =>
+	typeof value === "object" && value !== null && !Array.isArray(value);
+
+const joinRoutePath = (parentPath: string, childPath: string) => {
+	const joinedPath = `${parentPath}/${childPath}`
+		.replace(/\/+/g, "/")
+		.replace(/\/$/, "");
+
+	return (joinedPath || "/").replace(/:([^/]+)/g, "{$1}");
+};
+
+const normalizeParameters = (parameters: unknown, path: string) => {
+	const normalized: OpenApiObject[] = Array.isArray(parameters)
+		? parameters.filter(isObject)
+		: isObject(parameters)
+			? Object.entries(parameters).map(([name, parameter]) => {
+					const definition = isObject(parameter) ? parameter : {};
+					const { type, ...details } = definition;
+
+					return {
+						...details,
+						name,
+						in: "query",
+						schema: isObject(definition.schema)
+							? definition.schema
+							: { type: typeof type === "string" ? type : "string" },
+					};
+				})
+			: [];
+
+	for (const match of path.matchAll(/\{([^}]+)\}/g)) {
+		const name = match[1];
+		const isAlreadyDeclared = normalized.some(
+			(parameter) => parameter.name === name && parameter.in === "path",
+		);
+
+		if (!isAlreadyDeclared) {
+			normalized.push({
+				name,
+				in: "path",
+				required: true,
+				schema: { type: "string" },
+			});
+		}
+	}
+
+	return normalized;
+};
+
+const buildOpenApiPaths = (routeTree: OpenApiObject) => {
+	const paths: Record<string, OpenApiObject> = {};
+
+	const visit = (node: OpenApiObject, currentPath: string) => {
+		const sharedResponses = isObject(node.responses)
+			? node.responses
+			: undefined;
+
+		for (const [key, value] of Object.entries(node)) {
+			if (HTTP_METHODS.has(key) && isObject(value)) {
+				const operation = { ...value };
+				const parameters = normalizeParameters(
+					operation.parameters,
+					currentPath,
+				);
+
+				if (parameters.length > 0) {
+					operation.parameters = parameters;
+				}
+				if (!isObject(operation.responses) && sharedResponses) {
+					operation.responses = sharedResponses;
+				}
+
+				paths[currentPath] ??= {};
+				paths[currentPath][key] = operation;
+			} else if (key.startsWith("/") && isObject(value)) {
+				visit(value, joinRoutePath(currentPath, key));
+			}
+		}
+	};
+
+	visit(routeTree, "");
+	return paths;
+};
+
 const openApiDoc = {
 	openapi: "3.0.0", //required version field
 	info: {
@@ -9,9 +106,32 @@ const openApiDoc = {
 		version: "0.0.1",
 		description: "juicer API",
 	},
-	paths: {
+	paths: buildOpenApiPaths({
 		"/discord": {
 			"/auth": {
+				"/me": {
+					get: {
+						summary: "Get the authenticated Discord user",
+						description: "Get the authenticated Discord user's profile",
+						responses: {
+							"200": {
+								description: "Authenticated Discord user",
+								content: {
+									"application/json": {
+										schema: {
+											type: "object",
+											properties: {
+												userData: {
+													type: "object",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 				"/callback": {
 					get: {
 						summary: "Callback for Discord OAuth2",
@@ -57,6 +177,17 @@ const openApiDoc = {
 						},
 					},
 				},
+				"/remove-cookies": {
+					get: {
+						summary: "Remove Discord authentication cookies",
+						description: "Delete the Discord access and refresh token cookies",
+						responses: {
+							"200": {
+								description: "Authentication cookies removed",
+							},
+						},
+					},
+				},
 			},
 			"/user": {
 				"/me": {
@@ -90,7 +221,7 @@ const openApiDoc = {
 				},
 			},
 		},
-		"/server/:serverId": {
+		"/discord/servers/:serverId": {
 			"/": {
 				get: {
 					summary: "Get server data from both the DB and Discord API",
@@ -116,6 +247,34 @@ const openApiDoc = {
 									},
 								},
 							},
+						},
+					},
+				},
+				put: {
+					summary: "Update server settings",
+					description: "Update whether verification is required for the server",
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									type: "object",
+									properties: {
+										verificationRequired: {
+											type: "boolean",
+										},
+									},
+									required: ["verificationRequired"],
+								},
+							},
+						},
+					},
+					responses: {
+						"200": {
+							description: "Server settings updated",
+						},
+						"403": {
+							description: "User does not have manage server permission.",
 						},
 					},
 				},
@@ -153,7 +312,7 @@ const openApiDoc = {
 							content: {
 								"application/json": {
 									schema: {
-										type: "GuildMember",
+										type: "MyDataInServer",
 									},
 								},
 							},
@@ -232,8 +391,109 @@ const openApiDoc = {
 					},
 				},
 			},
+			"/games/create": {
+				post: {
+					summary: "Create a game in the server",
+					description: "Create a game in the server",
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									type: "object",
+									properties: {
+										name: {
+											type: "string",
+										},
+										description: {
+											type: "string",
+										},
+										categoryId: {
+											type: "number",
+											nullable: true,
+										},
+									},
+									required: ["name", "description"],
+								},
+							},
+						},
+					},
+					responses: {
+						"200": {
+							description: "Game created",
+						},
+						"403": {
+							description: "User does not have manage server permission.",
+						},
+					},
+				},
+			},
 			"/games/:gameId": {
 				"/": {
+					get: {
+						summary: "Get topic details",
+						description:
+							"Get a topic with its category, channels, and roles, including the current user's assignment state and whether each role is self-assignable.",
+						responses: {
+							"200": {
+								description: "Topic details",
+								content: {
+									"application/json": {
+										schema: {
+											type: "object",
+											properties: {
+												gameId: { type: "number" },
+												serverId: { type: "string" },
+												name: { type: "string" },
+												description: {
+													type: "string",
+													nullable: true,
+												},
+												category: {
+													type: "Category",
+													nullable: true,
+												},
+												channels: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+														},
+													},
+												},
+												roles: {
+													type: "array",
+													items: {
+														type: "object",
+														properties: {
+															id: { type: "string" },
+															name: { type: "string" },
+															color: { type: "string" },
+															description: {
+																type: "string",
+																nullable: true,
+															},
+															selfAssignable: {
+																type: "boolean",
+															},
+															assigned: {
+																type: "boolean",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							"404": {
+								description: "Topic not found",
+							},
+						},
+					},
 					put: {
 						summary: "Update a game in the server",
 						description: "Update a game in the server",
@@ -396,8 +656,9 @@ const openApiDoc = {
 						},
 					},
 				},
-				"/:roleCategoryId/assign": {
+				"/assign": {
 					post: {
+						deprecated: true,
 						summary: "Assign a role category to a role in the server",
 						description: "Assign a role category to a role in the server",
 						requestBody: {
@@ -409,7 +670,12 @@ const openApiDoc = {
 											roleId: {
 												type: "string",
 											},
+											roleCategoryId: {
+												type: "number",
+												nullable: true,
+											},
 										},
+										required: ["roleId"],
 									},
 								},
 							},
@@ -494,6 +760,61 @@ const openApiDoc = {
 						},
 					},
 				},
+				"/:roleId": {
+					patch: {
+						summary: "Update role settings atomically",
+						description:
+							"Update one or more role settings. Supplied fields are committed together.",
+						requestBody: {
+							required: true,
+							content: {
+								"application/json": {
+									schema: {
+										type: "object",
+										additionalProperties: false,
+										properties: {
+											roleCategoryId: {
+												type: "number",
+												nullable: true,
+											},
+											selfAssignable: {
+												type: "boolean",
+											},
+											description: {
+												type: "string",
+												maxLength: 500,
+												nullable: true,
+											},
+										},
+										minProperties: 1,
+									},
+								},
+							},
+						},
+						responses: {
+							"200": {
+								description: "Updated role",
+								content: {
+									"application/json": {
+										schema: {
+											type: "Role",
+										},
+									},
+								},
+							},
+							"400": {
+								description:
+									"Invalid settings or role category belongs to another server.",
+							},
+							"403": {
+								description: "User does not have manage server permission.",
+							},
+							"404": {
+								description: "Role not found in this server.",
+							},
+						},
+					},
+				},
 				"/:roleId/assign": {
 					post: {
 						summary: "Assign a role to myself",
@@ -536,6 +857,42 @@ const openApiDoc = {
 										},
 									},
 								},
+							},
+						},
+					},
+				},
+				"/:roleId/update": {
+					post: {
+						deprecated: true,
+						summary: "Update a role in the server",
+						description:
+							"Update whether a role is self-assignable and its description",
+						requestBody: {
+							required: true,
+							content: {
+								"application/json": {
+									schema: {
+										type: "object",
+										properties: {
+											selfAssignable: {
+												type: "boolean",
+												nullable: true,
+											},
+											description: {
+												type: "string",
+												nullable: true,
+											},
+										},
+									},
+								},
+							},
+						},
+						responses: {
+							"200": {
+								description: "Role updated",
+							},
+							"403": {
+								description: "User does not have manage server permission.",
 							},
 						},
 					},
@@ -645,7 +1002,7 @@ const openApiDoc = {
 				},
 			},
 		},
-	},
+	}),
 };
 
 app.get("/", (c) => {

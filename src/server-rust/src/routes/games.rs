@@ -13,11 +13,14 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use crate::db::{self, UpdateGameParams};
-use crate::discord::bot::{authenticate_and_authorize_user, validate_guild_channels_and_roles};
+use crate::discord::bot::{
+    authenticate_and_authorize_user, get_guild_channels_and_roles,
+    validate_guild_channels_and_roles,
+};
 use crate::error::{HttpError, Result};
 use crate::models::{
     AddCategoryToGameRequestBody, CreateGameRequestBody, ModifyTagsOfGameRequestBody,
-    UpdateGameRequestBody,
+    TopicDetails, TopicDetailsChannel, TopicDetailsRole, UpdateGameRequestBody,
 };
 use crate::state::AppState;
 use crate::validation::{
@@ -28,7 +31,7 @@ use crate::validation::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/create", post(create_game))
-        .route("/{gameId}", put(update_game))
+        .route("/{gameId}", get(get_game_details).put(update_game))
         .route("/{gameId}", delete(delete_game))
         .route("/{gameId}/categories/add", post(add_category_to_game))
         .route("/{gameId}/tags/tag", post(tag_game))
@@ -50,6 +53,82 @@ fn access_token(jar: &CookieJar) -> String {
     jar.get("discord_access_token")
         .map(|c| c.value().to_string())
         .unwrap_or_default()
+}
+
+/// GET /{gameId} — topic details with resolved channel/role names.
+async fn get_game_details(
+    State(state): State<AppState>,
+    Path((server_id, game_id)): Path<(String, i32)>,
+    jar: CookieJar,
+) -> Result<Json<TopicDetails>> {
+    let token = access_token(&jar);
+    // Read-only detail view: reuse the member cache instead of forcing a fetch.
+    let (game, authed) = tokio::join!(
+        db::get_game_details_in_db(&state.db, game_id, &server_id),
+        authenticate_and_authorize_user(&state, &server_id, &token, false, false),
+    );
+    let authed = authed?;
+    let Some(game) = game? else {
+        return Err(HttpError::not_found("Game not found."));
+    };
+
+    let role_metadata = if game.role_ids.is_empty() {
+        Vec::new()
+    } else {
+        db::get_roles_in_server_in_db_by_role_ids(&state.db, &server_id, &game.role_ids).await?
+    };
+    let metadata_by_role_id: std::collections::HashMap<&str, &crate::models::Role> =
+        role_metadata.iter().map(|role| (role.role_id.as_str(), role)).collect();
+
+    let entities = get_guild_channels_and_roles(&state, &server_id).await?;
+    let channel_name_by_id: std::collections::HashMap<&str, &str> = entities
+        .channels
+        .iter()
+        .map(|(id, name)| (id.as_str(), name.as_str()))
+        .collect();
+    let guild_role_by_id: std::collections::HashMap<&str, &crate::discord::bot::GuildRoleLite> =
+        entities.roles.iter().map(|role| (role.id.as_str(), role)).collect();
+    let member_role_ids: std::collections::HashSet<String> =
+        authed.member.roles.iter().map(|id| id.to_string()).collect();
+
+    // Channels/roles that no longer exist in the guild are dropped, and roles
+    // without DB metadata are dropped — mirrors the old backend.
+    let channels: Vec<TopicDetailsChannel> = game
+        .channels
+        .iter()
+        .filter_map(|channel_id| {
+            channel_name_by_id.get(channel_id.as_str()).map(|name| TopicDetailsChannel {
+                id: channel_id.clone(),
+                name: (*name).to_string(),
+            })
+        })
+        .collect();
+    let roles: Vec<TopicDetailsRole> = game
+        .role_ids
+        .iter()
+        .filter_map(|role_id| {
+            let guild_role = guild_role_by_id.get(role_id.as_str())?;
+            let metadata = metadata_by_role_id.get(role_id.as_str())?;
+            Some(TopicDetailsRole {
+                id: role_id.clone(),
+                name: guild_role.name.clone(),
+                color: guild_role.color.clone(),
+                description: metadata.description.clone(),
+                self_assignable: metadata.self_assignable,
+                assigned: member_role_ids.contains(role_id),
+            })
+        })
+        .collect();
+
+    Ok(Json(TopicDetails {
+        game_id: game.game_id,
+        server_id: game.server_id,
+        name: game.name,
+        description: game.description,
+        category: game.category,
+        channels,
+        roles,
+    }))
 }
 
 async fn create_game(

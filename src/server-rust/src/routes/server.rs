@@ -13,7 +13,8 @@ use serde_json::json;
 use crate::db;
 use crate::discord::bot;
 use crate::error::{HttpError, Result};
-use crate::models::{CreateServerResponse, GuildMemberResponse, ServerData, SyncRolesResponse, UpdateServerVerificationRequiredRequestBody};
+use crate::member_roles::{categorize_member_roles, MemberRoleInfo};
+use crate::models::{CreateServerResponse, MyDataInServer, ServerData, SyncRolesResponse, UpdateServerVerificationRequiredRequestBody};
 use crate::routes::{categories, games, role_categories, roles, search, tags};
 use crate::state::AppState;
 use crate::validation::is_verification_satisfied;
@@ -130,17 +131,47 @@ async fn create_server(
     ))
 }
 
-/// GET /{serverId}/me — my member data in the server.
+/// GET /{serverId}/me — my roles in the server, grouped by role category.
 async fn get_my_data_in_server(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     jar: CookieJar,
-) -> Result<Json<GuildMemberResponse>> {
+) -> Result<Json<MyDataInServer>> {
     let access_token = access_token(&jar);
-    let authed =
-        bot::authenticate_and_authorize_user(&state, &server_id, &access_token, false, true)
-            .await?;
-    Ok(Json(bot::member_to_response(&authed.member)))
+    let (authed, metadata) = tokio::join!(
+        bot::authenticate_and_authorize_user(&state, &server_id, &access_token, false, true),
+        db::get_server_role_metadata(&state.db, &server_id),
+    );
+    let authed = authed?;
+    let (db_roles, role_categories) = metadata?;
+
+    // Resolve the member's role IDs to names/colors via the guild snapshot.
+    let entities = bot::get_guild_channels_and_roles(&state, &server_id).await?;
+    let guild_role_by_id: std::collections::HashMap<&str, &bot::GuildRoleLite> =
+        entities.roles.iter().map(|role| (role.id.as_str(), role)).collect();
+    let member_roles: Vec<MemberRoleInfo> = authed
+        .member
+        .roles
+        .iter()
+        .filter_map(|role_id| {
+            guild_role_by_id
+                .get(role_id.to_string().as_str())
+                .map(|role| MemberRoleInfo {
+                    id: role.id.clone(),
+                    name: role.name.clone(),
+                    color: role.color.clone(),
+                })
+        })
+        .collect();
+
+    let categorized_roles =
+        categorize_member_roles(&server_id, &member_roles, &db_roles, &role_categories);
+    Ok(Json(MyDataInServer {
+        id: authed.member.user.id.to_string(),
+        display_name: authed.member.display_name().to_string(),
+        display_avatar_url: authed.member.face(),
+        categorized_roles,
+    }))
 }
 
 /// Admin required.

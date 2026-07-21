@@ -5,11 +5,11 @@ import { HTTPException } from "hono/http-exception";
 import {
 	AssignRoleCategoryToRoleRequestBody,
 	NameRequiredRequestBody,
-} from "juicer-shared/dist/types/index.js";
+} from "../../../types/zod.js";
 import {
 	createRoleCategory,
 	deleteRoleCategory,
-	updateRoleCategoryOfRole,
+	updateRoleSettings,
 } from "../../../functions/db.js";
 import { authenticateAndAuthorizeUser } from "../../../functions/discord-bot.js";
 
@@ -27,7 +27,7 @@ app.post("/create", zValidator("json", NameRequiredRequestBody), async (c) => {
 	if (manageGuildPermission) {
 		const roleCategory = await createRoleCategory({
 			serverId: serverId as string,
-			name: body.name as string,
+			name: body.name.trim(),
 		});
 		return c.json(roleCategory, 200);
 	}
@@ -45,12 +45,6 @@ app.delete("/:roleCategoryId", async (c) => {
 		accessToken as string,
 		true,
 	);
-	//verification role category is always ID 1
-	if (Number(roleCategoryId) === 1) {
-		throw new HTTPException(400, {
-			message: "Cannot delete verification role category.",
-		});
-	}
 	if (manageGuildPermission) {
 		const roleCategory = await deleteRoleCategory({
 			roleCategoryId: Number(roleCategoryId),
@@ -76,12 +70,12 @@ app.post(
 			true,
 		);
 		if (manageGuildPermission) {
-			const roleCategory = await updateRoleCategoryOfRole({
+			const role = await updateRoleSettings({
 				roleId: body.roleId as string,
 				roleCategoryId: body.roleCategoryId as number | null,
 				serverId: serverId as string,
 			});
-			return c.json(roleCategory, 200);
+			return c.json([role], 200);
 		}
 		throw new HTTPException(403, {
 			message: "User does not have manage server permission.",

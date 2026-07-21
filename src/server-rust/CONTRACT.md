@@ -135,9 +135,9 @@ Secure=config.is_production(), Max-Age=expires_in, Path=/.
 Route inventory (must match ../server/src/routes exactly):
 - auth.rs: GET /me; GET /callback; POST /refresh; POST /revoke; GET /remove-cookies
 - user.rs: GET /me -> MyInfo (userData passthrough + guilds)
-- server.rs: GET /{serverId}; POST /{serverId}/create (atomically creates the server row and its is_verification-flagged "verification" role category); GET /{serverId}/me (member_to_response); GET /{serverId}/sync-roles; PUT /{serverId} (verificationRequired); nests categories/games/role-categories/roles/search/tags under /{serverId}/...
-- games.rs: POST /create; PUT /{gameId}; DELETE /{gameId}; POST /{gameId}/categories/add; POST /{gameId}/tags/tag; POST /{gameId}/tags/{tagId}/untag; PUT /{gameId}/thumbnail/update (multipart field "file", validate mime image/*, 100..=1_048_576 bytes); GET /{gameId}/thumbnail (binary body, Cache-Control: private, max-age=300; auth with require_manage=false, force_fetch=false)
-- roles.rs: GET /  (admin; returns { serverRoles, myRoles: member role ids }); POST /{roleId}/assign; POST /{roleId}/unassign; POST /{roleId}/update
+- server.rs: GET /{serverId}; POST /{serverId}/create (atomically creates the server row and its is_verification-flagged "verification" role category); GET /{serverId}/me (MyDataInServer: roles grouped by role category); GET /{serverId}/sync-roles; PUT /{serverId} (verificationRequired); nests categories/games/role-categories/roles/search/tags under /{serverId}/...
+- games.rs: GET /{gameId} (TopicDetails: resolved channel/role names, assigned flags); POST /create; PUT /{gameId}; DELETE /{gameId}; POST /{gameId}/categories/add; POST /{gameId}/tags/tag; POST /{gameId}/tags/{tagId}/untag; PUT /{gameId}/thumbnail/update (multipart field "file", validate mime image/*, 100..=1_048_576 bytes); GET /{gameId}/thumbnail (binary body, Cache-Control: private, max-age=300; auth with require_manage=false, force_fetch=false)
+- roles.rs: GET /  (admin; returns { serverRoles, myRoles: member role ids }); PATCH /{roleId} (partial role settings update, admin); POST /{roleId}/assign; POST /{roleId}/unassign; POST /{roleId}/update
 - role_categories.rs: POST /create; DELETE /{roleCategoryId} (is_verification flag → 400); POST /assign
 - tags.rs: GET /; POST /create; DELETE /{tagId}
 - categories.rs: POST /create; DELETE /{categoryId}

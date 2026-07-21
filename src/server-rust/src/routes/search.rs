@@ -59,8 +59,8 @@ async fn search_all(
             .roles
             .iter()
             // @everyone would match generic queries yet is never a topic role
-            .filter(|(id, _, _)| *id != server_id)
-            .map(|(id, name, _)| (id.clone(), name.as_str())),
+            .filter(|role| role.id != server_id)
+            .map(|role| (role.id.clone(), role.name.as_str())),
         &query,
     );
 

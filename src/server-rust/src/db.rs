@@ -902,6 +902,146 @@ pub async fn get_all_roles_in_server_in_db(db: &PgPool, server_id: &str) -> Resu
     Ok(roles)
 }
 
+/// Roles and role categories of a server (categories ordered by ID, matching
+/// the old backend's getServerRoleMetadata).
+pub async fn get_server_role_metadata(
+    db: &PgPool,
+    server_id: &str,
+) -> Result<(Vec<Role>, Vec<RoleCategory>)> {
+    let roles_fut = async {
+        sqlx::query_as::<_, Role>(
+            "SELECT role_id, server_id, role_category_id, self_assignable, description \
+             FROM roles WHERE server_id = $1",
+        )
+        .bind(server_id)
+        .fetch_all(db)
+        .await
+        .map_err(HttpError::from)
+    };
+    let categories_fut = async {
+        sqlx::query_as::<_, RoleCategory>(
+            "SELECT role_category_id, server_id, name, is_verification \
+             FROM roles_categories WHERE server_id = $1 ORDER BY role_category_id ASC",
+        )
+        .bind(server_id)
+        .fetch_all(db)
+        .await
+        .map_err(HttpError::from)
+    };
+    tokio::try_join!(roles_fut, categories_fut)
+}
+
+/// Raw pieces of GET /games/{gameId}: the game row (without thumbnail), its
+/// category, and the associated role IDs.
+pub struct GameDetails {
+    pub game_id: i32,
+    pub server_id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: Option<Category>,
+    pub channels: Vec<String>,
+    pub role_ids: Vec<String>,
+}
+
+pub async fn get_game_details_in_db(
+    db: &PgPool,
+    game_id: i32,
+    server_id: &str,
+) -> Result<Option<GameDetails>> {
+    let row = sqlx::query(
+        "SELECT g.game_id, g.server_id, g.name, g.description, g.channels, \
+                c.category_id, c.server_id AS category_server_id, c.name AS category_name \
+         FROM games g \
+         LEFT JOIN categories c ON c.category_id = g.category_id \
+         WHERE g.game_id = $1 AND g.server_id = $2",
+    )
+    .bind(game_id)
+    .bind(server_id)
+    .fetch_optional(db)
+    .await?;
+    let Some(row) = row else {
+        return Ok(None);
+    };
+    let role_ids: Vec<String> =
+        sqlx::query_scalar("SELECT role_id FROM games_roles WHERE game_id = $1")
+            .bind(game_id)
+            .fetch_all(db)
+            .await?;
+    let category = match row.try_get::<Option<i32>, _>("category_id").map_err(HttpError::from)? {
+        Some(category_id) => Some(Category {
+            category_id,
+            server_id: row.try_get("category_server_id").map_err(HttpError::from)?,
+            name: row.try_get("category_name").map_err(HttpError::from)?,
+        }),
+        None => None,
+    };
+    Ok(Some(GameDetails {
+        game_id: row.try_get("game_id").map_err(HttpError::from)?,
+        server_id: row.try_get("server_id").map_err(HttpError::from)?,
+        name: row.try_get("name").map_err(HttpError::from)?,
+        description: row.try_get("description").map_err(HttpError::from)?,
+        category,
+        channels: row
+            .try_get::<Option<Vec<String>>, _>("channels")
+            .map_err(HttpError::from)?
+            .unwrap_or_default(),
+        role_ids,
+    }))
+}
+
+/// PATCH /roles/{roleId}: update only the provided settings. The category
+/// check and the update share one transaction.
+pub async fn update_role_settings(
+    db: &PgPool,
+    role_id: &str,
+    server_id: &str,
+    role_category_id: Option<Option<i32>>,
+    self_assignable: Option<bool>,
+    description: Option<Option<String>>,
+) -> Result<Role> {
+    let mut tx = db.begin().await?;
+    if let Some(Some(category_id)) = role_category_id {
+        let exists: Option<i32> = sqlx::query_scalar(
+            "SELECT role_category_id FROM roles_categories \
+             WHERE role_category_id = $1 AND server_id = $2",
+        )
+        .bind(category_id)
+        .bind(server_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if exists.is_none() {
+            return Err(HttpError::bad_request(
+                "Role category does not belong to this server.",
+            ));
+        }
+    }
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE roles SET ");
+    let mut fields = qb.separated(", ");
+    if let Some(role_category_id) = role_category_id {
+        fields.push("role_category_id = ");
+        fields.push_bind_unseparated(role_category_id);
+    }
+    if let Some(self_assignable) = self_assignable {
+        fields.push("self_assignable = ");
+        fields.push_bind_unseparated(self_assignable);
+    }
+    if let Some(description) = description {
+        fields.push("description = ");
+        fields.push_bind_unseparated(description);
+    }
+    qb.push(" WHERE role_id = ");
+    qb.push_bind(role_id);
+    qb.push(" AND server_id = ");
+    qb.push_bind(server_id);
+    qb.push(" RETURNING role_id, server_id, role_category_id, self_assignable, description");
+    let role: Option<Role> = qb.build_query_as().fetch_optional(&mut *tx).await?;
+    let Some(role) = role else {
+        return Err(HttpError::not_found("Role not found in this server."));
+    };
+    tx.commit().await?;
+    Ok(role)
+}
+
 pub async fn get_roles_in_server_in_db_by_role_ids(
     db: &PgPool,
     server_id: &str,

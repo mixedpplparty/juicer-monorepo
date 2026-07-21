@@ -197,35 +197,69 @@ pub struct MyInfo {
     pub guilds: Vec<FilteredGuild>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct ServerMemberRole {
+    pub role_id: String,
+    pub name: String,
+    pub color: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct CategorizedRoleGroup {
+    pub role_category_id: Option<i32>,
+    pub role_category_name: Option<String>,
+    pub roles: Vec<ServerMemberRole>,
+}
+
 /// Shape the client consumes from `GET /discord/servers/:serverId/me`.
-/// (The old backend serialized a whole discord.js GuildMember; the client only
-/// uses these fields — see shared `GuildMember` zod type.)
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
-pub struct GuildMemberResponse {
-    #[serde(rename = "avatarURL")]
-    #[ts(rename = "avatarURL")]
-    pub avatar_url: Option<String>,
-    #[serde(rename = "bannerURL")]
-    #[ts(rename = "bannerURL")]
-    pub banner_url: Option<String>,
+pub struct MyDataInServer {
+    pub id: String,
+    pub display_name: String,
     #[serde(rename = "displayAvatarURL")]
     #[ts(rename = "displayAvatarURL")]
-    pub display_avatar_url: Option<String>,
-    #[serde(rename = "displayBannerURL")]
-    #[ts(rename = "displayBannerURL")]
-    pub display_banner_url: Option<String>,
-    #[serde(rename = "avatarDecorationURL")]
-    #[ts(rename = "avatarDecorationURL")]
-    pub avatar_decoration_url: Option<String>,
-    /// Role IDs of the member.
-    pub roles: Vec<String>,
+    pub display_avatar_url: String,
+    pub categorized_roles: Vec<CategorizedRoleGroup>,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct TopicDetailsChannel {
     pub id: String,
-    pub nick: Option<String>,
-    /// Server nick ?? global display name ?? username (discord.js displayName).
-    pub display_name: String,
-    pub joined_at: Option<String>,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct TopicDetailsRole {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+    pub description: Option<String>,
+    pub self_assignable: bool,
+    pub assigned: bool,
+}
+
+/// Shape the client consumes from `GET /discord/servers/:serverId/games/:gameId`.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct TopicDetails {
+    pub game_id: i32,
+    pub server_id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: Option<Category>,
+    pub channels: Vec<TopicDetailsChannel>,
+    pub roles: Vec<TopicDetailsRole>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -344,6 +378,24 @@ pub struct SetRoleSelfAssignableRequestBody {
     pub self_assignable: Option<bool>,
     /// Double option: absent -> keep current value, JSON null -> clear
     /// (mirrors drizzle skipping `undefined` but writing `null`).
+    #[serde(default, deserialize_with = "double_option")]
+    #[ts(optional, type = "string | null")]
+    pub description: Option<Option<String>>,
+}
+
+/// PATCH /roles/{roleId} body — absent fields are left unchanged; a JSON null
+/// clears (roleCategoryId/description). Unknown keys are rejected like the
+/// strict zod schema on the old backend.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct UpdateRoleSettingsRequest {
+    #[serde(default, deserialize_with = "double_option")]
+    #[ts(optional, type = "number | null")]
+    pub role_category_id: Option<Option<i32>>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub self_assignable: Option<bool>,
     #[serde(default, deserialize_with = "double_option")]
     #[ts(optional, type = "string | null")]
     pub description: Option<Option<String>>,

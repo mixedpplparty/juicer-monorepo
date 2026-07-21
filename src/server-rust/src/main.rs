@@ -2,6 +2,7 @@ mod config;
 mod db;
 mod discord;
 mod error;
+mod member_roles;
 mod middleware;
 mod models;
 mod routes;

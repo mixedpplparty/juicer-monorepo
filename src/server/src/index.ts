@@ -22,7 +22,7 @@ const app = new Hono();
 const corsMiddleware = cors({
 	origin: (ALLOWED_ORIGINS ?? "").split(","),
 	credentials: true,
-	allowMethods: ["GET", "POST", "PUT", "DELETE"],
+	allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 	allowHeaders: [
 		"Accept",
 		"Accept-Language",

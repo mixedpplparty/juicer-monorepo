@@ -4,7 +4,7 @@ import {
 	PG_NOT_NULL_VIOLATION,
 	PG_UNIQUE_VIOLATION,
 } from "@drdgvhbh/postgres-error-codes";
-import { and, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
+import { and, asc, DrizzleQueryError, eq, ilike, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type {
 	CreateCategoryRequestBody,
@@ -22,8 +22,8 @@ import type {
 	Tag,
 	UpdateGameRequestBodyWithImageAsBuffer,
 	UpdateGameResponse,
-	UpdateServerVerificationRequiredRequestBody,
-} from "juicer-shared/dist/types/index.js";
+	UpdateRoleSettingsRequest,
+} from "../types/zod.js";
 import { DatabaseError } from "pg";
 import type * as z from "zod";
 import { db } from "../db/index.js";
@@ -37,6 +37,7 @@ import {
 	servers,
 	tags,
 } from "../db/schemas.js";
+import { buildRoleSettingsUpdate } from "./role-settings.js";
 //TODO return typing
 //get_games_by_server, get_game_thumbnail merged to this
 export const getServerDataInDb = async (
@@ -204,54 +205,62 @@ export const updateGame = async ({
 			res.updatedGame = updatedGame[0];
 		}
 
-		// update tags table
-		const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
-		// tags to add
-		const tagsToAdd = tagIds?.filter(
-			(tagId) => !existingTagIds.includes(tagId),
-		);
-		// tags to remove
-		const tagsToRemove = existingTagIds.filter(
-			(tagId) => !tagIds?.includes(tagId),
-		);
-		if (tagsToAdd && tagsToAdd.length > 0) {
-			const addedTags = await tx
-				.insert(gamesTags)
-				.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
-				.returning();
-			res.tags.added = addedTags;
-		}
-		if (tagsToRemove && tagsToRemove.length > 0) {
-			const removedTags = await tx
-				.delete(gamesTags)
-				.where(inArray(gamesTags.tagId, tagsToRemove))
-				.returning();
-			res.tags.removed = removedTags;
+		if (tagIds !== undefined && tagIds !== null) {
+			const existingTagIds = gameInfo.gamesTags.map((tag) => tag.tagId);
+			const tagsToAdd = tagIds.filter(
+				(tagId) => !existingTagIds.includes(tagId),
+			);
+			const tagsToRemove = existingTagIds.filter(
+				(tagId) => !tagIds.includes(tagId),
+			);
+			if (tagsToAdd.length > 0) {
+				const addedTags = await tx
+					.insert(gamesTags)
+					.values(tagsToAdd.map((tagId) => ({ gameId, tagId })))
+					.returning();
+				res.tags.added = addedTags;
+			}
+			if (tagsToRemove.length > 0) {
+				const removedTags = await tx
+					.delete(gamesTags)
+					.where(
+						and(
+							eq(gamesTags.gameId, gameId),
+							inArray(gamesTags.tagId, tagsToRemove),
+						),
+					)
+					.returning();
+				res.tags.removed = removedTags;
+			}
 		}
 
-		// update roles table
-		const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
-		// roles to add
-		const rolesToAdd = roleIds?.filter(
-			(roleId) => !existingRoleIds.includes(roleId),
-		);
-		// roles to remove
-		const rolesToRemove = existingRoleIds.filter(
-			(roleId) => !roleIds?.includes(roleId),
-		);
-		if (rolesToAdd && rolesToAdd.length > 0) {
-			const addedRoles = await tx
-				.insert(gamesRoles)
-				.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
-				.returning();
-			res.roles.added = addedRoles;
-		}
-		if (rolesToRemove && rolesToRemove.length > 0) {
-			const removedRoles = await tx
-				.delete(gamesRoles)
-				.where(inArray(gamesRoles.roleId, rolesToRemove))
-				.returning();
-			res.roles.removed = removedRoles;
+		if (roleIds !== undefined && roleIds !== null) {
+			const existingRoleIds = gameInfo.gamesRoles.map((role) => role.roleId);
+			const rolesToAdd = roleIds.filter(
+				(roleId) => !existingRoleIds.includes(roleId),
+			);
+			const rolesToRemove = existingRoleIds.filter(
+				(roleId) => !roleIds.includes(roleId),
+			);
+			if (rolesToAdd.length > 0) {
+				const addedRoles = await tx
+					.insert(gamesRoles)
+					.values(rolesToAdd.map((roleId) => ({ gameId, roleId })))
+					.returning();
+				res.roles.added = addedRoles;
+			}
+			if (rolesToRemove.length > 0) {
+				const removedRoles = await tx
+					.delete(gamesRoles)
+					.where(
+						and(
+							eq(gamesRoles.gameId, gameId),
+							inArray(gamesRoles.roleId, rolesToRemove),
+						),
+					)
+					.returning();
+				res.roles.removed = removedRoles;
+			}
 		}
 	});
 
@@ -346,6 +355,23 @@ export const getRoleInServerInDbByRoleIds = async ({
 	});
 };
 
+export const getServerRoleMetadata = async (serverId: string) => {
+	const [serverRoles, serverRoleCategories] = await Promise.all([
+		db.query.roles.findMany({
+			where: eq(roles.serverId, serverId),
+		}),
+		db.query.roleCategories.findMany({
+			where: eq(roleCategories.serverId, serverId),
+			orderBy: asc(roleCategories.roleCategoryId),
+		}),
+	]);
+
+	return {
+		roles: serverRoles,
+		roleCategories: serverRoleCategories,
+	};
+};
+
 export const deleteRoleFromDb = async ({
 	roleId,
 	serverId,
@@ -427,41 +453,85 @@ export const deleteRoleCategory = async ({
 	roleCategoryId: number;
 	serverId: string;
 }): Promise<(typeof roleCategories.$inferInsert)[]> => {
-	return await db
-		.delete(roleCategories)
-		.where(
-			and(
-				eq(roleCategories.roleCategoryId, roleCategoryId),
-				eq(roleCategories.serverId, serverId),
-			),
-		)
-		.returning();
+	return await db.transaction(async (tx) => {
+		const [category] = await tx
+			.select({
+				roleCategoryId: roleCategories.roleCategoryId,
+			})
+			.from(roleCategories)
+			.where(
+				and(
+					eq(roleCategories.roleCategoryId, roleCategoryId),
+					eq(roleCategories.serverId, serverId),
+				),
+			)
+			.limit(1);
+
+		if (!category) {
+			throw new HTTPException(404, {
+				message: "Role category not found in this server.",
+			});
+		}
+		if (category.roleCategoryId === 1) {
+			throw new HTTPException(400, {
+				message: "Cannot delete the verification role category.",
+			});
+		}
+
+		return await tx
+			.delete(roleCategories)
+			.where(
+				and(
+					eq(roleCategories.roleCategoryId, roleCategoryId),
+					eq(roleCategories.serverId, serverId),
+				),
+			)
+			.returning();
+	});
 };
 
-export const updateRoleCategoryOfRole = async ({
+export const updateRoleSettings = async ({
 	roleId,
-	roleCategoryId,
 	serverId,
-}: {
+	...input
+}: UpdateRoleSettingsRequest & {
 	roleId: string;
-	roleCategoryId: number | null;
 	serverId: string;
-}): Promise<(typeof roles.$inferInsert)[]> => {
-	if (roleCategoryId === null) {
-		// unassign the role category from the role
-		return await db
+}): Promise<typeof roles.$inferSelect> => {
+	return await db.transaction(async (tx) => {
+		if (input.roleCategoryId !== undefined && input.roleCategoryId !== null) {
+			const [category] = await tx
+				.select({ roleCategoryId: roleCategories.roleCategoryId })
+				.from(roleCategories)
+				.where(
+					and(
+						eq(roleCategories.roleCategoryId, input.roleCategoryId),
+						eq(roleCategories.serverId, serverId),
+					),
+				)
+				.limit(1);
+
+			if (!category) {
+				throw new HTTPException(400, {
+					message: "Role category does not belong to this server.",
+				});
+			}
+		}
+
+		const [updatedRole] = await tx
 			.update(roles)
-			.set({ roleCategoryId: null })
+			.set(buildRoleSettingsUpdate(input))
 			.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
 			.returning();
-	} else {
-		// assign the role category to the role
-		return await db
-			.update(roles)
-			.set({ roleCategoryId })
-			.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
-			.returning();
-	}
+
+		if (!updatedRole) {
+			throw new HTTPException(404, {
+				message: "Role not found in this server.",
+			});
+		}
+
+		return updatedRole;
+	});
 };
 
 export const findGamesByCategoryName = async ({
@@ -554,6 +624,23 @@ export const getAllGamesInServer = async ({
 	});
 };
 
+export const getGameDetailsInDb = async ({
+	gameId,
+	serverId,
+}: {
+	gameId: number;
+	serverId: string;
+}) => {
+	return await db.query.games.findFirst({
+		columns: { thumbnail: false },
+		where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
+		with: {
+			category: true,
+			gamesRoles: true,
+		},
+	});
+};
+
 export const updateGameThumbnail = async ({
 	gameId,
 	serverId,
@@ -585,27 +672,6 @@ export const getGameThumbnail = async ({
 			where: and(eq(games.gameId, gameId), eq(games.serverId, serverId)),
 		})
 		.then((res) => res?.thumbnail ?? null);
-};
-
-export const updateRoleInfo = async ({
-	roleId,
-	serverId,
-	selfAssignable,
-	description,
-}: {
-	roleId: string;
-	serverId: string;
-	selfAssignable?: boolean | null;
-	description?: string | null | undefined;
-}): Promise<(typeof roles.$inferInsert)[]> => {
-	if (selfAssignable === undefined || selfAssignable === null) {
-		selfAssignable = false;
-	}
-	return await db
-		.update(roles)
-		.set({ selfAssignable, description })
-		.where(and(eq(roles.roleId, roleId), eq(roles.serverId, serverId)))
-		.returning();
 };
 
 export const updateServerVerificationRequired = async ({
