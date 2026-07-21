@@ -2,8 +2,8 @@ import { Chip } from "@mixedpplparty/juicer-m3/chip";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import type { DragEvent, ReactNode } from "react";
+import type { RoleSettingsValue } from "../model/role-settings-form";
 import { roleDropZoneStyles } from "./role-drop-zone.styles";
-import type { RoleSettingsValue } from "./role-settings-dialog";
 
 interface RoleDropZoneProps {
 	name: string;

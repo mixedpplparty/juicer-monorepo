@@ -2,14 +2,29 @@ import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { Select } from "@mixedpplparty/juicer-m3/select";
 import { Text } from "@mixedpplparty/juicer-m3/text";
-import { TextField } from "@mixedpplparty/juicer-m3/text-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ServerData } from "juicer-shared";
-import { type FormEvent, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { topicQueryKeys } from "@/shared/api/query-keys/topic-query-keys";
 import { useUnsavedChangesWarning } from "@/shared/browser/use-unsaved-changes-warning";
+import { FormInput } from "@/shared/forms/form-input";
+import { FormSelect } from "@/shared/forms/form-select";
 import { createTopic } from "../api/mutations";
 import { topicAddDialogStyles } from "./topic-add-dialog.styles";
+
+const noTopicCategoryValue = "none";
+
+interface TopicAddFormValues {
+	name: string;
+	description: string;
+	categoryId: string | null;
+}
+
+const defaultValues: TopicAddFormValues = {
+	name: "",
+	description: "",
+	categoryId: null,
+};
 
 export interface TopicAddDialogProps {
 	open: boolean;
@@ -25,45 +40,45 @@ export function TopicAddDialog({
 	onOpenChange,
 }: TopicAddDialogProps) {
 	const queryClient = useQueryClient();
-	const formRef = useRef<HTMLFormElement>(null);
-	const [categoryId, setCategoryId] = useState<string | null>(null);
-	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const form = useForm<TopicAddFormValues>({
+		defaultValues,
+		mode: "onChange",
+	});
+	const { isDirty, isValid } = form.formState;
 	const categories = [
-		{ label: "선택 안 함", value: "none" },
+		{ label: "선택 안 함", value: noTopicCategoryValue },
 		...(serverData.serverDataDb?.categories?.map((category) => ({
 			label: category.name,
 			value: String(category.categoryId),
 		})) ?? []),
 	];
 
-	useUnsavedChangesWarning(open && hasUnsavedChanges);
+	useUnsavedChangesWarning(open && isDirty);
 
-	const resetForm = () => {
-		formRef.current?.reset();
-		setCategoryId(null);
-		setHasUnsavedChanges(false);
-		createTopicMutation.reset();
-	};
-
-	const createTopicMutation = useMutation({
+	const mutation = useMutation({
 		mutationFn: createTopic,
 		onSuccess: async () => {
 			await queryClient.refetchQueries({
 				queryKey: topicQueryKeys.lists.byServer(serverId),
 				type: "active",
 			});
-			resetForm();
+			form.reset(defaultValues);
 			onOpenChange(false);
 		},
 	});
 
+	const resetForm = () => {
+		form.reset(defaultValues);
+		mutation.reset();
+	};
+
 	const requestClose = () => {
-		if (createTopicMutation.isPending) {
+		if (mutation.isPending) {
 			return;
 		}
 
 		if (
-			hasUnsavedChanges &&
+			isDirty &&
 			!window.confirm("저장하지 않은 변경사항이 있습니다. 닫으시겠습니까?")
 		) {
 			return;
@@ -73,6 +88,23 @@ export function TopicAddDialog({
 		onOpenChange(false);
 	};
 
+	const submit = form.handleSubmit((values) => {
+		if (mutation.isPending) {
+			return;
+		}
+
+		const description = values.description.trim();
+		mutation.mutate({
+			serverId,
+			name: values.name.trim(),
+			description: description || null,
+			categoryId:
+				!values.categoryId || values.categoryId === noTopicCategoryValue
+					? null
+					: Number(values.categoryId),
+		});
+	});
+
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (nextOpen) {
 			onOpenChange(true);
@@ -81,43 +113,36 @@ export function TopicAddDialog({
 		}
 	};
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
-		const formData = new FormData(event.currentTarget);
-		const description = String(formData.get("description") ?? "");
-
-		createTopicMutation.mutate({
-			serverId,
-			name: String(formData.get("name") ?? ""),
-			description: description || null,
-			categoryId:
-				categoryId && categoryId !== "none" ? Number(categoryId) : null,
-		});
-	};
-
 	return (
 		<Dialog.Root open={open} onOpenChange={handleOpenChange}>
 			<Dialog.Popup>
 				<Dialog.Title>주제 추가</Dialog.Title>
-				<form
-					ref={formRef}
-					css={topicAddDialogStyles.form}
-					onChange={() => setHasUnsavedChanges(true)}
-					onSubmit={handleSubmit}
-				>
+				<form css={topicAddDialogStyles.form} onSubmit={submit}>
 					<Dialog.Content css={topicAddDialogStyles.fields}>
-						<TextField label="이름" name="name" required />
-						<TextField label="설명 (선택)" name="description" />
+						<FormInput
+							control={form.control}
+							name="name"
+							label="이름"
+							required
+							disabled={mutation.isPending}
+							rules={{
+								validate: (value) =>
+									value.trim().length > 0 || "이름을 입력해주세요.",
+							}}
+						/>
+						<FormInput
+							control={form.control}
+							name="description"
+							label="설명 (선택)"
+							disabled={mutation.isPending}
+						/>
 
 						<div css={topicAddDialogStyles.categoryField}>
-							<Select.Root
+							<FormSelect
+								control={form.control}
+								name="categoryId"
 								items={categories}
-								value={categoryId}
-								onValueChange={(value) => {
-									setCategoryId(value);
-									setHasUnsavedChanges(true);
-								}}
+								disabled={mutation.isPending}
 							>
 								<Select.Label>카테고리 (선택)</Select.Label>
 								<Select.Trigger>
@@ -134,10 +159,10 @@ export function TopicAddDialog({
 										))}
 									</Select.List>
 								</Select.Popup>
-							</Select.Root>
+							</FormSelect>
 						</div>
 
-						{createTopicMutation.error && (
+						{mutation.error && (
 							<Text
 								as="p"
 								typeRole="body"
@@ -145,7 +170,7 @@ export function TopicAddDialog({
 								role="alert"
 								css={topicAddDialogStyles.error}
 							>
-								{createTopicMutation.error.message}
+								{mutation.error.message}
 							</Text>
 						)}
 					</Dialog.Content>
@@ -154,13 +179,13 @@ export function TopicAddDialog({
 						<Button
 							type="button"
 							variant="text"
-							disabled={createTopicMutation.isPending}
+							disabled={mutation.isPending}
 							onClick={requestClose}
 						>
 							취소
 						</Button>
-						<Button type="submit" disabled={createTopicMutation.isPending}>
-							{createTopicMutation.isPending ? "추가하는 중..." : "추가하기"}
+						<Button type="submit" disabled={mutation.isPending || !isValid}>
+							{mutation.isPending ? "추가하는 중..." : "추가하기"}
 						</Button>
 					</Dialog.Actions>
 				</form>

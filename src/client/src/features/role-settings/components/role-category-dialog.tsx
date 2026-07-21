@@ -1,8 +1,12 @@
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
-import { TextField } from "@mixedpplparty/juicer-m3/text-field";
-import { type FormEvent, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { FormInput } from "@/shared/forms/form-input";
 import { roleCategoryDialogStyles } from "./role-category-dialog.styles";
+
+interface RoleCategoryFormValues {
+	name: string;
+}
 
 export interface RoleCategoryDialogProps {
 	open: boolean;
@@ -17,21 +21,20 @@ export function RoleCategoryDialog({
 	onOpenChange,
 	onSubmit,
 }: RoleCategoryDialogProps) {
-	const [name, setName] = useState("");
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm<RoleCategoryFormValues>({
+		defaultValues: { name: "" },
+		mode: "onChange",
+	});
 
-	useEffect(() => {
-		if (open) {
-			setName("");
+	const submit = handleSubmit(({ name }) => {
+		if (!pending) {
+			onSubmit(name.trim());
 		}
-	}, [open]);
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const trimmedName = name.trim();
-		if (trimmedName && !pending) {
-			onSubmit(trimmedName);
-		}
-	};
+	});
 
 	return (
 		<Dialog.Root
@@ -39,17 +42,21 @@ export function RoleCategoryDialog({
 			onOpenChange={(nextOpen) => !pending && onOpenChange(nextOpen)}
 		>
 			<Dialog.Popup>
-				<form css={roleCategoryDialogStyles.form} onSubmit={handleSubmit}>
+				<form css={roleCategoryDialogStyles.form} onSubmit={submit}>
 					<Dialog.Title>역할 분류 추가</Dialog.Title>
 					<Dialog.Content>
-						<TextField
+						<FormInput
+							control={control}
+							name="name"
 							label="이름"
 							variant="filled"
 							required
 							disabled={pending}
-							value={name}
 							css={roleCategoryDialogStyles.field}
-							onChange={(event) => setName(event.currentTarget.value)}
+							rules={{
+								validate: (value) =>
+									value.trim().length > 0 || "이름을 입력해주세요.",
+							}}
 						/>
 					</Dialog.Content>
 					<Dialog.Actions>
@@ -61,7 +68,7 @@ export function RoleCategoryDialog({
 						>
 							취소
 						</Button>
-						<Button type="submit" disabled={pending || !name.trim()}>
+						<Button type="submit" disabled={pending || !isValid}>
 							{pending ? "추가 중…" : "추가"}
 						</Button>
 					</Dialog.Actions>

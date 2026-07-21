@@ -1,5 +1,8 @@
 import { Select } from "@mixedpplparty/juicer-m3/select";
-import { TextField } from "@mixedpplparty/juicer-m3/text-field";
+import type { Control } from "react-hook-form";
+import { FormInput } from "@/shared/forms/form-input";
+import { FormSelect } from "@/shared/forms/form-select";
+import type { TopicEditFormValues } from "../topic-edit-form";
 import { topicEditPageStyles } from "./topic-edit-content.styles";
 
 interface TopicCategoryItem {
@@ -8,50 +11,42 @@ interface TopicCategoryItem {
 }
 
 interface TopicFieldsProps {
-	name: string;
-	description: string;
-	categoryId: number | null;
+	control: Control<TopicEditFormValues>;
 	categoryItems: TopicCategoryItem[];
 	disabled: boolean;
-	onNameChange: (name: string) => void;
-	onDescriptionChange: (description: string) => void;
-	onCategoryIdChange: (categoryId: number | null) => void;
 }
 
 export function TopicFields({
-	name,
-	description,
-	categoryId,
+	control,
 	categoryItems,
 	disabled,
-	onNameChange,
-	onDescriptionChange,
-	onCategoryIdChange,
 }: TopicFieldsProps) {
 	return (
 		<div css={topicEditPageStyles.fields}>
-			<TextField
+			<FormInput
+				control={control}
+				name="name"
 				label="주제명"
 				variant="filled"
 				required
 				disabled={disabled}
-				value={name}
-				onChange={(event) => onNameChange(event.currentTarget.value)}
+				rules={{
+					validate: (value) =>
+						value.trim().length > 0 || "주제명을 입력해주세요.",
+				}}
 			/>
-			<TextField
+			<FormInput
+				control={control}
+				name="description"
 				label="설명 (선택)"
 				variant="filled"
 				disabled={disabled}
-				value={description}
-				onChange={(event) => onDescriptionChange(event.currentTarget.value)}
 			/>
-			<Select.Root
+			<FormSelect
+				control={control}
+				name="categoryId"
 				items={categoryItems}
-				value={categoryId === null ? "none" : String(categoryId)}
 				disabled={disabled}
-				onValueChange={(value) =>
-					onCategoryIdChange(value && value !== "none" ? Number(value) : null)
-				}
 				css={topicEditPageStyles.fullWidth}
 			>
 				<Select.Label>카테고리 (선택)</Select.Label>
@@ -69,7 +64,7 @@ export function TopicFields({
 						))}
 					</Select.List>
 				</Select.Popup>
-			</Select.Root>
+			</FormSelect>
 		</div>
 	);
 }

@@ -2,20 +2,20 @@ import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { Select } from "@mixedpplparty/juicer-m3/select";
-import { Switch } from "@mixedpplparty/juicer-m3/switch";
 import { Text } from "@mixedpplparty/juicer-m3/text";
-import { TextField } from "@mixedpplparty/juicer-m3/text-field";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { FormInput } from "@/shared/forms/form-input";
+import { FormSelect } from "@/shared/forms/form-select";
+import { FormSwitch } from "@/shared/forms/form-switch";
+import {
+	getRoleSettingsDefaultValues,
+	type RoleSettingsFormValues,
+	type RoleSettingsValue,
+	toRoleSettingsSubmission,
+	unassignedRoleCategoryValue,
+} from "../model/role-settings-form";
 import { roleSettingsDialogStyles } from "./role-settings-dialog.styles";
-
-export interface RoleSettingsValue {
-	id: string;
-	name: string;
-	color: string;
-	roleCategoryId: number | null;
-	selfAssignable: boolean;
-	description: string | null;
-}
 
 export interface RoleSettingsCategory {
 	id: number;
@@ -23,7 +23,7 @@ export interface RoleSettingsCategory {
 }
 
 export interface RoleSettingsDialogProps {
-	role: RoleSettingsValue | null;
+	role: RoleSettingsValue;
 	categories: RoleSettingsCategory[];
 	pending?: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -41,12 +41,12 @@ export function RoleSettingsDialog({
 	onOpenChange,
 	onSubmit,
 }: RoleSettingsDialogProps) {
-	const [roleCategoryValue, setRoleCategoryValue] = useState("unassigned");
-	const [description, setDescription] = useState("");
-	const [selfAssignable, setSelfAssignable] = useState(false);
+	const { control, handleSubmit } = useForm<RoleSettingsFormValues>({
+		defaultValues: getRoleSettingsDefaultValues(role),
+	});
 	const categoryItems = useMemo(
 		() => [
-			{ value: "unassigned", label: "분류 없음" },
+			{ value: unassignedRoleCategoryValue, label: "분류 없음" },
 			...categories.map((category) => ({
 				value: String(category.id),
 				label: category.name,
@@ -55,55 +55,33 @@ export function RoleSettingsDialog({
 		[categories],
 	);
 
-	useEffect(() => {
-		if (role) {
-			setRoleCategoryValue(
-				role.roleCategoryId === null
-					? "unassigned"
-					: String(role.roleCategoryId),
-			);
-			setDescription(role.description ?? "");
-			setSelfAssignable(role.selfAssignable);
+	const submit = handleSubmit((values) => {
+		if (!pending) {
+			onSubmit(toRoleSettingsSubmission(values));
 		}
-	}, [role]);
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		if (!role || pending) {
-			return;
-		}
-		onSubmit({
-			roleCategoryId:
-				roleCategoryValue === "unassigned" ? null : Number(roleCategoryValue),
-			selfAssignable,
-			description: description.trim() || null,
-		});
-	};
+	});
 
 	return (
-		<Dialog.Root
-			open={role !== null}
-			onOpenChange={(open) => !pending && onOpenChange(open)}
-		>
+		<Dialog.Root open onOpenChange={(open) => !pending && onOpenChange(open)}>
 			<Dialog.Popup scrollable>
-				<form css={roleSettingsDialogStyles.form} onSubmit={handleSubmit}>
+				<form css={roleSettingsDialogStyles.form} onSubmit={submit}>
 					<Dialog.Title>역할 설정</Dialog.Title>
 					<Dialog.Content css={roleSettingsDialogStyles.fields}>
 						<div css={roleSettingsDialogStyles.role}>
 							<RoleIndicator
-								roleName={role?.name ?? ""}
-								color={role?.color ?? "#ffffff"}
+								roleName={role.name}
+								color={role.color}
 								typeRole="title"
 								size="medium"
 							/>
 						</div>
-						<Select.Root
+						<FormSelect
+							control={control}
+							name="roleCategoryId"
 							css={roleSettingsDialogStyles.fullWidth}
-							value={roleCategoryValue}
 							items={categoryItems}
 							disabled={pending}
 							variant="filled"
-							onValueChange={(value) => value && setRoleCategoryValue(value)}
 						>
 							<Select.Label>역할 분류</Select.Label>
 							<Select.Trigger>
@@ -123,14 +101,14 @@ export function RoleSettingsDialog({
 							<Select.Description>
 								분류는 멤버 프로필에서 관련 역할을 한 그룹으로 보여줍니다.
 							</Select.Description>
-						</Select.Root>
-						<TextField
+						</FormSelect>
+						<FormInput
+							control={control}
+							name="description"
 							label="역할 설명 (선택)"
 							variant="filled"
 							disabled={pending}
-							value={description}
 							css={roleSettingsDialogStyles.fullWidth}
-							onChange={(event) => setDescription(event.currentTarget.value)}
 						/>
 						<div css={roleSettingsDialogStyles.switchRow}>
 							<span css={roleSettingsDialogStyles.switchText}>
@@ -145,11 +123,11 @@ export function RoleSettingsDialog({
 									끄면 관리자만 이 역할을 부여할 수 있습니다.
 								</Text>
 							</span>
-							<Switch
-								checked={selfAssignable}
+							<FormSwitch
+								control={control}
+								name="selfAssignable"
 								disabled={pending}
 								aria-label="멤버가 직접 역할을 선택할 수 있음"
-								onCheckedChange={setSelfAssignable}
 							/>
 						</div>
 					</Dialog.Content>

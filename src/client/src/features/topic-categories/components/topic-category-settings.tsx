@@ -105,6 +105,7 @@ export function TopicCategorySettings({
 			</List>
 
 			<TopicCategoryDialog
+				key={creating ? "open" : "closed"}
 				open={creating}
 				pending={createMutation.isPending}
 				onOpenChange={setCreating}
