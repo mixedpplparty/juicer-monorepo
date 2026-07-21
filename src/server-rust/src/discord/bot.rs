@@ -674,22 +674,22 @@ async fn modify_roles_of_user(
     let guild = resolve_guild(state, server_id).await?;
     // Only roles present in the DB may be touched.
     let db_roles = db::get_roles_in_server_in_db_by_role_ids(&state.db, server_id, role_ids).await?;
-    let member = fetch_member(state, guild.id, user_id).await?;
+    let mut member = fetch_member(state, guild.id, user_id).await?;
 
-    let guild = &guild;
-    let member = &member;
+    let guild_ref = &guild;
+    let member_ref = &member;
     let results = join_all(db_roles.iter().map(|db_role| async move {
         let role_id = match db_role.role_id.parse::<u64>().ok().filter(|id| *id != 0) {
             Some(id) => RoleId::new(id),
-            None => return Ok::<(), HttpError>(()),
+            None => return Ok::<Option<RoleId>, HttpError>(None),
         };
         // Resolved (cached) roles first, REST-refreshed roles on a miss —
         // mirrors `guild.roles.cache.get(id) ?? guild.roles.fetch(id)`.
-        let role = match guild.roles.iter().find(|r| r.id == role_id).cloned() {
+        let role = match guild_ref.roles.iter().find(|r| r.id == role_id).cloned() {
             Some(role) => Some(role),
             None => state
                 .discord_http
-                .get_guild_roles(guild.id)
+                .get_guild_roles(guild_ref.id)
                 .await?
                 .into_iter()
                 .find(|r| r.id == role_id),
@@ -699,24 +699,50 @@ async fn modify_roles_of_user(
                 if add {
                     state
                         .discord_http
-                        .add_member_role(guild.id, member.user.id, role.id, None)
+                        .add_member_role(guild_ref.id, member_ref.user.id, role.id, None)
                         .await?;
                 } else {
                     state
                         .discord_http
-                        .remove_member_role(guild.id, member.user.id, role.id, None)
+                        .remove_member_role(guild_ref.id, member_ref.user.id, role.id, None)
                         .await?;
                 }
+                return Ok(Some(role.id));
             }
         }
-        Ok(())
+        Ok(None)
     }))
     .await;
+    let mut changed: Vec<RoleId> = Vec::new();
     for result in results {
-        result?;
+        if let Some(role_id) = result? {
+            changed.push(role_id);
+        }
+    }
+    // Refresh the TTL member cache with the applied changes so read paths that
+    // reuse the cached member (e.g. GET /games/{gameId} `assigned` flags) see
+    // the new state immediately instead of the pre-change snapshot (issue #53).
+    // The TS backend did the same via `guild.members.cache.set(updatedMember)`.
+    if !changed.is_empty() {
+        apply_role_changes(&mut member.roles, &changed, add);
+        member_cache_put(guild.id, user_id, &member);
     }
     Ok(())
 }
+
+/// Apply added/removed role IDs to a member's role list (deduplicated).
+fn apply_role_changes(roles: &mut Vec<RoleId>, changed: &[RoleId], add: bool) {
+    if add {
+        for role_id in changed {
+            if !roles.contains(role_id) {
+                roles.push(*role_id);
+            }
+        }
+    } else {
+        roles.retain(|role_id| !changed.contains(role_id));
+    }
+}
+
 
 pub async fn sync_roles_with_db_and_discord(
     state: &AppState,
@@ -765,4 +791,19 @@ pub async fn sync_roles_with_db_and_discord(
     tx.commit().await?;
 
     Ok(SyncRolesResponse { roles_created, roles_deleted })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn role_changes_add_without_duplicates_and_remove() {
+        let mut roles = vec![RoleId::new(1), RoleId::new(2)];
+        apply_role_changes(&mut roles, &[RoleId::new(2), RoleId::new(3)], true);
+        assert_eq!(roles, vec![RoleId::new(1), RoleId::new(2), RoleId::new(3)]);
+
+        apply_role_changes(&mut roles, &[RoleId::new(1), RoleId::new(9)], false);
+        assert_eq!(roles, vec![RoleId::new(2), RoleId::new(3)]);
+    }
 }
