@@ -3,6 +3,7 @@ const detailsByServer = (serverId: string) =>
 	["topicDetails", serverId] as const;
 
 export const topicQueryKeys = {
+	associables: (serverId: string) => ["topicAssociables", serverId] as const,
 	lists: {
 		byServer: listsByServer,
 		search: (serverId: string, query: string) =>

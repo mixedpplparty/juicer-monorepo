@@ -3,6 +3,7 @@ import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { Select } from "@mixedpplparty/juicer-m3/select";
 import { Text } from "@mixedpplparty/juicer-m3/text";
+import type { RoleSettingsRole } from "juicer-shared";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/shared/forms/form-input";
@@ -11,7 +12,6 @@ import { FormSwitch } from "@/shared/forms/form-switch";
 import {
 	getRoleSettingsDefaultValues,
 	type RoleSettingsFormValues,
-	type RoleSettingsValue,
 	toRoleSettingsSubmission,
 	unassignedRoleCategoryValue,
 } from "../model/role-settings-form";
@@ -23,7 +23,7 @@ export interface RoleSettingsCategory {
 }
 
 export interface RoleSettingsDialogProps {
-	role: RoleSettingsValue;
+	role: RoleSettingsRole;
 	categories: RoleSettingsCategory[];
 	pending?: boolean;
 	onOpenChange: (open: boolean) => void;

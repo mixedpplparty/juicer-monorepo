@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { TopicDetails } from "juicer-shared";
+import type { AssociableOptions, TopicDetails } from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 import { topicQueryKeys } from "./query-keys/topic-query-keys";
 
@@ -17,8 +17,25 @@ async function fetchTopicDetails(
 	);
 }
 
+async function fetchTopicAssociables(
+	serverId: string,
+	signal: AbortSignal,
+): Promise<AssociableOptions> {
+	return fetchJson(
+		`${backendBase}/discord/servers/${serverId}/games/associables`,
+		{ signal },
+		"연결 가능한 채널과 역할을 불러오지 못했습니다.",
+	);
+}
+
 export const topicDetailsQueryOptions = (serverId: string, topicId: number) =>
 	queryOptions({
 		queryKey: topicQueryKeys.details.detail(serverId, topicId),
 		queryFn: ({ signal }) => fetchTopicDetails(serverId, topicId, signal),
+	});
+
+export const topicAssociablesQueryOptions = (serverId: string) =>
+	queryOptions({
+		queryKey: topicQueryKeys.associables(serverId),
+		queryFn: ({ signal }) => fetchTopicAssociables(serverId, signal),
 	});

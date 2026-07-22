@@ -1,7 +1,7 @@
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ServerData, TopicDetails } from "juicer-shared";
+import type { AssociableOptions, ServerData, TopicDetails } from "juicer-shared";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
@@ -28,6 +28,7 @@ interface TopicEditContentProps {
 	serverData: ServerData;
 	topicId: number;
 	topic: TopicDetails;
+	associables: AssociableOptions;
 }
 
 export function TopicEditContent({
@@ -35,6 +36,7 @@ export function TopicEditContent({
 	serverData,
 	topicId,
 	topic,
+	associables,
 }: TopicEditContentProps) {
 	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
@@ -108,44 +110,25 @@ export function TopicEditContent({
 		[serverData.serverDataDb?.categories],
 	);
 	const channelsById = useMemo(
-		() =>
-			new Map(
-				(serverData.serverDataDiscord.channels ?? []).map((channel) => [
-					channel.id,
-					channel,
-				]),
-			),
-		[serverData.serverDataDiscord.channels],
+		() => new Map(associables.channels.map((channel) => [channel.id, channel])),
+		[associables.channels],
 	);
 	const rolesById = useMemo(
-		() =>
-			new Map(
-				(serverData.serverDataDiscord.roles ?? []).map((role) => [
-					role.id,
-					role,
-				]),
-			),
-		[serverData.serverDataDiscord.roles],
+		() => new Map(associables.roles.map((role) => [role.id, role])),
+		[associables.roles],
 	);
 	const channelOptions: TopicAssociationOption[] = useMemo(
 		() =>
-			(serverData.serverDataDiscord.channels ?? []).map((channel) => ({
+			associables.channels.map((channel) => ({
 				id: channel.id,
 				label: `#${channel.name}`,
 				headline: `#${channel.name}`,
 			})),
-		[serverData.serverDataDiscord.channels],
+		[associables.channels],
 	);
-	const roleOptions: TopicAssociationOption[] = useMemo(() => {
-		const dbRoleIds = new Set(
-			(serverData.serverDataDb?.roles ?? []).map((role) => role.roleId),
-		);
-		return (serverData.serverDataDiscord.roles ?? [])
-			.filter(
-				(role) =>
-					dbRoleIds.has(role.id) && role.name !== "@everyone" && !role.managed,
-			)
-			.map((role) => ({
+	const roleOptions: TopicAssociationOption[] = useMemo(
+		() =>
+			associables.roles.map((role) => ({
 				id: role.id,
 				label: role.name,
 				headline: (
@@ -156,8 +139,9 @@ export function TopicEditContent({
 						size="large"
 					/>
 				),
-			}));
-	}, [serverData.serverDataDb?.roles, serverData.serverDataDiscord.roles]);
+			})),
+		[associables.roles],
+	);
 
 	return (
 		<div css={topicEditPageStyles.root}>

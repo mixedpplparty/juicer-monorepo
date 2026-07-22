@@ -2,34 +2,24 @@ import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import type { ServerData } from "juicer-shared";
+import type { TopicSearchResult } from "juicer-shared";
 import { Link } from "react-router";
 import { topicsQueryOptions } from "../api/queries";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
-import {
-	type TopicListItemData,
-	useTopicListItems,
-} from "../hooks/use-topic-list-items";
 import { topicListStyles } from "./topic-list.styles";
 
 export interface TopicListProps {
 	serverId: string;
-	serverData: ServerData;
 	searchQuery: string;
 }
 
-export function TopicList({
-	serverId,
-	serverData,
-	searchQuery,
-}: TopicListProps) {
+export function TopicList({ serverId, searchQuery }: TopicListProps) {
 	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 	const { data: topics } = useSuspenseQuery(
 		topicsQueryOptions(serverId, debouncedSearchQuery),
 	);
-	const topicListItems = useTopicListItems(topics, serverData);
 
-	if (topicListItems.length === 0) {
+	if (topics.length === 0) {
 		return (
 			<Text as="p" typeRole="body" size="medium" css={topicListStyles.status}>
 				{debouncedSearchQuery
@@ -45,7 +35,7 @@ export function TopicList({
 			aria-label="주제 목록"
 			css={topicListStyles.list}
 		>
-			{topicListItems.map((topic) => (
+			{topics.map((topic) => (
 				<TopicListItem key={topic.gameId} topic={topic} />
 			))}
 		</List>
@@ -53,7 +43,7 @@ export function TopicList({
 }
 
 interface TopicListItemProps {
-	topic: TopicListItemData;
+	topic: TopicSearchResult;
 }
 
 function TopicListItem({ topic }: TopicListItemProps) {
@@ -92,7 +82,7 @@ function TopicListItem({ topic }: TopicListItemProps) {
 									key={role.id}
 									roleName={role.name}
 									color={role.color}
-									active={role.active}
+									active={role.assigned}
 									typeRole="body"
 									size="medium"
 								/>

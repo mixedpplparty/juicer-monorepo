@@ -1,5 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { Game, MyDataInServer, ServerData } from "juicer-shared";
+import type {
+	MyDataInServer,
+	ServerData,
+	TopicSearchResult,
+} from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 import { serverQueryKeys } from "@/shared/api/query-keys/server-query-keys";
 import { topicQueryKeys } from "@/shared/api/query-keys/topic-query-keys";
@@ -32,7 +36,7 @@ function fetchTopics(
 	serverId: string,
 	query: string,
 	signal: AbortSignal,
-): Promise<Game[]> {
+): Promise<TopicSearchResult[]> {
 	const searchParams = new URLSearchParams({ query });
 	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/search/all?${searchParams}`,

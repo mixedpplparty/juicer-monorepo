@@ -1,11 +1,14 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { TopicAppBarSkeleton } from "@/pages/server-overview/components/loading-skeletons";
 import { TopicAppBar } from "@/pages/server-overview/components/server-page-app-bar";
 import type { ServerDetailsOutletContext } from "@/pages/server-overview/server-details-context";
 import { serverDetailsPageStyles } from "@/pages/server-overview/server-details-page.styles";
-import { topicDetailsQueryOptions } from "@/shared/api/topic-queries";
+import {
+	topicAssociablesQueryOptions,
+	topicDetailsQueryOptions,
+} from "@/shared/api/topic-queries";
 import TopicEditContent from "./components/topic-edit-content";
 import { TopicEditSkeleton } from "./components/topic-edit-skeleton";
 
@@ -26,9 +29,12 @@ function TopicEditRoute() {
 		throw new Error("올바르지 않은 주제 ID입니다.");
 	}
 
-	const { data: topic } = useSuspenseQuery(
-		topicDetailsQueryOptions(serverId, topicId),
-	);
+	const [{ data: topic }, { data: associables }] = useSuspenseQueries({
+		queries: [
+			topicDetailsQueryOptions(serverId, topicId),
+			topicAssociablesQueryOptions(serverId),
+		],
+	});
 
 	return (
 		<>
@@ -47,6 +53,7 @@ function TopicEditRoute() {
 					serverData={serverData}
 					topicId={topicId}
 					topic={topic}
+					associables={associables}
 				/>
 			</div>
 		</>
