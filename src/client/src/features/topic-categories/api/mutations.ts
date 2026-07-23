@@ -1,20 +1,20 @@
-import type { Category } from "juicer-shared";
+import type { Category, NameRequiredRequestBody } from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
 export async function createTopicCategory({
 	serverId,
-	name,
+	body,
 }: {
 	serverId: string;
-	name: string;
+	body: NameRequiredRequestBody;
 }): Promise<Category[]> {
 	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/categories/create`,
 		{
 			method: "POST",
-			json: { name },
+			json: body,
 		},
 		"주제 카테고리를 추가하지 못했습니다.",
 	);

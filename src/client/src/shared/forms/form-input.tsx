@@ -14,11 +14,16 @@ import {
 export type FormInputProps<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, string>,
+	TTransformedValues extends FieldValues = TFieldValues,
 > = Omit<
 	TextFieldProps,
 	"defaultValue" | "name" | "onBlur" | "onChange" | "value"
 > & {
-	control: UseControllerProps<TFieldValues, TName>["control"];
+	control: UseControllerProps<
+		TFieldValues,
+		TName,
+		TTransformedValues
+	>["control"];
 	name: TName;
 	rules?: Omit<
 		RegisterOptions<TFieldValues, TName>,
@@ -29,6 +34,7 @@ export type FormInputProps<
 export function FormInput<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, string>,
+	TTransformedValues extends FieldValues = TFieldValues,
 >({
 	control,
 	disabled,
@@ -37,7 +43,7 @@ export function FormInput<
 	errorText,
 	rootProps,
 	...props
-}: FormInputProps<TFieldValues, TName>) {
+}: FormInputProps<TFieldValues, TName, TTransformedValues>) {
 	const { field, fieldState } = useController({
 		control,
 		disabled,

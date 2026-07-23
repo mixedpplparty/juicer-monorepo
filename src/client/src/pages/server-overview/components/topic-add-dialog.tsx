@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { Select } from "@mixedpplparty/juicer-m3/select";
@@ -8,19 +9,17 @@ import { useForm } from "react-hook-form";
 import { topicQueryKeys } from "@/shared/api/query-keys/topic-query-keys";
 import { useUnsavedChangesWarning } from "@/shared/browser/use-unsaved-changes-warning";
 import { FormInput } from "@/shared/forms/form-input";
+import {
+	noTopicCategoryValue,
+	type TopicCreateFormInput,
+	type TopicCreateFormOutput,
+	topicCreateFormSchema,
+} from "@/shared/forms/form-schemas";
 import { FormSelect } from "@/shared/forms/form-select";
 import { createTopic } from "../api/mutations";
 import { topicAddDialogStyles } from "./topic-add-dialog.styles";
 
-const noTopicCategoryValue = "none";
-
-interface TopicAddFormValues {
-	name: string;
-	description: string;
-	categoryId: string | null;
-}
-
-const defaultValues: TopicAddFormValues = {
+const defaultValues: TopicCreateFormInput = {
 	name: "",
 	description: "",
 	categoryId: null,
@@ -40,9 +39,10 @@ export function TopicAddDialog({
 	onOpenChange,
 }: TopicAddDialogProps) {
 	const queryClient = useQueryClient();
-	const form = useForm<TopicAddFormValues>({
+	const form = useForm<TopicCreateFormInput, unknown, TopicCreateFormOutput>({
 		defaultValues,
 		mode: "onChange",
+		resolver: zodResolver(topicCreateFormSchema),
 	});
 	const { isDirty, isValid } = form.formState;
 	const categories = [
@@ -88,20 +88,14 @@ export function TopicAddDialog({
 		onOpenChange(false);
 	};
 
-	const submit = form.handleSubmit((values) => {
+	const submit = form.handleSubmit((body) => {
 		if (mutation.isPending) {
 			return;
 		}
 
-		const description = values.description.trim();
 		mutation.mutate({
 			serverId,
-			name: values.name.trim(),
-			description: description || null,
-			categoryId:
-				!values.categoryId || values.categoryId === noTopicCategoryValue
-					? null
-					: Number(values.categoryId),
+			body,
 		});
 	});
 
@@ -125,10 +119,6 @@ export function TopicAddDialog({
 							label="이름"
 							required
 							disabled={mutation.isPending}
-							rules={{
-								validate: (value) =>
-									value.trim().length > 0 || "이름을 입력해주세요.",
-							}}
 						/>
 						<FormInput
 							control={form.control}

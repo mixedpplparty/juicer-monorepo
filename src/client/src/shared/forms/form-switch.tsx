@@ -10,11 +10,16 @@ import {
 export type FormSwitchProps<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, boolean>,
+	TTransformedValues extends FieldValues = TFieldValues,
 > = Omit<
 	SwitchProps,
 	"checked" | "defaultChecked" | "name" | "onCheckedChange"
 > & {
-	control: UseControllerProps<TFieldValues, TName>["control"];
+	control: UseControllerProps<
+		TFieldValues,
+		TName,
+		TTransformedValues
+	>["control"];
 	name: TName;
 	rules?: Omit<
 		RegisterOptions<TFieldValues, TName>,
@@ -25,6 +30,7 @@ export type FormSwitchProps<
 export function FormSwitch<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, boolean>,
+	TTransformedValues extends FieldValues = TFieldValues,
 >({
 	control,
 	disabled,
@@ -32,7 +38,7 @@ export function FormSwitch<
 	onBlur,
 	rules,
 	...props
-}: FormSwitchProps<TFieldValues, TName>) {
+}: FormSwitchProps<TFieldValues, TName, TTransformedValues>) {
 	const { field } = useController({ control, disabled, name, rules });
 
 	return (

@@ -5,7 +5,7 @@ import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Category } from "juicer-shared";
+import type { Category, NameRequiredRequestBody } from "juicer-shared";
 import { useState } from "react";
 import { invalidateServerTopicState } from "@/shared/api/query-invalidation";
 import { serverQueryKeys } from "@/shared/api/query-keys/server-query-keys";
@@ -34,7 +34,8 @@ export function TopicCategorySettings({
 		});
 
 	const createMutation = useMutation({
-		mutationFn: (name: string) => createTopicCategory({ serverId, name }),
+		mutationFn: (body: NameRequiredRequestBody) =>
+			createTopicCategory({ serverId, body }),
 		onSuccess: async () => {
 			await refreshServer();
 			setCreating(false);
@@ -109,7 +110,7 @@ export function TopicCategorySettings({
 				open={creating}
 				pending={createMutation.isPending}
 				onOpenChange={setCreating}
-				onSubmit={(name) => createMutation.mutate(name)}
+				onSubmit={(body) => createMutation.mutate(body)}
 			/>
 
 			<DeleteTopicCategoryDialog

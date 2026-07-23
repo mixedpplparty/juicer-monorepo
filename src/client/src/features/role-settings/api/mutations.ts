@@ -1,4 +1,5 @@
 import type {
+	NameRequiredRequestBody,
 	Role,
 	RoleCategory,
 	UpdateRoleSettingsRequest,
@@ -9,16 +10,16 @@ const backendBase = import.meta.env.VITE_BACKEND_URI;
 
 export async function createRoleCategory({
 	serverId,
-	name,
+	body,
 }: {
 	serverId: string;
-	name: string;
+	body: NameRequiredRequestBody;
 }): Promise<RoleCategory[]> {
 	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/role-categories/create`,
 		{
 			method: "POST",
-			json: { name },
+			json: body,
 		},
 		"역할 분류를 추가하지 못했습니다.",
 	);
@@ -41,16 +42,17 @@ export async function deleteRoleCategory({
 export async function updateRoleSettings({
 	serverId,
 	roleId,
-	...settings
+	body,
 }: {
 	serverId: string;
 	roleId: string;
-} & UpdateRoleSettingsRequest): Promise<Role> {
+	body: UpdateRoleSettingsRequest;
+}): Promise<Role> {
 	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/roles/${roleId}`,
 		{
 			method: "PATCH",
-			json: settings,
+			json: body,
 		},
 		"역할 설정을 변경하지 못했습니다.",
 	);

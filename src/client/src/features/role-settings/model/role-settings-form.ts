@@ -1,16 +1,12 @@
 import type { RoleSettingsRole } from "juicer-shared";
-
-export const unassignedRoleCategoryValue = "unassigned";
-
-export interface RoleSettingsFormValues {
-	roleCategoryId: string;
-	selfAssignable: boolean;
-	description: string;
-}
+import {
+	type RoleSettingsFormInput,
+	unassignedRoleCategoryValue,
+} from "@/shared/forms/form-schemas";
 
 export function getRoleSettingsDefaultValues(
 	role: RoleSettingsRole,
-): RoleSettingsFormValues {
+): RoleSettingsFormInput {
 	return {
 		roleCategoryId:
 			role.categoryId === null
@@ -18,16 +14,5 @@ export function getRoleSettingsDefaultValues(
 				: String(role.categoryId),
 		selfAssignable: role.selfAssignable,
 		description: role.description ?? "",
-	};
-}
-
-export function toRoleSettingsSubmission(values: RoleSettingsFormValues) {
-	return {
-		roleCategoryId:
-			values.roleCategoryId === unassignedRoleCategoryValue
-				? null
-				: Number(values.roleCategoryId),
-		selfAssignable: values.selfAssignable,
-		description: values.description.trim() || null,
 	};
 }

@@ -1,14 +1,9 @@
 import type { TopicDetails } from "juicer-shared";
-
-export const noTopicCategoryValue = "none";
-
-export interface TopicEditFormValues {
-	name: string;
-	description: string;
-	categoryId: string;
-	channelIds: string[];
-	roleIds: string[];
-}
+import {
+	noTopicCategoryValue,
+	type TopicUpdateFormInput,
+	type TopicUpdateFormOutput,
+} from "@/shared/forms/form-schemas";
 
 export function normalizeIds(ids: string[]) {
 	return [...new Set(ids)].toSorted();
@@ -16,7 +11,7 @@ export function normalizeIds(ids: string[]) {
 
 export function getTopicEditDefaultValues(
 	topic: TopicDetails,
-): TopicEditFormValues {
+): TopicUpdateFormInput {
 	return {
 		name: topic.name,
 		description: topic.description ?? "",
@@ -29,14 +24,17 @@ export function getTopicEditDefaultValues(
 	};
 }
 
-export function normalizeTopicEditValues(
-	values: TopicEditFormValues,
-): TopicEditFormValues {
+export function getTopicEditResetValues(
+	values: TopicUpdateFormOutput,
+): TopicUpdateFormInput {
 	return {
-		name: values.name.trim(),
-		description: values.description.trim(),
-		categoryId: values.categoryId,
-		channelIds: normalizeIds(values.channelIds),
+		name: values.name,
+		description: values.description ?? "",
+		categoryId:
+			values.categoryId === null
+				? noTopicCategoryValue
+				: String(values.categoryId),
+		channelIds: values.channels,
 		roleIds: normalizeIds(values.roleIds),
 	};
 }

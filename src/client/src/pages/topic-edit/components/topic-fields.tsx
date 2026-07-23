@@ -1,8 +1,11 @@
 import { Select } from "@mixedpplparty/juicer-m3/select";
 import type { Control } from "react-hook-form";
 import { FormInput } from "@/shared/forms/form-input";
+import type {
+	TopicUpdateFormInput,
+	TopicUpdateFormOutput,
+} from "@/shared/forms/form-schemas";
 import { FormSelect } from "@/shared/forms/form-select";
-import type { TopicEditFormValues } from "../topic-edit-form";
 import { topicEditPageStyles } from "./topic-edit-content.styles";
 
 interface TopicCategoryItem {
@@ -11,7 +14,7 @@ interface TopicCategoryItem {
 }
 
 interface TopicFieldsProps {
-	control: Control<TopicEditFormValues>;
+	control: Control<TopicUpdateFormInput, unknown, TopicUpdateFormOutput>;
 	categoryItems: TopicCategoryItem[];
 	disabled: boolean;
 }
@@ -30,10 +33,6 @@ export function TopicFields({
 				variant="filled"
 				required
 				disabled={disabled}
-				rules={{
-					validate: (value) =>
-						value.trim().length > 0 || "주제명을 입력해주세요.",
-				}}
 			/>
 			<FormInput
 				control={control}
