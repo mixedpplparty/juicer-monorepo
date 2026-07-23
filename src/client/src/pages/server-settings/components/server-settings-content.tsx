@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { useOutletContext } from "react-router";
-import { RoleSettingsSection } from "@/features/role-settings";
+import {
+	RoleSettingsSection,
+	RoleSettingsSkeleton,
+} from "@/features/role-settings";
 import { TopicCategorySettings } from "@/features/topic-categories";
 import type { ServerDetailsOutletContext } from "@/pages/server-overview/server-details-context";
 import ServerDataSettings from "../server-data/server-data-settings";
@@ -21,7 +24,7 @@ export function ServerSettingsContent() {
 				}
 			/>
 			<SettingsSection title="역할 설정">
-				<Suspense fallback={null}>
+				<Suspense fallback={<RoleSettingsSkeleton />}>
 					<RoleSettingsSection serverId={serverId} />
 				</Suspense>
 			</SettingsSection>
