@@ -1,7 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AssociableOptions, ServerData, TopicDetails } from "juicer-shared";
+import type {
+	AssociableOptions,
+	ServerData,
+	TopicDetails,
+} from "juicer-shared";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
@@ -10,13 +15,16 @@ import {
 } from "@/features/topic-associations";
 import { topicQueryKeys } from "@/shared/api/query-keys/topic-query-keys";
 import { useUnsavedChangesWarning } from "@/shared/browser/use-unsaved-changes-warning";
+import {
+	type TopicUpdateFormInput,
+	type TopicUpdateFormOutput,
+	topicUpdateFormSchema,
+} from "@/shared/forms/form-schemas";
 import { updateTopic } from "../api/mutations";
 import {
 	getTopicEditDefaultValues,
+	getTopicEditResetValues,
 	normalizeIds,
-	normalizeTopicEditValues,
-	noTopicCategoryValue,
-	type TopicEditFormValues,
 } from "../topic-edit-form";
 import TopicAssociationList from "./topic-association-list";
 import { topicEditPageStyles } from "./topic-edit-content.styles";
@@ -40,9 +48,10 @@ export function TopicEditContent({
 }: TopicEditContentProps) {
 	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
-	const form = useForm<TopicEditFormValues>({
+	const form = useForm<TopicUpdateFormInput, unknown, TopicUpdateFormOutput>({
 		defaultValues: getTopicEditDefaultValues(topic),
 		mode: "onChange",
+		resolver: zodResolver(topicUpdateFormSchema),
 	});
 	const channelIds = useWatch({ control: form.control, name: "channelIds" });
 	const roleIds = useWatch({ control: form.control, name: "roleIds" });
@@ -60,25 +69,16 @@ export function TopicEditContent({
 		form.setValue("channelIds", normalizeIds(ids), { shouldDirty: true });
 	const setRoleIds = (ids: string[]) =>
 		form.setValue("roleIds", normalizeIds(ids), { shouldDirty: true });
-	const submit = form.handleSubmit(async (values) => {
+	const submit = form.handleSubmit(async (body) => {
 		if (mutation.isPending) {
 			return;
 		}
-
-		const normalizedValues = normalizeTopicEditValues(values);
 
 		try {
 			await mutation.mutateAsync({
 				serverId,
 				topicId,
-				name: normalizedValues.name,
-				description: normalizedValues.description,
-				categoryId:
-					normalizedValues.categoryId === noTopicCategoryValue
-						? null
-						: Number(normalizedValues.categoryId),
-				channelIds: normalizedValues.channelIds,
-				roleIds: normalizedValues.roleIds,
+				body,
 			});
 			await Promise.all([
 				queryClient.refetchQueries({
@@ -89,7 +89,7 @@ export function TopicEditContent({
 					refetchType: "all",
 				}),
 			]);
-			form.reset(normalizedValues);
+			form.reset(getTopicEditResetValues(body));
 			enqueue("주제를 저장했습니다.");
 		} catch (error) {
 			enqueue(

@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
@@ -7,14 +8,15 @@ import type { RoleSettingsRole } from "juicer-shared";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/shared/forms/form-input";
+import {
+	type RoleSettingsFormInput,
+	type RoleSettingsFormOutput,
+	roleSettingsFormSchema,
+	unassignedRoleCategoryValue,
+} from "@/shared/forms/form-schemas";
 import { FormSelect } from "@/shared/forms/form-select";
 import { FormSwitch } from "@/shared/forms/form-switch";
-import {
-	getRoleSettingsDefaultValues,
-	type RoleSettingsFormValues,
-	toRoleSettingsSubmission,
-	unassignedRoleCategoryValue,
-} from "../model/role-settings-form";
+import { getRoleSettingsDefaultValues } from "../model/role-settings-form";
 import { roleSettingsDialogStyles } from "./role-settings-dialog.styles";
 
 export interface RoleSettingsCategory {
@@ -27,11 +29,7 @@ export interface RoleSettingsDialogProps {
 	categories: RoleSettingsCategory[];
 	pending?: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSubmit: (value: {
-		roleCategoryId: number | null;
-		selfAssignable: boolean;
-		description: string | null;
-	}) => void;
+	onSubmit: (value: RoleSettingsFormOutput) => void;
 }
 
 export function RoleSettingsDialog({
@@ -41,8 +39,14 @@ export function RoleSettingsDialog({
 	onOpenChange,
 	onSubmit,
 }: RoleSettingsDialogProps) {
-	const { control, handleSubmit } = useForm<RoleSettingsFormValues>({
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm<RoleSettingsFormInput, unknown, RoleSettingsFormOutput>({
 		defaultValues: getRoleSettingsDefaultValues(role),
+		mode: "onChange",
+		resolver: zodResolver(roleSettingsFormSchema),
 	});
 	const categoryItems = useMemo(
 		() => [
@@ -57,7 +61,7 @@ export function RoleSettingsDialog({
 
 	const submit = handleSubmit((values) => {
 		if (!pending) {
-			onSubmit(toRoleSettingsSubmission(values));
+			onSubmit(values);
 		}
 	});
 
@@ -140,7 +144,7 @@ export function RoleSettingsDialog({
 						>
 							취소
 						</Button>
-						<Button type="submit" disabled={pending}>
+						<Button type="submit" disabled={pending || !isValid}>
 							{pending ? "저장 중…" : "저장"}
 						</Button>
 					</Dialog.Actions>

@@ -8,7 +8,11 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { RoleSettingsCategory, RoleSettingsRole } from "juicer-shared";
+import type {
+	NameRequiredRequestBody,
+	RoleSettingsCategory,
+	RoleSettingsRole,
+} from "juicer-shared";
 import { type DragEvent, useMemo, useState } from "react";
 import { invalidateServerRoleState } from "@/shared/api/query-invalidation";
 import { serverQueryKeys } from "@/shared/api/query-keys/server-query-keys";
@@ -61,7 +65,8 @@ export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
 	}, [roleSettings.roles]);
 
 	const createCategoryMutation = useMutation({
-		mutationFn: (name: string) => createRoleCategory({ serverId, name }),
+		mutationFn: (body: NameRequiredRequestBody) =>
+			createRoleCategory({ serverId, body }),
 		onSuccess: async () => {
 			await queryClient.refetchQueries({
 				queryKey: serverQueryKeys.roleSettings(serverId),
@@ -78,7 +83,12 @@ export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
 		}: {
 			roleId: string;
 			roleCategoryId: number | null;
-		}) => updateRoleSettings({ serverId, roleId, roleCategoryId }),
+		}) =>
+			updateRoleSettings({
+				serverId,
+				roleId,
+				body: { roleCategoryId },
+			}),
 		onSuccess: async () => {
 			await invalidateServerRoleState(queryClient, serverId);
 			enqueue("역할을 옮겼습니다.");
@@ -104,9 +114,11 @@ export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
 			updateRoleSettings({
 				serverId,
 				roleId: role.id,
-				roleCategoryId,
-				selfAssignable,
-				description,
+				body: {
+					roleCategoryId,
+					selfAssignable,
+					description,
+				},
 			}),
 		onSuccess: async () => {
 			setSelectedRole(null);
@@ -130,8 +142,7 @@ export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
 		roleCategoryId: number | null,
 	) => {
 		event.preventDefault();
-		const roleId =
-			draggedRoleId || event.dataTransfer.getData("text/plain");
+		const roleId = draggedRoleId || event.dataTransfer.getData("text/plain");
 		const role = roleSettings.roles.find(
 			(candidate) => candidate.id === roleId,
 		);
@@ -226,7 +237,7 @@ export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
 				open={creatingCategory}
 				pending={createCategoryMutation.isPending}
 				onOpenChange={setCreatingCategory}
-				onSubmit={(name) => createCategoryMutation.mutate(name)}
+				onSubmit={(body) => createCategoryMutation.mutate(body)}
 			/>
 			{selectedRole ? (
 				<RoleSettingsDialog

@@ -6,10 +6,12 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc -b && vite build",
+		"test": "vitest run",
 		"preview": "vite preview"
 	},
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
+		"@hookform/resolvers": "^5.4.0",
 		"@mixedpplparty/juicer-m3": "1.1.12",
 		"@tanstack/react-query": "^5.101.2",
 		"juicer-shared": "workspace:*",
@@ -17,7 +19,8 @@
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7",
 		"react-hook-form": "^7.82.0",
-		"react-router": "^8.2.0"
+		"react-router": "^8.2.0",
+		"zod": "^4.1.11"
 	},
 	"devDependencies": {
 		"@types/node": "^24.13.2",
@@ -25,6 +28,7 @@
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.3",
 		"typescript": "~6.0.2",
-		"vite": "^8.1.1"
+		"vite": "^8.1.1",
+		"vitest": "^4.1.10"
 	}
 }

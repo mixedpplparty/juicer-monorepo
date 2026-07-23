@@ -1,18 +1,20 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/shared/forms/form-input";
+import {
+	type CategoryNameFormInput,
+	type CategoryNameFormOutput,
+	categoryNameFormSchema,
+} from "@/shared/forms/form-schemas";
 import { topicCategoryDialogStyles } from "./topic-category-dialog.styles";
-
-interface TopicCategoryFormValues {
-	name: string;
-}
 
 interface TopicCategoryDialogProps {
 	open: boolean;
 	pending: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSubmit: (name: string) => void;
+	onSubmit: (body: CategoryNameFormOutput) => void;
 }
 
 export function TopicCategoryDialog({
@@ -25,14 +27,15 @@ export function TopicCategoryDialog({
 		control,
 		handleSubmit,
 		formState: { isValid },
-	} = useForm<TopicCategoryFormValues>({
+	} = useForm<CategoryNameFormInput, unknown, CategoryNameFormOutput>({
 		defaultValues: { name: "" },
 		mode: "onChange",
+		resolver: zodResolver(categoryNameFormSchema),
 	});
 
-	const submit = handleSubmit(({ name }) => {
+	const submit = handleSubmit((body) => {
 		if (!pending) {
-			onSubmit(name.trim());
+			onSubmit(body);
 		}
 	});
 
@@ -53,10 +56,6 @@ export function TopicCategoryDialog({
 							required
 							disabled={pending}
 							css={topicCategoryDialogStyles.field}
-							rules={{
-								validate: (value) =>
-									value.trim().length > 0 || "이름을 입력해주세요.",
-							}}
 						/>
 					</Dialog.Content>
 					<Dialog.Actions>

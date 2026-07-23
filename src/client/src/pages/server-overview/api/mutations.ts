@@ -1,4 +1,8 @@
-import type { CreateGameResponse, SyncRolesResponse } from "juicer-shared";
+import type {
+	CreateGameRequestBody,
+	CreateGameResponse,
+	SyncRolesResponse,
+} from "juicer-shared";
 import { fetchJson } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
@@ -9,9 +13,7 @@ interface CreateServerResponse {
 
 export interface CreateTopicInput {
 	serverId: string;
-	name: string;
-	description: string | null;
-	categoryId: number | null;
+	body: CreateGameRequestBody;
 }
 
 export function createServer(serverId: string): Promise<CreateServerResponse> {
@@ -32,15 +34,13 @@ export function syncServerRoles(serverId: string): Promise<SyncRolesResponse> {
 
 export async function createTopic({
 	serverId,
-	name,
-	description,
-	categoryId,
+	body,
 }: CreateTopicInput): Promise<CreateGameResponse[]> {
 	return fetchJson(
 		`${backendBase}/discord/servers/${serverId}/games/create`,
 		{
 			method: "POST",
-			json: { name, description, categoryId },
+			json: body,
 		},
 		"주제를 추가하지 못했습니다.",
 	);

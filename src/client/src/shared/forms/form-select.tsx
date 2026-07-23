@@ -12,11 +12,16 @@ import {
 export type FormSelectProps<
 	TFieldValues extends FieldValues,
 	TName extends FieldPath<TFieldValues>,
+	TTransformedValues extends FieldValues = TFieldValues,
 > = Omit<
 	SelectRootProps<FieldPathValue<TFieldValues, TName>>,
 	"defaultValue" | "name" | "onValueChange" | "value"
 > & {
-	control: UseControllerProps<TFieldValues, TName>["control"];
+	control: UseControllerProps<
+		TFieldValues,
+		TName,
+		TTransformedValues
+	>["control"];
 	errorText?: ReactNode;
 	name: TName;
 	rules?: Omit<
@@ -28,6 +33,7 @@ export type FormSelectProps<
 export function FormSelect<
 	TFieldValues extends FieldValues,
 	TName extends FieldPath<TFieldValues>,
+	TTransformedValues extends FieldValues = TFieldValues,
 >({
 	children,
 	control,
@@ -38,7 +44,7 @@ export function FormSelect<
 	onOpenChange,
 	rules,
 	...props
-}: FormSelectProps<TFieldValues, TName>) {
+}: FormSelectProps<TFieldValues, TName, TTransformedValues>) {
 	const { field, fieldState } = useController({
 		control,
 		disabled,
