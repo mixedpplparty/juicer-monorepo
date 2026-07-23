@@ -19,11 +19,12 @@ use crate::discord::bot::{
 };
 use crate::error::{HttpError, Result};
 use crate::models::{
-    AddCategoryToGameRequestBody, CreateGameRequestBody, GameWithoutRelations,
-    ModifyTagsOfGameRequestBody, TopicDetails, TopicDetailsChannel, TopicDetailsRole,
-    UpdateGameRequestBody, UpdateGameResponse,
+    AddCategoryToGameRequestBody, AssociableOptions, CreateGameRequestBody,
+    GameWithoutRelations, ModifyTagsOfGameRequestBody, TopicDetails, TopicDetailsChannel,
+    TopicDetailsRole, UpdateGameRequestBody, UpdateGameResponse,
 };
 use crate::state::AppState;
+use crate::views::build_associable_options;
 use crate::validation::{
     normalized_description, validated_db_ids, validated_discord_ids, validated_name,
     DESCRIPTION_MAX, GAME_NAME_MAX,
@@ -32,6 +33,7 @@ use crate::validation::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/create", post(create_game))
+        .route("/associables", get(get_associables))
         .route("/{gameId}", get(get_game_details).put(update_game))
         .route("/{gameId}", delete(delete_game))
         .route("/{gameId}/categories/add", post(add_category_to_game))
@@ -89,7 +91,7 @@ pub(crate) async fn get_game_details(
     let channel_name_by_id: std::collections::HashMap<&str, &str> = entities
         .channels
         .iter()
-        .map(|(id, name)| (id.as_str(), name.as_str()))
+        .map(|channel| (channel.id.as_str(), channel.name.as_str()))
         .collect();
     let guild_role_by_id: std::collections::HashMap<&str, &crate::discord::bot::GuildRoleLite> =
         entities.roles.iter().map(|role| (role.id.as_str(), role)).collect();
@@ -463,4 +465,26 @@ pub(crate) async fn get_thumbnail(
             .into_response()),
         None => Err(HttpError::not_found("Thumbnail not found.")),
     }
+}
+
+/// GET /associables — channels/roles a topic may be associated with (issue
+/// #51), following the same policy the update validation enforces.
+#[utoipa::path(get, path = "/discord/servers/{serverId}/games/associables", tag = "games",
+    params(("serverId" = String, Path, description = "Discord server (guild) ID")),
+    responses((status = 200, body = AssociableOptions), (status = 403, description = "Missing manage permission or server verification required")),
+    security(("discord_cookie" = [])))]
+pub(crate) async fn get_associables(
+    State(state): State<AppState>,
+    Path((server_id,)): Path<(String,)>,
+    jar: CookieJar,
+) -> Result<Json<AssociableOptions>> {
+    let token = access_token(&jar);
+    let (authed, db_roles) = tokio::join!(
+        authenticate_and_authorize_user(&state, &server_id, &token, true, true),
+        db::get_all_roles_in_server_in_db(&state.db, &server_id),
+    );
+    authed?;
+    let db_roles = db_roles?;
+    let entities = get_guild_channels_and_roles(&state, &server_id).await?;
+    Ok(Json(build_associable_options(&server_id, &entities, &db_roles)))
 }

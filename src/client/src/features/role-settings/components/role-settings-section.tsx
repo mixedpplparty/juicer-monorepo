@@ -2,8 +2,23 @@ import { IconButton } from "@mixedpplparty/juicer-m3/button";
 import { AddIcon } from "@mixedpplparty/juicer-m3/icons/add";
 import { DeleteIcon } from "@mixedpplparty/juicer-m3/icons/delete";
 import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
-import type { ServerData } from "juicer-shared";
-import { useRoleSettings } from "../hooks/use-role-settings";
+import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
+import type { RoleSettingsCategory, RoleSettingsRole } from "juicer-shared";
+import { type DragEvent, useMemo, useState } from "react";
+import { invalidateServerRoleState } from "@/shared/api/query-invalidation";
+import { serverQueryKeys } from "@/shared/api/query-keys/server-query-keys";
+import { showRequestError } from "@/shared/notifications/show-request-error";
+import {
+	createRoleCategory,
+	deleteRoleCategory,
+	updateRoleSettings,
+} from "../api/mutations";
+import { roleSettingsQueryOptions } from "../api/queries";
 import DeleteRoleCategoryDialog from "./delete-role-category-dialog";
 import RoleCategoryDialog from "./role-category-dialog";
 import RoleDropZone from "./role-drop-zone";
@@ -12,77 +27,175 @@ import { roleSettingsSectionStyles } from "./role-settings-section.styles";
 
 interface RoleSettingsSectionProps {
 	serverId: string;
-	serverData: ServerData;
 }
 
-export function RoleSettingsSection({
-	serverId,
-	serverData,
-}: RoleSettingsSectionProps) {
-	const settings = useRoleSettings({ serverId, serverData });
-	const selectedRole = settings.selectedRole;
+export function RoleSettingsSection({ serverId }: RoleSettingsSectionProps) {
+	const queryClient = useQueryClient();
+	const { enqueue } = useSnackbar();
+	const { data: roleSettings } = useSuspenseQuery(
+		roleSettingsQueryOptions(serverId),
+	);
+	const [creatingCategory, setCreatingCategory] = useState(false);
+	const [selectedRole, setSelectedRole] = useState<RoleSettingsRole | null>(
+		null,
+	);
+	const [pendingDelete, setPendingDelete] =
+		useState<RoleSettingsCategory | null>(null);
+	const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
+	const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
+
+	const verificationCategory = roleSettings.categories.find(
+		(category) => category.kind === "verification",
+	);
+	const visibleCategories = roleSettings.categories.filter(
+		(category) => category.kind !== "verification",
+	);
+	const rolesByCategory = useMemo(() => {
+		const result = new Map<number | null, RoleSettingsRole[]>();
+		for (const role of roleSettings.roles) {
+			const groupedRoles = result.get(role.categoryId) ?? [];
+			groupedRoles.push(role);
+			result.set(role.categoryId, groupedRoles);
+		}
+		return result;
+	}, [roleSettings.roles]);
+
+	const createCategoryMutation = useMutation({
+		mutationFn: (name: string) => createRoleCategory({ serverId, name }),
+		onSuccess: async () => {
+			await queryClient.refetchQueries({
+				queryKey: serverQueryKeys.roleSettings(serverId),
+			});
+			setCreatingCategory(false);
+			enqueue("역할 분류를 추가했습니다.");
+		},
+		onError: (error) => showRequestError(error, enqueue),
+	});
+	const moveRoleMutation = useMutation({
+		mutationFn: ({
+			roleId,
+			roleCategoryId,
+		}: {
+			roleId: string;
+			roleCategoryId: number | null;
+		}) => updateRoleSettings({ serverId, roleId, roleCategoryId }),
+		onSuccess: async () => {
+			await invalidateServerRoleState(queryClient, serverId);
+			enqueue("역할을 옮겼습니다.");
+		},
+		onError: (error) => showRequestError(error, enqueue),
+		onSettled: () => {
+			setDraggedRoleId(null);
+			setDragOverCategory(null);
+		},
+	});
+	const roleSettingsMutation = useMutation({
+		mutationFn: ({
+			role,
+			roleCategoryId,
+			selfAssignable,
+			description,
+		}: {
+			role: RoleSettingsRole;
+			roleCategoryId: number | null;
+			selfAssignable: boolean;
+			description: string | null;
+		}) =>
+			updateRoleSettings({
+				serverId,
+				roleId: role.id,
+				roleCategoryId,
+				selfAssignable,
+				description,
+			}),
+		onSuccess: async () => {
+			setSelectedRole(null);
+			await invalidateServerRoleState(queryClient, serverId);
+			enqueue("역할 설정을 저장했습니다.");
+		},
+		onError: (error) => showRequestError(error, enqueue),
+	});
+	const deleteCategoryMutation = useMutation({
+		mutationFn: deleteRoleCategory,
+		onSuccess: async () => {
+			await invalidateServerRoleState(queryClient, serverId);
+			setPendingDelete(null);
+			enqueue("역할 분류를 삭제했습니다.");
+		},
+		onError: (error) => showRequestError(error, enqueue),
+	});
+
+	const handleDrop = (
+		event: DragEvent<HTMLElement>,
+		roleCategoryId: number | null,
+	) => {
+		event.preventDefault();
+		const roleId =
+			draggedRoleId || event.dataTransfer.getData("text/plain");
+		const role = roleSettings.roles.find(
+			(candidate) => candidate.id === roleId,
+		);
+		setDragOverCategory(null);
+		if (
+			!role?.editable ||
+			role.categoryId === roleCategoryId ||
+			moveRoleMutation.isPending
+		) {
+			return;
+		}
+		moveRoleMutation.mutate({ roleId, roleCategoryId });
+	};
 
 	return (
 		<>
 			<div css={roleSettingsSectionStyles.groups}>
 				<RoleDropZone
 					name="분류 없는 역할"
-					roles={settings.rolesByCategory.get(null) ?? []}
+					roles={rolesByCategory.get(null) ?? []}
 					categoryKey="unassigned"
-					dragOverCategory={settings.dragOverCategory}
-					disabled={settings.moveRoleMutation.isPending}
-					onRoleClick={settings.setSelectedRole}
-					onDragStart={settings.setDraggedRoleId}
-					onDragOverCategory={settings.setDragOverCategory}
-					onDrop={(event) => settings.handleDrop(event, null)}
+					dragOverCategory={dragOverCategory}
+					disabled={moveRoleMutation.isPending}
+					onRoleClick={setSelectedRole}
+					onDragStart={setDraggedRoleId}
+					onDragOverCategory={setDragOverCategory}
+					onDrop={(event) => handleDrop(event, null)}
 				/>
-				{settings.verificationCategory ? (
+				{verificationCategory ? (
 					<RoleDropZone
 						name="juicer 이용에 필요한 역할"
-						roles={
-							settings.rolesByCategory.get(
-								settings.verificationCategory.roleCategoryId,
-							) ?? []
-						}
-						categoryKey={String(settings.verificationCategory.roleCategoryId)}
-						dragOverCategory={settings.dragOverCategory}
-						disabled={settings.moveRoleMutation.isPending}
-						onRoleClick={settings.setSelectedRole}
-						onDragStart={settings.setDraggedRoleId}
-						onDragOverCategory={settings.setDragOverCategory}
-						onDrop={(event) =>
-							settings.handleDrop(
-								event,
-								settings.verificationCategory?.roleCategoryId ?? null,
-							)
-						}
+						roles={rolesByCategory.get(verificationCategory.id) ?? []}
+						categoryKey={String(verificationCategory.id)}
+						dragOverCategory={dragOverCategory}
+						disabled={moveRoleMutation.isPending}
+						onRoleClick={setSelectedRole}
+						onDragStart={setDraggedRoleId}
+						onDragOverCategory={setDragOverCategory}
+						onDrop={(event) => handleDrop(event, verificationCategory.id)}
 					/>
 				) : null}
-				{settings.visibleCategories.map((roleCategory) => (
+				{visibleCategories.map((roleCategory) => (
 					<RoleDropZone
-						key={roleCategory.roleCategoryId}
+						key={roleCategory.id}
 						name={roleCategory.name}
-						roles={
-							settings.rolesByCategory.get(roleCategory.roleCategoryId) ?? []
-						}
-						categoryKey={String(roleCategory.roleCategoryId)}
-						dragOverCategory={settings.dragOverCategory}
-						disabled={settings.moveRoleMutation.isPending}
+						roles={rolesByCategory.get(roleCategory.id) ?? []}
+						categoryKey={String(roleCategory.id)}
+						dragOverCategory={dragOverCategory}
+						disabled={moveRoleMutation.isPending}
 						deleteAction={
-							<IconButton
-								type="button"
-								aria-label={`${roleCategory.name} 역할 분류 삭제`}
-								onClick={() => settings.setPendingDelete(roleCategory)}
-							>
-								<DeleteIcon />
-							</IconButton>
+							roleCategory.deletable ? (
+								<IconButton
+									type="button"
+									aria-label={`${roleCategory.name} 역할 분류 삭제`}
+									onClick={() => setPendingDelete(roleCategory)}
+								>
+									<DeleteIcon />
+								</IconButton>
+							) : undefined
 						}
-						onRoleClick={settings.setSelectedRole}
-						onDragStart={settings.setDraggedRoleId}
-						onDragOverCategory={settings.setDragOverCategory}
-						onDrop={(event) =>
-							settings.handleDrop(event, roleCategory.roleCategoryId)
-						}
+						onRoleClick={setSelectedRole}
+						onDragStart={setDraggedRoleId}
+						onDragOverCategory={setDragOverCategory}
+						onDrop={(event) => handleDrop(event, roleCategory.id)}
 					/>
 				))}
 			</div>
@@ -95,8 +208,8 @@ export function RoleSettingsSection({
 					render={
 						<button
 							type="button"
-							disabled={settings.createCategoryMutation.isPending}
-							onClick={() => settings.setCreatingCategory(true)}
+							disabled={createCategoryMutation.isPending}
+							onClick={() => setCreatingCategory(true)}
 						/>
 					}
 					css={[
@@ -109,42 +222,41 @@ export function RoleSettingsSection({
 			</List>
 
 			<RoleCategoryDialog
-				key={settings.creatingCategory ? "open" : "closed"}
-				open={settings.creatingCategory}
-				pending={settings.createCategoryMutation.isPending}
-				onOpenChange={settings.setCreatingCategory}
-				onSubmit={(name) => settings.createCategoryMutation.mutate(name)}
+				key={creatingCategory ? "open" : "closed"}
+				open={creatingCategory}
+				pending={createCategoryMutation.isPending}
+				onOpenChange={setCreatingCategory}
+				onSubmit={(name) => createCategoryMutation.mutate(name)}
 			/>
 			{selectedRole ? (
 				<RoleSettingsDialog
 					role={selectedRole}
-					categories={settings.roleCategories.map((category) => ({
-						id: category.roleCategoryId,
-						name: category.isVerification
-							? "juicer 이용에 필요한 역할"
-							: category.name,
+					categories={roleSettings.categories.map((category) => ({
+						id: category.id,
+						name:
+							category.kind === "verification"
+								? "juicer 이용에 필요한 역할"
+								: category.name,
 					}))}
-					pending={settings.roleSettingsMutation.isPending}
-					onOpenChange={(open) => !open && settings.setSelectedRole(null)}
-					onSubmit={(value) => {
-						if (selectedRole) {
-							settings.roleSettingsMutation.mutate({
-								role: selectedRole,
-								...value,
-							});
-						}
-					}}
+					pending={roleSettingsMutation.isPending}
+					onOpenChange={(open) => !open && setSelectedRole(null)}
+					onSubmit={(value) =>
+						roleSettingsMutation.mutate({
+							role: selectedRole,
+							...value,
+						})
+					}
 				/>
 			) : null}
 			<DeleteRoleCategoryDialog
-				roleCategory={settings.pendingDelete}
-				pending={settings.deleteCategoryMutation.isPending}
-				onOpenChange={(open) => !open && settings.setPendingDelete(null)}
+				roleCategory={pendingDelete}
+				pending={deleteCategoryMutation.isPending}
+				onOpenChange={(open) => !open && setPendingDelete(null)}
 				onConfirm={() => {
-					if (settings.pendingDelete) {
-						settings.deleteCategoryMutation.mutate({
+					if (pendingDelete) {
+						deleteCategoryMutation.mutate({
 							serverId,
-							roleCategoryId: settings.pendingDelete.roleCategoryId,
+							roleCategoryId: pendingDelete.id,
 						});
 					}
 				}}

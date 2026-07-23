@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { useOutletContext } from "react-router";
 import { RoleSettingsSection } from "@/features/role-settings";
 import { TopicCategorySettings } from "@/features/topic-categories";
@@ -20,7 +21,9 @@ export function ServerSettingsContent() {
 				}
 			/>
 			<SettingsSection title="역할 설정">
-				<RoleSettingsSection serverId={serverId} serverData={serverData} />
+				<Suspense fallback={null}>
+					<RoleSettingsSection serverId={serverId} />
+				</Suspense>
 			</SettingsSection>
 			<SettingsSection title="주제 카테고리">
 				<TopicCategorySettings

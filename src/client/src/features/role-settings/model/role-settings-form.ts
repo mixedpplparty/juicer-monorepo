@@ -1,13 +1,6 @@
-export const unassignedRoleCategoryValue = "unassigned";
+import type { RoleSettingsRole } from "juicer-shared";
 
-export interface RoleSettingsValue {
-	id: string;
-	name: string;
-	color: string;
-	roleCategoryId: number | null;
-	selfAssignable: boolean;
-	description: string | null;
-}
+export const unassignedRoleCategoryValue = "unassigned";
 
 export interface RoleSettingsFormValues {
 	roleCategoryId: string;
@@ -16,13 +9,13 @@ export interface RoleSettingsFormValues {
 }
 
 export function getRoleSettingsDefaultValues(
-	role: RoleSettingsValue,
+	role: RoleSettingsRole,
 ): RoleSettingsFormValues {
 	return {
 		roleCategoryId:
-			role.roleCategoryId === null
+			role.categoryId === null
 				? unassignedRoleCategoryValue
-				: String(role.roleCategoryId),
+				: String(role.categoryId),
 		selfAssignable: role.selfAssignable,
 		description: role.description ?? "",
 	};

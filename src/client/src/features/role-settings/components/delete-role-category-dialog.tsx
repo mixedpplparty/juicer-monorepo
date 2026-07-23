@@ -1,10 +1,10 @@
 import { Button } from "@mixedpplparty/juicer-m3/button";
 import { Dialog } from "@mixedpplparty/juicer-m3/dialog";
-import type { RoleCategory } from "juicer-shared";
+import type { RoleSettingsCategory } from "juicer-shared";
 import { deleteRoleCategoryDialogStyles } from "./delete-role-category-dialog.styles";
 
 interface DeleteRoleCategoryDialogProps {
-	roleCategory: RoleCategory | null;
+	roleCategory: RoleSettingsCategory | null;
 	pending: boolean;
 	onOpenChange: (open: boolean) => void;
 	onConfirm: () => void;

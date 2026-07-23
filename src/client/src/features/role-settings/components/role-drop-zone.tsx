@@ -1,18 +1,18 @@
 import { Chip } from "@mixedpplparty/juicer-m3/chip";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
 import { Text } from "@mixedpplparty/juicer-m3/text";
+import type { RoleSettingsRole } from "juicer-shared";
 import type { DragEvent, ReactNode } from "react";
-import type { RoleSettingsValue } from "../model/role-settings-form";
 import { roleDropZoneStyles } from "./role-drop-zone.styles";
 
 interface RoleDropZoneProps {
 	name: string;
-	roles: RoleSettingsValue[];
+	roles: RoleSettingsRole[];
 	categoryKey: string;
 	dragOverCategory: string | null;
 	disabled: boolean;
 	deleteAction?: ReactNode;
-	onRoleClick: (role: RoleSettingsValue) => void;
+	onRoleClick: (role: RoleSettingsRole) => void;
 	onDragStart: (roleId: string) => void;
 	onDragOverCategory: (categoryKey: string) => void;
 	onDrop: (event: DragEvent<HTMLElement>) => void;
@@ -62,30 +62,34 @@ export function RoleDropZone({
 			</div>
 			<div css={roleDropZoneStyles.chips}>
 				{roles.length > 0 ? (
-					roles.map((role) => (
-						<Chip
-							key={role.id}
-							type="button"
-							variant="assist"
-							draggable={!disabled}
-							disabled={disabled}
-							css={roleDropZoneStyles.chip}
-							onDragStart={(event) => {
-								event.dataTransfer.setData("text/plain", role.id);
-								event.dataTransfer.effectAllowed = "move";
-								onDragStart(role.id);
-							}}
-							onDragEnd={() => onDragOverCategory("")}
-							onClick={() => onRoleClick(role)}
-						>
-							<RoleIndicator
-								roleName={role.name}
-								color={role.color}
-								typeRole="label"
-								size="large"
-							/>
-						</Chip>
-					))
+					roles.map((role) => {
+						const roleDisabled = disabled || !role.editable;
+
+						return (
+							<Chip
+								key={role.id}
+								type="button"
+								variant="assist"
+								draggable={!roleDisabled}
+								disabled={roleDisabled}
+								css={roleDropZoneStyles.chip}
+								onDragStart={(event) => {
+									event.dataTransfer.setData("text/plain", role.id);
+									event.dataTransfer.effectAllowed = "move";
+									onDragStart(role.id);
+								}}
+								onDragEnd={() => onDragOverCategory("")}
+								onClick={() => onRoleClick(role)}
+							>
+								<RoleIndicator
+									roleName={role.name}
+									color={role.color}
+									typeRole="label"
+									size="large"
+								/>
+							</Chip>
+						);
+					})
 				) : (
 					<Text
 						as="p"

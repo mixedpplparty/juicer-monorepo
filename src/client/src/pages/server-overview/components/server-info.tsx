@@ -51,7 +51,6 @@ export function ServerInfo({
 				<Suspense fallback={<TopicListSkeleton />}>
 					<TopicList
 						serverId={serverId}
-						serverData={serverData}
 						searchQuery={searchQuery}
 					/>
 				</Suspense>
