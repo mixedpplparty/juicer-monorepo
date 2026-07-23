@@ -140,6 +140,9 @@ pub struct FilteredGuild {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub owner_nick: Option<String>,
+    // JSON numbers are parsed as `number` in JavaScript. ts-rs otherwise maps
+    // i64 to `bigint`, which does not match serde_json's wire representation.
+    #[ts(type = "number")]
     pub member_count: i64,
 }
 
@@ -174,6 +177,7 @@ pub struct FilteredServerDataDiscord {
     pub owner_id: String,
     pub owner_name: String,
     pub owner_nick: Option<String>,
+    #[ts(type = "number")]
     pub member_count: i64,
     pub roles: Option<Vec<ServerDataDiscordRole2>>,
     pub channels: Option<Vec<ServerDataDiscordChannel>>,

@@ -2,4 +2,4 @@
 import type { ServerDataDiscordChannel } from "./ServerDataDiscordChannel";
 import type { ServerDataDiscordRole2 } from "./ServerDataDiscordRole2";
 
-export type FilteredServerDataDiscord = { id: string, name: string, icon: string | null, ownerId: string, ownerName: string, ownerNick: string | null, memberCount: bigint, roles: Array<ServerDataDiscordRole2> | null, channels: Array<ServerDataDiscordChannel> | null, };
+export type FilteredServerDataDiscord = { id: string, name: string, icon: string | null, ownerId: string, ownerName: string, ownerNick: string | null, memberCount: number, roles: Array<ServerDataDiscordRole2> | null, channels: Array<ServerDataDiscordChannel> | null, };
