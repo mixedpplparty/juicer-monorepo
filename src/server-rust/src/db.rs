@@ -398,8 +398,10 @@ pub async fn create_game(
 
 pub struct UpdateGameParams {
     pub name: Option<String>,
-    pub description: Option<String>,
-    pub category_id: Option<i32>,
+    /// Outer `None` leaves the column unchanged; inner `None` writes SQL NULL.
+    pub description: Option<Option<String>>,
+    /// Outer `None` leaves the column unchanged; inner `None` writes SQL NULL.
+    pub category_id: Option<Option<i32>>,
     pub thumbnail: Option<Vec<u8>>,
     pub channels: Option<Vec<String>>,
     pub tag_ids: Option<Vec<i32>>,
@@ -432,7 +434,7 @@ pub async fn update_game(
     if game_exists.is_none() {
         return Err(HttpError::not_found("Game not found."));
     }
-    if let Some(category_id) = params.category_id {
+    if let Some(Some(category_id)) = params.category_id {
         ensure_category_belongs_to_server(&mut *tx, server_id, category_id).await?;
     }
     if let Some(tag_ids) = &params.tag_ids {
@@ -1444,6 +1446,64 @@ mod smoke_tests {
                 .await
                 .unwrap();
         assert_eq!(kept, 1, "absent tag_ids must not remove existing tags");
+
+        let unchanged: (Option<String>, Option<i32>) =
+            sqlx::query_as("SELECT description, category_id FROM games WHERE game_id = $1")
+                .bind(game.game_id)
+                .fetch_one(&db)
+                .await
+                .unwrap();
+        assert_eq!(unchanged.0.as_deref(), Some("automation"));
+        assert_eq!(unchanged.1, Some(cat.category_id));
+
+        update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: None,
+                description: Some(Some("updated description".into())),
+                category_id: Some(Some(cat.category_id)),
+                thumbnail: None,
+                channels: None,
+                tag_ids: None,
+                role_ids: None,
+            },
+        )
+        .await
+        .unwrap();
+        let updated: (Option<String>, Option<i32>) =
+            sqlx::query_as("SELECT description, category_id FROM games WHERE game_id = $1")
+                .bind(game.game_id)
+                .fetch_one(&db)
+                .await
+                .unwrap();
+        assert_eq!(updated.0.as_deref(), Some("updated description"));
+        assert_eq!(updated.1, Some(cat.category_id));
+
+        update_game(
+            &db,
+            game.game_id,
+            sid,
+            UpdateGameParams {
+                name: None,
+                description: Some(None),
+                category_id: Some(None),
+                thumbnail: None,
+                channels: None,
+                tag_ids: None,
+                role_ids: None,
+            },
+        )
+        .await
+        .unwrap();
+        let cleared: (Option<String>, Option<i32>) =
+            sqlx::query_as("SELECT description, category_id FROM games WHERE game_id = $1")
+                .bind(game.game_id)
+                .fetch_one(&db)
+                .await
+                .unwrap();
+        assert_eq!(cleared, (None, None));
 
         let missing = update_game(
             &db, 999_999, sid,

@@ -187,7 +187,16 @@ pub(crate) async fn update_game(
         .name
         .map(|name| validated_name(&name, GAME_NAME_MAX, "Name"))
         .transpose()?;
-    let description = normalized_description(body.description, DESCRIPTION_MAX)?;
+    let description = body
+        .description
+        .map(|value| normalized_description(value, DESCRIPTION_MAX))
+        .transpose()?;
+    let category_id = match body.category_id {
+        Some(Some(id)) if id <= 0 => {
+            return Err(HttpError::bad_request("Invalid category ID."));
+        }
+        value => value,
+    };
     let channels = body
         .channels
         .map(|ids| validated_discord_ids(ids, "channel"))
@@ -216,7 +225,7 @@ pub(crate) async fn update_game(
         UpdateGameParams {
             name,
             description,
-            category_id: body.category_id,
+            category_id,
             thumbnail: None,
             channels,
             tag_ids,

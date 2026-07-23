@@ -381,10 +381,10 @@ pub struct AssociableOptions {
 pub struct CreateGameRequestBody {
     pub name: String,
     #[serde(default)]
-    #[ts(optional)]
+    #[ts(optional, type = "string | null")]
     pub description: Option<String>,
     #[serde(default)]
-    #[ts(optional)]
+    #[ts(optional, type = "number | null")]
     pub category_id: Option<i32>,
 }
 
@@ -395,12 +395,14 @@ pub struct UpdateGameRequestBody {
     #[serde(default)]
     #[ts(optional)]
     pub name: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub description: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub category_id: Option<i32>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[ts(optional, type = "string | null")]
+    #[schema(value_type = Option<String>)]
+    pub description: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option")]
+    #[ts(optional, type = "number | null")]
+    #[schema(value_type = Option<i32>)]
+    pub category_id: Option<Option<i32>>,
     #[serde(default)]
     #[ts(optional)]
     pub channels: Option<Vec<String>>,
@@ -514,4 +516,32 @@ where
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct UpdateServerVerificationRequiredRequestBody {
     pub verification_required: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::UpdateGameRequestBody;
+
+    #[test]
+    fn update_game_distinguishes_absent_null_and_present_values() {
+        let absent: UpdateGameRequestBody = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(absent.description, None);
+        assert_eq!(absent.category_id, None);
+
+        let nulls: UpdateGameRequestBody = serde_json::from_value(serde_json::json!({
+            "description": null,
+            "categoryId": null
+        }))
+        .unwrap();
+        assert_eq!(nulls.description, Some(None));
+        assert_eq!(nulls.category_id, Some(None));
+
+        let values: UpdateGameRequestBody = serde_json::from_value(serde_json::json!({
+            "description": "updated",
+            "categoryId": 42
+        }))
+        .unwrap();
+        assert_eq!(values.description, Some(Some("updated".to_string())));
+        assert_eq!(values.category_id, Some(Some(42)));
+    }
 }
