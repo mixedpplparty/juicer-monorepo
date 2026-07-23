@@ -9,6 +9,7 @@ import type {
 } from "juicer-shared";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useNavigate } from "react-router";
 import {
 	TopicAssociationDialog,
 	type TopicAssociationOption,
@@ -48,6 +49,7 @@ export function TopicEditContent({
 }: TopicEditContentProps) {
 	const queryClient = useQueryClient();
 	const { enqueue } = useSnackbar();
+	const navigate = useNavigate();
 	const form = useForm<TopicUpdateFormInput, unknown, TopicUpdateFormOutput>({
 		defaultValues: getTopicEditDefaultValues(topic),
 		mode: "onChange",
@@ -59,7 +61,7 @@ export function TopicEditContent({
 	const [channelDialogOpen, setChannelDialogOpen] = useState(false);
 	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
-	useUnsavedChangesWarning(isDirty);
+	const allowNavigation = useUnsavedChangesWarning(isDirty);
 
 	const mutation = useMutation({
 		mutationFn: updateTopic,
@@ -91,6 +93,8 @@ export function TopicEditContent({
 			]);
 			form.reset(getTopicEditResetValues(body));
 			enqueue("주제를 저장했습니다.");
+			allowNavigation();
+			navigate(`/servers/${serverId}/topics/${topicId}`);
 		} catch (error) {
 			enqueue(
 				error instanceof Error ? error.message : "주제를 저장하지 못했습니다.",
