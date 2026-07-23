@@ -140,6 +140,9 @@ pub struct FilteredGuild {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub owner_nick: Option<String>,
+    // JSON numbers are parsed as `number` in JavaScript. ts-rs otherwise maps
+    // i64 to `bigint`, which does not match serde_json's wire representation.
+    #[ts(type = "number")]
     pub member_count: i64,
 }
 
@@ -174,6 +177,7 @@ pub struct FilteredServerDataDiscord {
     pub owner_id: String,
     pub owner_name: String,
     pub owner_nick: Option<String>,
+    #[ts(type = "number")]
     pub member_count: i64,
     pub roles: Option<Vec<ServerDataDiscordRole2>>,
     pub channels: Option<Vec<ServerDataDiscordChannel>>,
@@ -188,16 +192,20 @@ pub struct ServerData {
     pub server_data_discord: FilteredServerDataDiscord,
 }
 
-/// Raw Discord user object (`/users/@me`) passed through untouched.
-pub type ApiUser = serde_json::Value;
+/// Subset of Discord's `APIUser` returned to the frontend.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct MyInfoUserData {
+    pub id: String,
+    pub username: String,
+    pub avatar: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct MyInfo {
-    #[ts(type = "any")]
-    #[schema(value_type = Object)]
-    pub user_data: ApiUser,
+    pub user_data: MyInfoUserData,
     pub guilds: Vec<FilteredGuild>,
 }
 
