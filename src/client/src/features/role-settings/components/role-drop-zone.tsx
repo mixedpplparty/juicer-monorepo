@@ -14,7 +14,8 @@ interface RoleDropZoneProps {
 	deleteAction?: ReactNode;
 	onRoleClick: (role: RoleSettingsRole) => void;
 	onDragStart: (roleId: string) => void;
-	onDragOverCategory: (categoryKey: string) => void;
+	onDragOverCategory: (categoryKey: string | null) => void;
+	onDragEnd: () => void;
 	onDrop: (event: DragEvent<HTMLElement>) => void;
 }
 
@@ -28,6 +29,7 @@ export function RoleDropZone({
 	onRoleClick,
 	onDragStart,
 	onDragOverCategory,
+	onDragEnd,
 	onDrop,
 }: RoleDropZoneProps) {
 	return (
@@ -43,7 +45,7 @@ export function RoleDropZone({
 			}}
 			onDragLeave={(event) => {
 				if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-					onDragOverCategory("");
+					onDragOverCategory(null);
 				}
 			}}
 			onDrop={onDrop}
@@ -78,7 +80,7 @@ export function RoleDropZone({
 									event.dataTransfer.effectAllowed = "move";
 									onDragStart(role.id);
 								}}
-								onDragEnd={() => onDragOverCategory("")}
+								onDragEnd={onDragEnd}
 								onClick={() => onRoleClick(role)}
 							>
 								<RoleIndicator
