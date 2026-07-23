@@ -16,6 +16,7 @@ export type { MessageOnSuccess } from "./MessageOnSuccess";
 export type { ModifyTagsOfGameRequestBody } from "./ModifyTagsOfGameRequestBody";
 export type { MyDataInServer } from "./MyDataInServer";
 export type { MyInfo } from "./MyInfo";
+export type { MyInfoUserData } from "./MyInfoUserData";
 export type { NameRequiredRequestBody } from "./NameRequiredRequestBody";
 export type { Role } from "./Role";
 export type { RoleCategory } from "./RoleCategory";

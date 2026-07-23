@@ -192,16 +192,20 @@ pub struct ServerData {
     pub server_data_discord: FilteredServerDataDiscord,
 }
 
-/// Raw Discord user object (`/users/@me`) passed through untouched.
-pub type ApiUser = serde_json::Value;
+/// Subset of Discord's `APIUser` returned to the frontend.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[ts(export, export_to = "../../shared/src/types/generated/")]
+pub struct MyInfoUserData {
+    pub id: String,
+    pub username: String,
+    pub avatar: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "../../shared/src/types/generated/")]
 pub struct MyInfo {
-    #[ts(type = "any")]
-    #[schema(value_type = Object)]
-    pub user_data: ApiUser,
+    pub user_data: MyInfoUserData,
     pub guilds: Vec<FilteredGuild>,
 }
 

@@ -7,14 +7,14 @@ use axum_extra::extract::CookieJar;
 
 use crate::discord::{bot, oauth};
 use crate::error::{HttpError, Result};
-use crate::models::MyInfo;
+use crate::models::{MyInfo, MyInfoUserData};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/me", get(me))
 }
 
-/// GET /discord/user/me — Discord user data passthrough + mutual guilds.
+/// GET /discord/user/me — minimal Discord user profile + mutual guilds.
 #[utoipa::path(get, path = "/discord/user/me", tag = "user", operation_id = "userMe",
     responses((status = 200, body = MyInfo), (status = 401, description = "Not authenticated")),
     security(("discord_cookie" = [])))]
@@ -24,14 +24,43 @@ pub(crate) async fn me(State(state): State<AppState>, jar: CookieJar) -> Result<
         .map(|c| c.value().to_string())
         .ok_or_else(|| HttpError::unauthorized("Unauthorized"))?;
 
-    let user_data = oauth::get_discord_oauth_user_data(&state, &access_token).await?;
-    let user_id = user_data
+    let discord_user = oauth::get_discord_oauth_user_data(&state, &access_token).await?;
+    let user_id = discord_user
         .get("id")
         .and_then(|v| v.as_str())
-        .and_then(|s| s.parse::<u64>().ok())
+        .ok_or_else(|| HttpError::internal("Discord error."))?;
+    let serenity_user_id = user_id
+        .parse::<u64>()
+        .ok()
         .map(serenity::model::id::UserId::new)
         .ok_or_else(|| HttpError::internal("Discord error."))?;
-    let guilds = bot::get_all_servers_user_and_bot_are_in(&state, user_id).await?;
+    let username = discord_user
+        .get("username")
+        .and_then(|value| value.as_str())
+        .map(str::to_owned)
+        .ok_or_else(|| HttpError::internal("Discord error."))?;
+    let avatar = discord_user
+        .get("avatar")
+        .map(|value| {
+            if value.is_null() {
+                Ok(None)
+            } else {
+                value
+                    .as_str()
+                    .map(|avatar| Some(avatar.to_owned()))
+                    .ok_or_else(|| HttpError::internal("Discord error."))
+            }
+        })
+        .transpose()?
+        .flatten();
+    let guilds = bot::get_all_servers_user_and_bot_are_in(&state, serenity_user_id).await?;
 
-    Ok(Json(MyInfo { user_data, guilds }))
+    Ok(Json(MyInfo {
+        user_data: MyInfoUserData {
+            id: user_id.to_owned(),
+            username,
+            avatar,
+        },
+        guilds,
+    }))
 }
