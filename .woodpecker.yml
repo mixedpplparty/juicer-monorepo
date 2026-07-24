@@ -8,7 +8,7 @@ steps:
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
-      registry: 192.168.1.101:5000
+      registry: http://192.168.1.101:5000
       insecure: true
       dockerfile: src/client.Dockerfile
       context: src/
@@ -27,7 +27,7 @@ steps:
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
-      registry: 192.168.1.101:5000
+      registry: http://192.168.1.101:5000
       insecure: true
       dockerfile: src/server.Dockerfile
       context: src/
@@ -40,7 +40,7 @@ steps:
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-db
-      registry: 192.168.1.101:5000
+      registry: http://192.168.1.101:5000
       insecure: true
       dockerfile: src/db.Dockerfile
       context: src/
