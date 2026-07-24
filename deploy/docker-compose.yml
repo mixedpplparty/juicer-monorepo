@@ -1,0 +1,67 @@
+# juicer production stack — deployed via Woodpecker CI/CD
+# Registry: 192.168.1.101:5000/kuukan-app/juicer-*
+# Domain: juicer.kuukan.dev (Traefik on infra network)
+
+services:
+  db:
+    image: 192.168.1.101:5000/kuukan-app/juicer-db:latest
+    container_name: juicer-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p ${POSTGRES_PORT:-5432}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    image: 192.168.1.101:5000/kuukan-app/juicer-backend:latest
+    container_name: juicer-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+      - infra
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.juicer-backend.rule=Host(`juicer.kuukan.dev`) && PathPrefix(`/backend`)"
+      - "traefik.http.routers.juicer-backend.entrypoints=websecure"
+      - "traefik.http.routers.juicer-backend.tls.certresolver=cloudflare"
+      - "traefik.http.routers.juicer-backend.middlewares=juicer-backend-stripprefix,default-chain@file"
+      - "traefik.http.middlewares.juicer-backend-stripprefix.stripprefix.prefixes=/backend"
+      - "traefik.http.services.juicer-backend.loadbalancer.server.port=8000"
+
+  frontend:
+    image: 192.168.1.101:5000/kuukan-app/juicer-frontend:latest
+    container_name: juicer-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - default
+      - infra
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.juicer-frontend.rule=Host(`juicer.kuukan.dev`)"
+      - "traefik.http.routers.juicer-frontend.entrypoints=websecure"
+      - "traefik.http.routers.juicer-frontend.tls.certresolver=cloudflare"
+      - "traefik.http.routers.juicer-frontend.priority=1"
+      - "traefik.http.routers.juicer-frontend.middlewares=default-chain@file"
+      - "traefik.http.services.juicer-frontend.loadbalancer.server.port=8080"
+
+volumes:
+  postgres_data:
+
+networks:
+  infra:
+    external: true
