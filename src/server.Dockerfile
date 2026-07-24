@@ -14,9 +14,7 @@ WORKDIR /app
 # Build with BuildKit cache mounts for the cargo registry and target dir so
 # dependency compilation is reused across builds.
 COPY server-rust ./server-rust
-RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry \
-    --mount=type=cache,id=cargo-target-musl,target=/app/server-rust/target \
-    cargo build --release --manifest-path server-rust/Cargo.toml \
+RUN cargo build --release --manifest-path server-rust/Cargo.toml \
     && cp server-rust/target/release/juicer-server /app/juicer-server
 
 FROM scratch AS runner

@@ -23,8 +23,8 @@ WORKDIR /app
 COPY package.json tsconfig.json pnpm*yaml ./
 COPY server/package.json server/pnpm-lock.yaml ./server/
 COPY shared/package.json ./shared/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --ignore-scripts
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prefix /app/server --ignore-scripts
+RUN pnpm install --ignore-scripts
+RUN pnpm install --prefix /app/server --ignore-scripts
 
 # Copy source code and build (after install so source edits don't bust the
 # dependency layer).

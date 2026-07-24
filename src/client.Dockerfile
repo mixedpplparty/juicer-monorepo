@@ -21,7 +21,7 @@ RUN corepack enable
 COPY package.json tsconfig.json pnpm*yaml ./
 COPY client/package.json ./client/
 COPY shared/package.json ./shared/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --ignore-scripts
+RUN pnpm install --ignore-scripts
 
 # Copy the rest of the source code (after install so source edits don't bust the
 # dependency layer).

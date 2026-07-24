@@ -4,11 +4,11 @@ when:
 
 steps:
   - name: build-frontend
-    image: woodpeckerci/plugin-docker-buildx
+    image: plugins/docker
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
-      registry: http://192.168.1.101:5000
+      registry: 192.168.1.101:5000
       insecure: true
       dockerfile: src/client.Dockerfile
       context: src/
@@ -23,11 +23,11 @@ steps:
         - "VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=${VITE_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Fjuicer.kuukan.dev%2Fbackend%2Fdiscord%2Fauth%2Fcallback&scope=identify"
 
   - name: build-backend
-    image: woodpeckerci/plugin-docker-buildx
+    image: plugins/docker
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
-      registry: http://192.168.1.101:5000
+      registry: 192.168.1.101:5000
       insecure: true
       dockerfile: src/server.Dockerfile
       context: src/
@@ -36,11 +36,11 @@ steps:
         - ${CI_COMMIT_SHA}
 
   - name: build-db
-    image: woodpeckerci/plugin-docker-buildx
+    image: plugins/docker
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-db
-      registry: http://192.168.1.101:5000
+      registry: 192.168.1.101:5000
       insecure: true
       dockerfile: src/db.Dockerfile
       context: src/
