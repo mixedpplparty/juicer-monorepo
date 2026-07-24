@@ -58,4 +58,4 @@ steps:
       key:
         from_secret: ssh_key
       command:
-        - cd ~/projects/apps/juicer && docker compose pull && docker compose up -d
+        - cd ~/projects/apps/juicer && docker compose pull && docker compose up -d --force-recreate
