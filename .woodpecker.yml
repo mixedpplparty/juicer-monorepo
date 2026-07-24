@@ -10,6 +10,7 @@ steps:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
       registry: 192.168.1.101:5000
       insecure: true
+      no_cache: true
       dockerfile: src/client.Dockerfile
       context: src/
       tags:
