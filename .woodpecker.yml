@@ -4,7 +4,7 @@ when:
 
 steps:
   - name: build-frontend
-    image: plugins/docker
+    image: woodpeckerci/plugin-docker-buildx
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
@@ -23,7 +23,7 @@ steps:
         - "VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=${VITE_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Fjuicer.kuukan.dev%2Fbackend%2Fdiscord%2Fauth%2Fcallback&scope=identify"
 
   - name: build-backend
-    image: plugins/docker
+    image: woodpeckerci/plugin-docker-buildx
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
@@ -36,7 +36,7 @@ steps:
         - ${CI_COMMIT_SHA}
 
   - name: build-db
-    image: plugins/docker
+    image: woodpeckerci/plugin-docker-buildx
     depends_on: []
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-db
