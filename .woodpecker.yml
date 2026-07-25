@@ -25,16 +25,36 @@ steps:
         - "VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=1413382444882858024&permissions=268438576&integration_type=0&scope=bot"
         - "VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=1413382444882858024&response_type=code&redirect_uri=https%3A%2F%2Fjuicer.kuukan.dev%2Fbackend%2Fdiscord%2Fauth%2Fcallback&scope=identify"
 
-  - name: build-backend
+  # Step 1: Build & push the builder stage (contains compiled dependencies).
+  # This image is the cache source — its layers include the full cargo target
+  # dir, so subsequent builds skip dependency recompilation.
+  - name: build-backend-cache
     image: plugins/docker
     depends_on: []
+    settings:
+      repo: 192.168.1.101:5000/kuukan-app/juicer-backend-builder
+      registry: 192.168.1.101:5000
+      insecure: true
+      pull_image: false
+      target: builder
+      cache_from:
+        - 192.168.1.101:5000/kuukan-app/juicer-backend-builder:latest
+      dockerfile: src/server.Dockerfile
+      context: src/
+      tags:
+        - latest
+
+  # Step 2: Build the final scratch image using the cached builder stage.
+  - name: build-backend
+    image: plugins/docker
+    depends_on: [build-backend-cache]
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
       registry: 192.168.1.101:5000
       insecure: true
       pull_image: false
       cache_from:
-        - 192.168.1.101:5000/kuukan-app/juicer-backend:latest
+        - 192.168.1.101:5000/kuukan-app/juicer-backend-builder:latest
       dockerfile: src/server.Dockerfile
       context: src/
       tags:
