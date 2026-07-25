@@ -4,15 +4,27 @@
 # The whole stack is rustls-based (no OpenSSL) and the alpine builder produces
 # a fully static musl binary, so the runtime image is `scratch`: nothing but
 # the binary and the CA bundle (~a tenth of the previous debian-slim image).
-FROM rust:1-alpine AS builder
+#
+# Pinned toolchain for reproducible builds (bump deliberately when needed).
+FROM rust:1.88-alpine AS builder
 
 # musl-dev for ring's C sources; ca-certificates only to copy into the runner.
 RUN apk add --no-cache musl-dev ca-certificates
 
 WORKDIR /app
 
-# Build with BuildKit cache mounts for the cargo registry and target dir so
-# dependency compilation is reused across builds.
+# --- Dependency pre-compilation layer (cached across source-only changes) ---
+# Copy ONLY the manifests + lockfile first, then build every dependency against
+# a stub binary. As long as Cargo.toml/Cargo.lock are unchanged, this layer is
+# reused and only the final crate recompiles when source edits land — turning a
+# ~7 minute full rebuild into a ~1 minute incremental one.
+COPY server-rust/Cargo.toml server-rust/Cargo.lock ./server-rust/
+RUN mkdir -p server-rust/src \
+    && printf 'fn main() {}\n' > server-rust/src/main.rs \
+    && cargo build --release --manifest-path server-rust/Cargo.toml --bins \
+    && rm -rf server-rust/src
+
+# --- Real build (fast: deps come from the cached layer above) ---
 COPY server-rust ./server-rust
 RUN cargo build --release --manifest-path server-rust/Cargo.toml \
     && cp server-rust/target/release/juicer-server /app/juicer-server

@@ -10,7 +10,8 @@ steps:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
       registry: 192.168.1.101:5000
       insecure: true
-      no_cache: true
+      cache_from:
+        - 192.168.1.101:5000/kuukan-app/juicer-frontend:latest
       dockerfile: src/client.Dockerfile
       context: src/
       tags:
@@ -30,6 +31,8 @@ steps:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
       registry: 192.168.1.101:5000
       insecure: true
+      cache_from:
+        - 192.168.1.101:5000/kuukan-app/juicer-backend:latest
       dockerfile: src/server.Dockerfile
       context: src/
       tags:
@@ -43,6 +46,8 @@ steps:
       repo: 192.168.1.101:5000/kuukan-app/juicer-db
       registry: 192.168.1.101:5000
       insecure: true
+      cache_from:
+        - 192.168.1.101:5000/kuukan-app/juicer-db:latest
       dockerfile: src/db.Dockerfile
       context: src/
       tags:
