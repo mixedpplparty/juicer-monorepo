@@ -114,10 +114,10 @@ pub(crate) async fn get_server_data(
 }
 
 /// Admin required.
-/// POST /{serverId}/create — create server (also creates the "verification" role category).
+/// POST /{serverId}/create — create server, its verification category, and sync its roles.
 #[utoipa::path(post, path = "/discord/servers/{serverId}/create", tag = "servers",
     params(("serverId" = String, Path, description = "Discord server (guild) ID")),
-    responses((status = 200, description = "Server and verification role category created"), (status = 400, description = "Server already exists"), (status = 403, description = "Missing manage permission or server verification required")),
+    responses((status = 200, description = "Server created and roles synchronized"), (status = 400, description = "Server already exists"), (status = 403, description = "Missing manage permission or server verification required")),
     security(("discord_cookie" = [])))]
 pub(crate) async fn create_server(
     State(state): State<AppState>,
@@ -130,8 +130,9 @@ pub(crate) async fn create_server(
             .await?;
     if authed.manage_guild_permission {
         db::create_server_with_verification_category(&state.db, &server_id).await?;
+        bot::sync_roles_with_db_and_discord(&state, &server_id).await?;
         return Ok(Json(json!({
-            "message": "Server created. Roles need to be synced."
+            "message": "Server created."
         })));
     }
     Err(HttpError::forbidden(
