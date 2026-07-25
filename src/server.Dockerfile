@@ -16,8 +16,7 @@ WORKDIR /app
 # --- Dependency pre-compilation layer (cached across source-only changes) ---
 # Copy ONLY the manifests + lockfile first, then build every dependency against
 # a stub binary. As long as Cargo.toml/Cargo.lock are unchanged, this layer is
-# reused and only the final crate recompiles when source edits land — turning a
-# ~7 minute full rebuild into a ~1 minute incremental one.
+# reused and only the final crate recompiles when source edits land.
 COPY server-rust/Cargo.toml server-rust/Cargo.lock ./server-rust/
 RUN mkdir -p server-rust/src \
     && printf 'fn main() {}\n' > server-rust/src/main.rs \
