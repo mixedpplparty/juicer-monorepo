@@ -1,5 +1,5 @@
-import { HttpError } from "@/shared/api/fetch-json";
-import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { HttpError, setHttpErrorHandler } from "@/shared/api/fetch-json";
 
 function handleApiError(error: unknown) {
 	if (!(error instanceof HttpError) || error.status !== 401) {
@@ -20,12 +20,7 @@ function handleApiError(error: unknown) {
 }
 
 export const queryClient = new QueryClient({
-	queryCache: new QueryCache({
-		onError: handleApiError,
-	}),
-	mutationCache: new MutationCache({
-		onError: handleApiError,
-	}),
+	queryCache: new QueryCache({ onError: handleApiError }),
 	defaultOptions: {
 		queries: {
 			retry: (failureCount, error) =>
@@ -33,5 +28,7 @@ export const queryClient = new QueryClient({
 		},
 	},
 });
+
+setHttpErrorHandler(handleApiError);
 
 export default queryClient;

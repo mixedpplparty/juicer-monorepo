@@ -1,6 +1,6 @@
 import { Skeleton } from "@mixedpplparty/juicer-m3/skeleton";
-import { SkeletonRows } from "@/pages/server-overview/components/loading-skeletons";
-import { loadingSkeletonStyles } from "@/pages/server-overview/components/loading-skeletons.styles";
+import { SkeletonRows } from "@/features/server/components/loading-skeletons";
+import { loadingSkeletonStyles } from "@/features/server/components/loading-skeletons.styles";
 
 export function TopicDetailsSkeleton() {
 	return (

@@ -1,36 +1,12 @@
-import { Suspense } from "react";
-import { Outlet, useMatch } from "react-router";
-import ServerList from "@/pages/server-list/components/server-list";
-import { ServerListSkeleton } from "@/pages/server-list/components/server-list-skeleton";
-import { useMediaQuery } from "@/shared/browser/use-media-query";
-import breakpoints from "@/shared/styles/breakpoints";
-import { serversLayoutStyles } from "./servers-layout.styles";
+import { ServersLayoutPresenter } from "./servers-layout.presenter";
+import { ServersLayoutView } from "./servers-layout.view";
 
+export type { ServersLayoutProps } from "./servers-layout.presenter";
 export function ServersLayout() {
-	const isViewingServer = useMatch("/servers/:serverId/*") !== null;
-	const isDesktop = useMediaQuery(`(min-width: ${breakpoints.tablet})`);
-	const shouldRenderServerList = isDesktop || !isViewingServer;
-
 	return (
-		<div css={serversLayoutStyles.root}>
-			{shouldRenderServerList && (
-				<aside aria-label="서버 탐색">
-					<Suspense fallback={<ServerListSkeleton />}>
-						<ServerList />
-					</Suspense>
-				</aside>
-			)}
-
-			<main
-				css={[
-					serversLayoutStyles.content,
-					!isViewingServer && serversLayoutStyles.contentHiddenOnMobile,
-				]}
-			>
-				<Outlet />
-			</main>
-		</div>
+		<ServersLayoutPresenter>
+			{(model) => <ServersLayoutView {...model} />}
+		</ServersLayoutPresenter>
 	);
 }
-
 export default ServersLayout;

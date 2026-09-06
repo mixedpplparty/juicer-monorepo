@@ -4,20 +4,21 @@ import {
 	RoleSettingsSection,
 	RoleSettingsSkeleton,
 } from "@/features/role-settings";
+import type { ServerDetailsOutletContext } from "@/features/server/model/server-details-context";
 import { TopicCategorySettings } from "@/features/topic-categories";
-import type { ServerDetailsOutletContext } from "@/pages/server-overview/server-details-context";
 import ServerDataSettings from "../server-data/server-data-settings";
 import VerificationSettings from "../verification/verification-settings";
 import { serverSettingsPageStyles } from "./server-settings-content.styles";
 import SettingsSection from "./settings-section";
 
 export function ServerSettingsContent() {
-	const { serverId, serverData } =
+	const { serverId, serverData, refetchServer } =
 		useOutletContext<ServerDetailsOutletContext>();
 
 	return (
 		<div css={serverSettingsPageStyles.root}>
 			<VerificationSettings
+				refetchServer={refetchServer}
 				serverId={serverId}
 				verificationRequired={
 					serverData.serverDataDb?.verificationRequired ?? false
@@ -30,6 +31,7 @@ export function ServerSettingsContent() {
 			</SettingsSection>
 			<SettingsSection title="주제 카테고리">
 				<TopicCategorySettings
+					refetchServer={refetchServer}
 					serverId={serverId}
 					categories={serverData.serverDataDb?.categories ?? []}
 				/>

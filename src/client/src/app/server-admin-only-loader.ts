@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { serverQueryOptions } from "@/pages/server-overview/api/queries";
+import { serverQueryOptions } from "@/features/server/api/queries";
 import { queryClient } from "./query-client";
 
 export default async function serverAdminOnlyLoader({
