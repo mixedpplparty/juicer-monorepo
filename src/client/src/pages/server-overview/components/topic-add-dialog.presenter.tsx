@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSnackbar } from "@mixedpplparty/juicer-m3/snackbar";
 import type { ServerData } from "juicer-shared";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -13,6 +14,7 @@ import {
 import type { Refetch } from "@/shared/api/refetch";
 import { useLoading } from "@/shared/async/use-loading";
 import { useUnsavedChangesWarning } from "@/shared/browser/use-unsaved-changes-warning";
+import { refreshAfterSuccess } from "@/shared/notifications/refresh-after-success";
 
 const defaultValues: TopicCreateFormInput = {
 	name: "",
@@ -34,6 +36,7 @@ function useTopicAddDialogModel({
 	serverData,
 	onOpenChange,
 }: TopicAddDialogProps) {
+	const { enqueue } = useSnackbar();
 	const form = useForm<TopicCreateFormInput, unknown, TopicCreateFormOutput>({
 		defaultValues,
 		mode: "onChange",
@@ -57,17 +60,18 @@ function useTopicAddDialogModel({
 		await withAddTopic(async () => {
 			try {
 				await createTopic({ serverId, body });
-
-				await refetchTopics();
-				form.reset(defaultValues);
-				onOpenChange(false);
 			} catch (error) {
 				setAddTopicError(
 					error instanceof Error
 						? error
 						: new Error("요청을 처리하지 못했습니다."),
 				);
+				return;
 			}
+
+			form.reset(defaultValues);
+			onOpenChange(false);
+			await refreshAfterSuccess(refetchTopics, enqueue, "주제를 추가했습니다.");
 		});
 	}
 	const resetForm = () => {

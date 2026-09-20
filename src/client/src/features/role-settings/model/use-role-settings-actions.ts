@@ -5,6 +5,7 @@ import type { RoleSettingsFormOutput } from "@/features/role-settings/model/role
 import { invalidateServerRoleState } from "@/shared/api/query-invalidation";
 import type { Refetch } from "@/shared/api/refetch";
 import { useLoading } from "@/shared/async/use-loading";
+import { refreshAfterSuccess } from "@/shared/notifications/refresh-after-success";
 import { showRequestError } from "@/shared/notifications/show-request-error";
 import {
 	createRoleCategory,
@@ -28,13 +29,17 @@ export function useRoleSettingsActions(
 		return withCreating(async () => {
 			try {
 				await createRoleCategory({ serverId, body });
-				await refetchRoles();
-				enqueue("역할 분류를 추가했습니다.");
-				return true;
 			} catch (error) {
 				showRequestError(error, enqueue);
 				return false;
 			}
+
+			await refreshAfterSuccess(
+				refetchRoles,
+				enqueue,
+				"역할 분류를 추가했습니다.",
+			);
+			return true;
 		});
 	}
 	async function moveRole(roleId: string, roleCategoryId: number | null) {

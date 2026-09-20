@@ -6,6 +6,7 @@ import { useState } from "react";
 import { invalidateServerTopicState } from "@/shared/api/query-invalidation";
 import type { Refetch } from "@/shared/api/refetch";
 import { useLoading } from "@/shared/async/use-loading";
+import { refreshAfterSuccess } from "@/shared/notifications/refresh-after-success";
 import { showRequestError } from "@/shared/notifications/show-request-error";
 import { createTopicCategory, deleteTopicCategory } from "../api/mutations";
 export interface TopicCategorySettingsProps {
@@ -30,13 +31,17 @@ function useTopicCategorySettingsModel({
 		await withSubmitCategory(async () => {
 			try {
 				await createTopicCategory({ serverId, body });
-
-				await refetchServer();
-				setCreating(false);
-				enqueue("주제 카테고리를 추가했습니다.");
 			} catch (error) {
 				showRequestError(error, enqueue);
+				return;
 			}
+
+			setCreating(false);
+			await refreshAfterSuccess(
+				refetchServer,
+				enqueue,
+				"주제 카테고리를 추가했습니다.",
+			);
 		});
 	}
 	const [removeCategoryPending, withRemoveCategory] = useLoading();
