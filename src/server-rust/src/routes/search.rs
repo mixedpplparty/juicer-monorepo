@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/search.ts`.
+//! Topic search routes.
 //! Nested under `/discord/servers/{serverId}/search`.
 
 use std::collections::HashSet;

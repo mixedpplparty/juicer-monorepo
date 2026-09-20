@@ -56,11 +56,15 @@ impl Config {
         }
     }
 
-    pub fn database_url(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.pg_user, self.pg_password, self.pg_host, self.pg_port, self.pg_database
-        )
+    pub fn database_options(&self) -> sqlx::postgres::PgConnectOptions {
+        // Avoid interpolating credentials into a URL: passwords may contain
+        // @, :, / or other URI delimiters.
+        sqlx::postgres::PgConnectOptions::new()
+            .host(&self.pg_host)
+            .port(self.pg_port)
+            .username(&self.pg_user)
+            .password(&self.pg_password)
+            .database(&self.pg_database)
     }
 
     pub fn is_production(&self) -> bool {

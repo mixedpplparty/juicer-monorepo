@@ -1,0 +1,4 @@
+# SQLx hashes migration bytes. Keep Windows and Linux builds identical.
+*.sql text eol=lf
+*.sh text eol=lf
+scripts/fixtures/docker text eol=lf

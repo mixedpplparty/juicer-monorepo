@@ -4,6 +4,7 @@ mod discord;
 mod error;
 mod member_roles;
 mod middleware;
+mod migrations;
 mod models;
 mod routes;
 mod state;
@@ -17,6 +18,22 @@ use serenity::prelude::GatewayIntents;
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args == ["healthcheck"] {
+        let healthy = reqwest::Client::new()
+            .get("http://127.0.0.1:8000/health/ready")
+            .timeout(std::time::Duration::from_secs(4))
+            .send()
+            .await
+            .is_ok_and(|response| response.status().is_success());
+        std::process::exit(if healthy { 0 } else { 1 });
+    }
+    let migrating = args == ["migrate"] || args == ["migrate", "--adopt-legacy"];
+    let checking = args == ["check-db"];
+    if !args.is_empty() && !migrating && !checking {
+        eprintln!("Usage: juicer-server [migrate [--adopt-legacy] | check-db | healthcheck]");
+        std::process::exit(2);
+    }
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -29,13 +46,26 @@ async fn main() {
 
     let db = sqlx::postgres::PgPoolOptions::new()
         .max_connections(10)
-        .connect(&config.database_url())
+        .acquire_timeout(std::time::Duration::from_secs(30))
+        .connect_with(config.database_options())
         .await
         .expect("failed to connect to Postgres");
 
-    db::ensure_verification_category_schema(&db)
-        .await
-        .expect("failed to ensure verification category schema");
+    if migrating {
+        if let Err(error) = migrations::run(&db, args.len() == 2).await {
+            tracing::error!(%error, "Migration failed; application was not started");
+            std::process::exit(1);
+        }
+        tracing::info!("Database migrations complete");
+        return;
+    }
+    if let Err(error) = migrations::check(&db).await {
+        tracing::error!(%error, "Database is not ready for this release; run migrate first");
+        std::process::exit(1);
+    }
+    if checking {
+        return;
+    }
 
     // Serenity gateway client: Guilds intent only, mirroring the old bot.
     let mut discord_client =
@@ -111,5 +141,3 @@ async fn main() {
     .await
     .expect("server error");
 }
-// cache-test: 1784964187
-// cache-verify-1784965652

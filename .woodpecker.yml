@@ -1,11 +1,49 @@
 when:
-  branch: [main]
-  event: [push, manual]
+  - event: pull_request
+    branch: main
+  - event: [push, manual]
+    branch: main
+
+services:
+  - name: postgres
+    image: postgres:17.10-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    environment:
+      POSTGRES_PASSWORD: migration-test-only
 
 steps:
+  - name: test-backend
+    image: rust:1.88-alpine
+    depends_on: []
+    environment:
+      DATABASE_URL: postgres://postgres:migration-test-only@postgres:5432/postgres
+    commands:
+      - apk add --no-cache musl-dev postgresql-client git
+      - sh scripts/test-backend.sh
+
+  - name: test-frontend
+    image: node:24-alpine
+    depends_on: []
+    commands:
+      - corepack enable
+      - cd src
+      - pnpm install --frozen-lockfile
+      - pnpm run build:client
+
+  - name: test-deployment
+    image: node:24-alpine
+    depends_on: []
+    commands:
+      - apk add --no-cache bash coreutils util-linux docker-cli docker-cli-compose
+      - bash -n deploy/deploy.sh
+      - node --test scripts/deploy.test.mjs
+      - node scripts/check-compose.mjs
+
   - name: build-frontend
     image: plugins/docker
-    depends_on: []
+    depends_on: [test-backend, test-frontend, test-deployment]
+    when:
+      event: [push, manual]
+      branch: main
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-frontend
       registry: 192.168.1.101:5000
@@ -15,22 +53,21 @@ steps:
         - 192.168.1.101:5000/kuukan-app/juicer-frontend:latest
       dockerfile: src/client.Dockerfile
       context: src/
-      tags:
-        - latest
-        - ${CI_COMMIT_SHA}
+      tags: [latest, "${CI_COMMIT_SHA}"]
       build_args:
+        - VCS_REF=${CI_COMMIT_SHA}
         - VITE_BACKEND_URI=https://juicer.kuukan.dev/backend
         - VITE_API_ENDPOINT=https://discord.com/api/v10
         - VITE_CLIENT_ID=1413382444882858024
         - "VITE_BOT_INSTALL_URI=https://discord.com/oauth2/authorize?client_id=1413382444882858024&permissions=268438576&integration_type=0&scope=bot"
         - "VITE_USER_AUTH_URI=https://discord.com/oauth2/authorize?client_id=1413382444882858024&response_type=code&redirect_uri=https%3A%2F%2Fjuicer.kuukan.dev%2Fbackend%2Fdiscord%2Fauth%2Fcallback&scope=identify"
 
-  # Step 1: Build & push the builder stage (contains compiled dependencies).
-  # This image is the cache source — its layers include the full cargo target
-  # dir, so subsequent builds skip dependency recompilation.
   - name: build-backend-cache
     image: plugins/docker
-    depends_on: []
+    depends_on: [test-backend, test-frontend, test-deployment]
+    when:
+      event: [push, manual]
+      branch: main
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend-builder
       registry: 192.168.1.101:5000
@@ -41,13 +78,14 @@ steps:
         - 192.168.1.101:5000/kuukan-app/juicer-backend-builder:latest
       dockerfile: src/server.Dockerfile
       context: src/
-      tags:
-        - latest
+      tags: [latest]
 
-  # Step 2: Build the final scratch image using the cached builder stage.
   - name: build-backend
     image: plugins/docker
     depends_on: [build-backend-cache]
+    when:
+      event: [push, manual]
+      branch: main
     settings:
       repo: 192.168.1.101:5000/kuukan-app/juicer-backend
       registry: 192.168.1.101:5000
@@ -57,33 +95,36 @@ steps:
         - 192.168.1.101:5000/kuukan-app/juicer-backend-builder:latest
       dockerfile: src/server.Dockerfile
       context: src/
-      tags:
-        - latest
-        - ${CI_COMMIT_SHA}
+      tags: [latest, "${CI_COMMIT_SHA}"]
+      build_args:
+        - VCS_REF=${CI_COMMIT_SHA}
 
-  - name: build-db
-    image: plugins/docker
-    depends_on: []
-    settings:
-      repo: 192.168.1.101:5000/kuukan-app/juicer-db
-      registry: 192.168.1.101:5000
-      insecure: true
-      pull_image: false
-      cache_from:
-        - 192.168.1.101:5000/kuukan-app/juicer-db:latest
-      dockerfile: src/db.Dockerfile
-      context: src/
-      tags:
-        - latest
-        - ${CI_COMMIT_SHA}
-
-  - name: deploy
-    image: appleboy/drone-ssh
-    depends_on: [build-frontend, build-backend, build-db]
+  # Ship configuration with the exact release; preserve host secrets and data.
+  - name: deliver-deployment
+    image: appleboy/drone-scp
+    depends_on: [build-frontend, build-backend]
+    when:
+      event: [push, manual]
+      branch: main
     settings:
       host: 192.168.1.101
       username: kuukan
       key:
         from_secret: ssh_key
-      command:
-        - cd ~/projects/apps/juicer && docker compose pull && docker compose up -d --force-recreate
+      source: deploy
+      target: ~/projects/apps/juicer/releases/${CI_COMMIT_SHA}
+
+  - name: deploy
+    image: appleboy/drone-ssh
+    depends_on: [deliver-deployment]
+    when:
+      event: [push, manual]
+      branch: main
+    settings:
+      host: 192.168.1.101
+      username: kuukan
+      key:
+        from_secret: ssh_key
+      command_timeout: 30m
+      script:
+        - JUICER_BUILD_NUMBER=${CI_PIPELINE_NUMBER} bash ~/projects/apps/juicer/releases/${CI_COMMIT_SHA}/deploy/deploy.sh ~/projects/apps/juicer ${CI_COMMIT_SHA}

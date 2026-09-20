@@ -1,13 +1,13 @@
 # juicer-server (Rust) — module contract
 
-Rust port of the Hono backend at `../server`. axum 0.8 + sqlx 0.8 (Postgres) +
-serenity 0.12 + reqwest + ts-rs. Behavior must match the TS backend
-route-for-route: same paths, same JSON field names (camelCase — models in
+Rust backend. axum 0.8 + sqlx 0.8 (Postgres) +
+serenity 0.12 + reqwest + ts-rs. Preserve the published API:
+same paths, same JSON field names (camelCase — models in
 `src/models.rs` already encode this via serde), same status codes, same
 plain-text error bodies (`error::HttpError`).
 
-Already written (do NOT rewrite, only consume): `Cargo.toml`, `src/main.rs`,
-`src/models.rs`, `src/error.rs`, `src/config.rs`, `src/state.rs`.
+`src/main.rs` owns CLI startup, `src/migrations.rs` owns migration execution,
+and `migrations/` owns database DDL. `src/models.rs` defines the shared API types.
 
 Use `crate::error::{HttpError, Result}` everywhere. `AppState` is cloneable and
 passed as `axum::extract::State<AppState>`.
@@ -16,6 +16,7 @@ passed as `axum::extract::State<AppState>`.
 
 ```
 src/db.rs                  — all Postgres queries (sqlx, runtime queries — do NOT use query! macros)
+src/migrations.rs          — explicit migration/adoption and read-only readiness checks
 src/discord/mod.rs         — `pub mod bot; pub mod oauth;`
 src/discord/bot.rs         — serenity gateway/REST helpers + `pub struct ReadyHandler` (EventHandler logging "Ready!" on ready)
 src/discord/oauth.rs       — Discord OAuth via reqwest (user-token endpoints)
@@ -26,7 +27,7 @@ src/routes/{auth,user,server,games,roles,role_categories,tags,categories,search,
 
 ## Signatures (exact — other modules compile against these)
 
-### src/db.rs  (port of ../server/src/functions/db.ts — keep per-function behavior, incl. thrown statuses)
+### src/db.rs (application queries; schema ownership is in migrations/)
 
 ```rust
 use crate::error::Result;
@@ -132,7 +133,7 @@ TS code (it passed `undefined` through — here: treat missing as 401 via oauth 
 explicit 401 where the TS code checked). Cookies set with HttpOnly, SameSite=Lax,
 Secure=config.is_production(), Max-Age=expires_in, Path=/.
 
-Route inventory (must match ../server/src/routes exactly):
+Route inventory (maintain the published API contract):
 - auth.rs: GET /me; GET /callback; POST /refresh; POST /revoke; GET /remove-cookies
 - user.rs: GET /me -> MyInfo (user id/username/avatar + guilds)
 - server.rs: GET /{serverId}; POST /{serverId}/create (atomically creates the server row and its is_verification-flagged "verification" role category); GET /{serverId}/me (MyDataInServer: roles grouped by role category); GET /{serverId}/sync-roles; PUT /{serverId} (verificationRequired); nests categories/games/role-categories/roles/search/tags under /{serverId}/...
@@ -171,9 +172,9 @@ All "Admin required" handlers must keep the exact 403 message "User does not hav
 ## Later API changes (issues #40/#46/#47/#48, PR #44 review)
 
 - Verification role category is a distinct DB-flagged row (`is_verification`),
-  not "roleCategoryId 1". `ensure_verification_category_schema` runs at boot:
-  adds the column if missing and backfills the oldest "verification"-named
-  category per legacy server.
+  not "roleCategoryId 1". SQL migration 0002 adds the column if missing and
+  backfills the oldest "verification"-named category per legacy server. Already
+  flagged categories are preserved. Application startup only checks migrations.
 - Verification guard: with `verificationRequired` on and verification roles
   configured, every `/discord/servers/{serverId}` route returns 403
   ("Server verification required.") unless the member holds ALL verification

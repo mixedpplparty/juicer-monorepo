@@ -1,4 +1,4 @@
-//! Port of `../server/src/functions/categorize-member-roles.ts` — groups a
+//! Groups a
 //! member's Discord roles by the server's role categories for GET /me.
 
 use crate::models::{CategorizedRoleGroup, Role, RoleCategory, ServerMemberRole};

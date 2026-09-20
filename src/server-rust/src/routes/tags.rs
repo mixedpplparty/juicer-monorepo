@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/tags.ts`.
+//! Topic tag routes.
 //! Nested under `/discord/servers/{serverId}/tags`.
 
 use axum::extract::{Path, State};

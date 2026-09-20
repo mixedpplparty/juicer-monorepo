@@ -21,11 +21,10 @@ RUN corepack enable
 COPY package.json tsconfig.json pnpm*yaml ./
 COPY client/package.json ./client/
 COPY shared/package.json ./shared/
-RUN pnpm install --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy the rest of the source code (after install so source edits don't bust the
 # dependency layer).
-# Note: if COPY server shared ./, contents of server and shared will be copied to /app and not /app/server and /app/shared
 COPY client ./client
 COPY shared ./shared
 
@@ -49,6 +48,9 @@ RUN pnpm run build:client
 
 # ---- Stage 2: Serve the application with Nginx ----
 FROM nginx:alpine
+
+ARG VCS_REF=local
+LABEL org.opencontainers.image.revision=$VCS_REF
 
 # vulnurability mitigations
 RUN apk update && apk upgrade --no-cache

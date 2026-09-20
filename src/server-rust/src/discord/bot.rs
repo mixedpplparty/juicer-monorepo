@@ -1,4 +1,4 @@
-//! Serenity gateway/REST helpers — port of `../server/src/functions/discord-bot.ts`.
+//! Serenity gateway and REST helpers.
 //!
 //! Guilds are resolved from the gateway cache when possible (the bot runs with
 //! the Guilds intent, so guilds it is in are already cached) and only fall back

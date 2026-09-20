@@ -1,4 +1,4 @@
-//! Port of ../server/src/routes/discord/server/games.ts
+//! Topic creation, editing, associations and thumbnails.
 //!
 //! Nested under `/discord/servers/{serverId}/games`, so every handler extracts
 //! the accumulated path params starting with `serverId`.

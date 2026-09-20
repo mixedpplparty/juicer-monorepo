@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/categories.ts`.
+//! Topic category routes.
 //! Nested under `/discord/servers/{serverId}/categories`.
 
 use axum::extract::{Path, State};

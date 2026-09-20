@@ -1,4 +1,4 @@
-//! All Postgres queries — port of `../server/src/functions/db.ts`.
+//! Application Postgres queries; schema changes live in ../migrations.
 //!
 //! Runtime sqlx queries only (no `query!` macros). Per-function behavior,
 //! including thrown statuses and messages, mirrors the TS implementation.
@@ -110,38 +110,6 @@ async fn attach_game_relations(
             }
         })
         .collect())
-}
-
-// ---------- startup schema guard ----------
-
-/// Idempotent: schema is owned by drizzle-kit in `../server`, but this keeps
-/// the Rust server bootable against a database migrated before the
-/// is_verification column existed, and backfills the flag for legacy servers
-/// (their auto-created category is the oldest one named "verification").
-pub async fn ensure_verification_category_schema(db: &PgPool) -> Result<()> {
-    let mut tx = db.begin().await?;
-    sqlx::query(
-        "ALTER TABLE roles_categories \
-         ADD COLUMN IF NOT EXISTS is_verification boolean NOT NULL DEFAULT false",
-    )
-    .execute(&mut *tx)
-    .await?;
-    sqlx::query(
-        "UPDATE roles_categories SET is_verification = true \
-         WHERE role_category_id IN ( \
-             SELECT MIN(rc.role_category_id) FROM roles_categories rc \
-             WHERE rc.name = 'verification' \
-               AND NOT EXISTS ( \
-                   SELECT 1 FROM roles_categories flagged \
-                   WHERE flagged.server_id = rc.server_id AND flagged.is_verification \
-               ) \
-             GROUP BY rc.server_id \
-         )",
-    )
-    .execute(&mut *tx)
-    .await?;
-    tx.commit().await?;
-    Ok(())
 }
 
 // ---------- servers ----------
@@ -1282,18 +1250,12 @@ pub async fn update_role_category_of_role(
 
 #[cfg(test)]
 mod smoke_tests {
-    //! End-to-end SQL smoke test against a real Postgres. Skipped unless
-    //! SMOKE_DATABASE_URL is set (e.g. postgres://juicer:juicer@127.0.0.1:15432/juicer).
+    //! SQLx creates and migrates an isolated database; DATABASE_URL is required.
     use super::*;
 
-    #[tokio::test]
-    async fn full_db_flow() {
-        let Ok(url) = std::env::var("SMOKE_DATABASE_URL") else {
-            eprintln!("SMOKE_DATABASE_URL not set — skipping DB smoke test");
-            return;
-        };
-        let db = PgPool::connect(&url).await.expect("connect");
-        ensure_verification_category_schema(&db).await.expect("schema guard");
+    #[sqlx::test]
+    async fn full_db_flow(db: PgPool) {
+        crate::migrations::check(&db).await.expect("schema ready");
         let sid = "smoke-server";
         // Clean slate for reruns (roles_categories has no ON DELETE CASCADE, so
         // it must go before servers).
@@ -1480,6 +1442,7 @@ mod smoke_tests {
                 .unwrap();
         assert_eq!(updated.0.as_deref(), Some("updated description"));
         assert_eq!(updated.1, Some(cat.category_id));
+        assert_eq!(find_games_by_category_name(&db, sid, "rpg").await.unwrap().len(), 1);
 
         update_game(
             &db,
@@ -1537,7 +1500,8 @@ mod smoke_tests {
 
         assert_eq!(find_games_by_name(&db, sid, "factorio").await.unwrap().len(), 1);
         assert_eq!(find_games_by_tags(&db, sid, &["coop".into()]).await.unwrap().len(), 1);
-        assert_eq!(find_games_by_category_name(&db, sid, "rpg").await.unwrap().len(), 1);
+        // The explicit-null update above removed this association.
+        assert!(find_games_by_category_name(&db, sid, "rpg").await.unwrap().is_empty());
         let all = get_all_games_in_server(&db, sid).await.unwrap();
         assert_eq!(all.len(), 1);
         assert!(all[0].games_tags.as_ref().unwrap().len() == 1);

@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/user.ts`.
+//! Current user and server membership routes.
 
 use axum::extract::State;
 use axum::routing::get;
