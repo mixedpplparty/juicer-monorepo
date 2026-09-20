@@ -1,58 +1,20 @@
-import { Switch, type SwitchProps } from "@mixedpplparty/juicer-m3/switch";
+import type { FieldPathByValue, FieldValues } from "react-hook-form";
 import {
-	type FieldPathByValue,
-	type FieldValues,
-	type RegisterOptions,
-	type UseControllerProps,
-	useController,
-} from "react-hook-form";
+	FormSwitchPresenter,
+	type FormSwitchProps,
+} from "./form-switch.presenter";
+import { FormSwitchView } from "./form-switch.view";
 
-export type FormSwitchProps<
-	TFieldValues extends FieldValues,
-	TName extends FieldPathByValue<TFieldValues, boolean>,
-	TTransformedValues extends FieldValues = TFieldValues,
-> = Omit<
-	SwitchProps,
-	"checked" | "defaultChecked" | "name" | "onCheckedChange"
-> & {
-	control: UseControllerProps<
-		TFieldValues,
-		TName,
-		TTransformedValues
-	>["control"];
-	name: TName;
-	rules?: Omit<
-		RegisterOptions<TFieldValues, TName>,
-		"disabled" | "setValueAs" | "valueAsDate" | "valueAsNumber"
-	>;
-};
-
+export type { FormSwitchProps } from "./form-switch.presenter";
 export function FormSwitch<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, boolean>,
 	TTransformedValues extends FieldValues = TFieldValues,
->({
-	control,
-	disabled,
-	name,
-	onBlur,
-	rules,
-	...props
-}: FormSwitchProps<TFieldValues, TName, TTransformedValues>) {
-	const { field } = useController({ control, disabled, name, rules });
-
+>(props: FormSwitchProps<TFieldValues, TName, TTransformedValues>) {
 	return (
-		<Switch
+		<FormSwitchPresenter
 			{...props}
-			disabled={field.disabled}
-			inputRef={field.ref}
-			name={field.name}
-			checked={Boolean(field.value)}
-			onCheckedChange={field.onChange}
-			onBlur={(event) => {
-				field.onBlur();
-				onBlur?.(event);
-			}}
+			renderModel={(model) => <FormSwitchView {...model} />}
 		/>
 	);
 }

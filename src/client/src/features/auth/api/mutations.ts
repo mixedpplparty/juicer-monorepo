@@ -1,4 +1,4 @@
-import { HttpError } from "@/shared/api/fetch-json";
+import { HttpError, reportHttpError } from "@/shared/api/fetch-json";
 
 const backendBase = import.meta.env.VITE_BACKEND_URI;
 
@@ -18,6 +18,6 @@ export async function logout(): Promise<void> {
 		response.status === 302 || response.type === "opaqueredirect";
 
 	if (!response.ok && !revokedWithRedirect) {
-		throw new HttpError(response, "로그아웃하지 못했습니다.");
+		throw reportHttpError(new HttpError(response, "로그아웃하지 못했습니다."));
 	}
 }

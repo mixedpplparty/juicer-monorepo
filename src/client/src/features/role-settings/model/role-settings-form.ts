@@ -2,7 +2,7 @@ import type { RoleSettingsRole } from "juicer-shared";
 import {
 	type RoleSettingsFormInput,
 	unassignedRoleCategoryValue,
-} from "@/shared/forms/form-schemas";
+} from "@/features/role-settings/model/role-settings-schema";
 
 export function getRoleSettingsDefaultValues(
 	role: RoleSettingsRole,

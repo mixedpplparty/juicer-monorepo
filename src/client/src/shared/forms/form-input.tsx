@@ -1,71 +1,20 @@
+import type { FieldPathByValue, FieldValues } from "react-hook-form";
 import {
-	TextField,
-	type TextFieldProps,
-} from "@mixedpplparty/juicer-m3/text-field";
-import {
-	type FieldPathByValue,
-	type FieldPathValue,
-	type FieldValues,
-	type RegisterOptions,
-	type UseControllerProps,
-	useController,
-} from "react-hook-form";
+	FormInputPresenter,
+	type FormInputProps,
+} from "./form-input.presenter";
+import { FormInputView } from "./form-input.view";
 
-export type FormInputProps<
-	TFieldValues extends FieldValues,
-	TName extends FieldPathByValue<TFieldValues, string>,
-	TTransformedValues extends FieldValues = TFieldValues,
-> = Omit<
-	TextFieldProps,
-	"defaultValue" | "name" | "onBlur" | "onChange" | "value"
-> & {
-	control: UseControllerProps<
-		TFieldValues,
-		TName,
-		TTransformedValues
-	>["control"];
-	name: TName;
-	rules?: Omit<
-		RegisterOptions<TFieldValues, TName>,
-		"disabled" | "setValueAs" | "valueAsDate" | "valueAsNumber"
-	>;
-};
-
+export type { FormInputProps } from "./form-input.presenter";
 export function FormInput<
 	TFieldValues extends FieldValues,
 	TName extends FieldPathByValue<TFieldValues, string>,
 	TTransformedValues extends FieldValues = TFieldValues,
->({
-	control,
-	disabled,
-	name,
-	rules,
-	errorText,
-	rootProps,
-	...props
-}: FormInputProps<TFieldValues, TName, TTransformedValues>) {
-	const { field, fieldState } = useController({
-		control,
-		disabled,
-		name,
-		rules,
-	});
-
+>(props: FormInputProps<TFieldValues, TName, TTransformedValues>) {
 	return (
-		<TextField
+		<FormInputPresenter
 			{...props}
-			ref={field.ref}
-			disabled={field.disabled}
-			name={field.name}
-			value={field.value as FieldPathValue<TFieldValues, TName>}
-			onBlur={field.onBlur}
-			onChange={field.onChange}
-			aria-invalid={fieldState.invalid || undefined}
-			errorText={fieldState.error?.message ?? errorText}
-			rootProps={{
-				...rootProps,
-				invalid: fieldState.invalid || rootProps?.invalid,
-			}}
+			renderModel={(model) => <FormInputView {...model} />}
 		/>
 	);
 }

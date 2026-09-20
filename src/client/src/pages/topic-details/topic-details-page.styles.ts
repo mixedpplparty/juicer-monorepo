@@ -61,20 +61,4 @@ export const topicDetailsPageStyles = {
 		background: "var(--md-sys-color-surface-container-low)",
 		color: "var(--md-sys-color-on-surface-variant)",
 	}),
-	appBarTitle: css({
-		minWidth: 0,
-		display: "flex",
-		flexDirection: "column",
-	}),
-	appBarTopicName: css({
-		overflow: "hidden",
-		textOverflow: "ellipsis",
-		whiteSpace: "nowrap",
-	}),
-	appBarServerName: css({
-		color: "var(--md-sys-color-on-surface-variant)",
-		overflow: "hidden",
-		textOverflow: "ellipsis",
-		whiteSpace: "nowrap",
-	}),
 };

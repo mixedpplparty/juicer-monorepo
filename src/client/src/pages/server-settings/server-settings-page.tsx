@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router";
-import { ServerPageAppBar } from "@/pages/server-overview/components/server-page-app-bar";
-import type { ServerDetailsOutletContext } from "@/pages/server-overview/server-details-context";
-import { serverDetailsPageStyles } from "@/pages/server-overview/server-details-page.styles";
+import { serverDetailsPageStyles } from "@/features/server/components/server-layout.styles";
+import { ServerPageAppBar } from "@/features/server/components/server-page-app-bar";
+import type { ServerDetailsOutletContext } from "@/features/server/model/server-details-context";
 import ServerSettingsContent from "./components/server-settings-content";
 
 export function ServerSettingsPage() {

@@ -1,40 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
+import { Suspense } from "react";
 import { Outlet } from "react-router";
-import { serverQueryOptions } from "./api/queries";
-import { ServerDetailsLayoutSkeleton } from "./components/loading-skeletons";
-import { useRequiredServerId } from "./hooks/use-required-server-id";
-import type { ServerDetailsOutletContext } from "./server-details-context";
-import { serverDetailsPageStyles } from "./server-details-page.styles";
+import { ServerDetailsLayoutSkeleton } from "@/features/server/components/loading-skeletons";
+import { ServerDataFetch } from "@/features/server/components/server-data.fetch";
+import { serverDetailsPageStyles } from "@/features/server/components/server-layout.styles";
+import type { ServerDetailsOutletContext } from "@/features/server/model/server-details-context";
+import { useRequiredServerId } from "@/features/server/model/use-required-server-id";
 
-// Reset the data view when navigating between servers so no local state from the
-// previous server remains while the next query loads.
 export function ServerDetailsLayout() {
 	const serverId = useRequiredServerId();
-	return <ServerDetailsDataLayout key={serverId} serverId={serverId} />;
-}
-
-interface ServerDetailsDataLayoutProps {
-	serverId: string;
-}
-
-function ServerDetailsDataLayout({ serverId }: ServerDetailsDataLayoutProps) {
-	const { data: serverData, error } = useQuery(serverQueryOptions(serverId));
-
-	if (!serverData && error) {
-		throw error;
-	}
-
-	if (!serverData) {
-		return <ServerDetailsLayoutSkeleton />;
-	}
-
-	const context: ServerDetailsOutletContext = { serverId, serverData };
-
 	return (
-		<div css={serverDetailsPageStyles.root}>
-			<Outlet context={context} />
-		</div>
+		<Suspense key={serverId} fallback={<ServerDetailsLayoutSkeleton />}>
+			<ServerDataFetch serverId={serverId}>
+				{(serverData, refetchServer) => (
+					<div css={serverDetailsPageStyles.root}>
+						<Outlet
+							context={
+								{
+									serverId,
+									serverData,
+									refetchServer,
+								} satisfies ServerDetailsOutletContext
+							}
+						/>
+					</div>
+				)}
+			</ServerDataFetch>
+		</Suspense>
 	);
 }
-
 export default ServerDetailsLayout;

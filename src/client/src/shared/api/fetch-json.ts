@@ -10,8 +10,21 @@ export class HttpError extends Error {
 	}
 }
 
+let onHttpError: (error: HttpError) => void = () => {};
+
+export function setHttpErrorHandler(handler: (error: HttpError) => void) {
+	onHttpError = handler;
+}
+
+export function reportHttpError(error: HttpError) {
+	onHttpError(error);
+	return error;
+}
+
 export interface FetchJsonInit extends RequestInit {
 	json?: unknown;
+	/** Report errors for imperative GET commands as well as write requests. */
+	reportError?: boolean;
 }
 
 async function getResponseErrorMessage(
@@ -33,7 +46,7 @@ export async function fetchJson<T>(
 	init: FetchJsonInit = {},
 	fallbackMessage = "요청을 처리하지 못했습니다.",
 ): Promise<T> {
-	const { headers: initialHeaders, json, ...requestInit } = init;
+	const { headers: initialHeaders, json, reportError, ...requestInit } = init;
 	const headers = new Headers(initialHeaders);
 
 	if (json !== undefined && !headers.has("Content-Type")) {
@@ -48,10 +61,19 @@ export async function fetchJson<T>(
 	});
 
 	if (!response.ok) {
-		throw new HttpError(
+		const error = new HttpError(
 			response,
 			await getResponseErrorMessage(response, fallbackMessage),
 		);
+		// Queries report errors after settling; plain write requests report them here.
+		if (
+			reportError ??
+			(requestInit.method &&
+				!["GET", "HEAD"].includes(requestInit.method.toUpperCase()))
+		) {
+			reportHttpError(error);
+		}
+		throw error;
 	}
 
 	if (response.status === 204) {

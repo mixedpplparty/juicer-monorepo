@@ -1,106 +1,19 @@
-import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
-import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
-import { Text } from "@mixedpplparty/juicer-m3/text";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import type { TopicSearchResult } from "juicer-shared";
-import { Link } from "react-router";
-import { topicsQueryOptions } from "../api/queries";
-import { useDebouncedValue } from "../hooks/use-debounced-value";
-import { topicListStyles } from "./topic-list.styles";
-
+import { TopicsFetch } from "@/features/server/components/topics.fetch";
+import { TopicListPresenter } from "./topic-list.presenter";
+import { TopicListView } from "./topic-list.view";
 export interface TopicListProps {
 	serverId: string;
 	searchQuery: string;
 }
-
 export function TopicList({ serverId, searchQuery }: TopicListProps) {
-	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-	const { data: topics } = useSuspenseQuery(
-		topicsQueryOptions(serverId, debouncedSearchQuery),
-	);
-
-	if (topics.length === 0) {
-		return (
-			<Text as="p" typeRole="body" size="medium" css={topicListStyles.status}>
-				{debouncedSearchQuery
-					? "검색 결과가 없습니다."
-					: "등록된 주제가 없습니다."}
-			</Text>
-		);
-	}
-
 	return (
-		<List
-			container="transparent"
-			aria-label="주제 목록"
-			css={topicListStyles.list}
-		>
-			{topics.map((topic) => (
-				<TopicListItem key={topic.gameId} topic={topic} />
-			))}
-		</List>
+		<TopicsFetch serverId={serverId} searchQuery={searchQuery}>
+			{(topics) => (
+				<TopicListPresenter topics={topics} searchQuery={searchQuery}>
+					{(model) => <TopicListView {...model} />}
+				</TopicListPresenter>
+			)}
+		</TopicsFetch>
 	);
 }
-
-interface TopicListItemProps {
-	topic: TopicSearchResult;
-}
-
-function TopicListItem({ topic }: TopicListItemProps) {
-	return (
-		<ListItem
-			css={topicListStyles.item}
-			render={<Link to={`topics/${topic.gameId}`} />}
-			headline={
-				<Text typeRole="title" size="large">
-					{topic.name}
-				</Text>
-			}
-			supportingText={
-				<span css={topicListStyles.details}>
-					<span css={topicListStyles.channels}>
-						{topic.channels.length > 0 ? (
-							topic.channels.map((channel) => (
-								<Text key={channel.id} typeRole="body" size="medium">
-									#{channel.name}
-								</Text>
-							))
-						) : (
-							<Text
-								typeRole="body"
-								size="medium"
-								css={topicListStyles.emptyAssociation}
-							>
-								연관 채널 없음
-							</Text>
-						)}
-					</span>
-					<span css={topicListStyles.roles}>
-						{topic.roles.length > 0 ? (
-							topic.roles.map((role) => (
-								<RoleIndicator
-									key={role.id}
-									roleName={role.name}
-									color={role.color}
-									active={role.assigned}
-									typeRole="body"
-									size="medium"
-								/>
-							))
-						) : (
-							<Text
-								typeRole="body"
-								size="medium"
-								css={topicListStyles.emptyAssociation}
-							>
-								연관 역할 없음
-							</Text>
-						)}
-					</span>
-				</span>
-			}
-		/>
-	);
-}
-
 export default TopicList;
