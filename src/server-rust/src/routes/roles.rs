@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/roles.ts`.
+//! Discord role settings and self-assignment routes.
 //!
 //! Nested under `/discord/servers/{serverId}/roles`.
 

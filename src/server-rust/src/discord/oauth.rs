@@ -1,7 +1,6 @@
 //! Discord OAuth via reqwest (user-token endpoints).
 //!
-//! Port of `../server/src/functions/discord-oauth.ts` with the error mapping
-//! from `../server/src/functions/axios-error-handler.ts`.
+//! Preserves the established OAuth response and error mapping contract.
 
 use axum::http::StatusCode;
 use reqwest::Response;

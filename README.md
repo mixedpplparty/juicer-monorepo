@@ -1,7 +1,7 @@
 # juicer
 
 A Discord-integrated web application built as a pnpm monorepo. juicer pairs a
-React single-page app with a Hono API server, a PostgreSQL database, and a
+React single-page app with a Rust/Axum API server, a PostgreSQL database, and a
 Traefik reverse proxy that terminates TLS — all orchestrated with Docker
 Compose.
 
@@ -33,15 +33,15 @@ grant or remove roles for themselves through the Discord API.
 
 ## Architecture
 
-The project is a pnpm workspace under [`src/`](src/) with three packages:
+The frontend/shared types are a pnpm workspace under [`src/`](src/); the backend is a Rust crate:
 
 | Package  | Path           | Stack                                                      |
 | -------- | -------------- | --------------------------------------------------------- |
 | `client` | `src/client`   | React 19, Vite, MUI, TanStack Query, Jotai, served by nginx |
-| `server` | `src/server`   | Hono on Bun, Drizzle ORM, Zod                             |
-| `shared` | `src/shared`   | Shared Zod schemas and types consumed by client + server  |
+| `server` | `src/server-rust` | Axum, SQLx, Serenity; versioned SQL migrations           |
+| `shared` | `src/shared`   | TypeScript API types generated from Rust by ts-rs        |
 
-At runtime, Docker Compose brings up four services:
+Docker Compose runs four persistent services and a one-off migration service:
 
 | Service    | Container          | Role                                            |
 | ---------- | ------------------ | ----------------------------------------------- |
@@ -49,6 +49,7 @@ At runtime, Docker Compose brings up four services:
 | `frontend` | `juicer_frontend`  | Serves the built SPA                            |
 | `backend`  | `juicer_backend`   | REST API, reachable under `/backend`            |
 | `db`       | `juicer_db`        | PostgreSQL database                             |
+| `migrate`  | one-off           | Applies committed SQL before backend startup    |
 
 Traefik routes requests by path prefix: `/backend` → backend, `/dashboard`
 and `/api` → the Traefik dashboard, and everything else → frontend.
@@ -59,6 +60,11 @@ and `/api` → the Traefik dashboard, and everything else → frontend.
 - A Discord application — see [Discord Developer Portal](#discord-developer-portal)
 
 ## Getting Started
+
+**Existing installation?** Use the [backup-and-upgrade procedure](deploy/README.md)
+first. Do not delete the PostgreSQL volume or start under a different Compose
+project name to resolve migration errors. The first SQLx migration requires
+explicit adoption of a verified legacy schema.
 
 1. Copy [`.env.example`](.env.example) to `.env` and fill in the values — see
    [Configuration](#configuration).
@@ -82,6 +88,14 @@ and `/api` → the Traefik dashboard, and everything else → frontend.
    ```bash
    docker compose down
    ```
+
+The named database volume survives `down`; never add `--volumes` for an existing
+installation. The API checks its migration history before starting and exposes
+`/health/ready` for container readiness. PostgreSQL readiness alone is not enough.
+
+For native Rust development, migration commands, tests, and type generation, see
+[the backend guide](src/server-rust/README.md). For Woodpecker release delivery,
+backup validation, downtime and rollback, see [the deployment guide](deploy/README.md).
 
 ## Configuration
 

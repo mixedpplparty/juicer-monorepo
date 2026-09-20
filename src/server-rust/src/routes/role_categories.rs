@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/role-categories.ts`.
+//! Role category routes.
 //!
 //! Nested under `/discord/servers/{serverId}/role-categories`.
 

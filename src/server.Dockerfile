@@ -20,15 +20,19 @@ WORKDIR /app
 COPY server-rust/Cargo.toml server-rust/Cargo.lock ./server-rust/
 RUN mkdir -p server-rust/src \
     && printf 'fn main() {}\n' > server-rust/src/main.rs \
-    && cargo build --release --manifest-path server-rust/Cargo.toml --bins \
+    && cargo build --locked --release --manifest-path server-rust/Cargo.toml --bins \
     && rm -rf server-rust/src
 
 # --- Real build (fast: deps come from the cached layer above) ---
 COPY server-rust ./server-rust
-RUN cargo build --release --manifest-path server-rust/Cargo.toml \
+RUN touch server-rust/src/main.rs \
+    && cargo build --locked --release --manifest-path server-rust/Cargo.toml \
     && cp server-rust/target/release/juicer-server /app/juicer-server
 
 FROM scratch AS runner
+
+ARG VCS_REF=local
+LABEL org.opencontainers.image.revision=$VCS_REF
 
 # TLS roots are compiled in via webpki-roots; the system bundle is included
 # anyway so a future switch to native certs cannot fail silently.
@@ -37,5 +41,6 @@ COPY --from=builder /app/juicer-server /juicer-server
 
 USER 1001:1001
 EXPOSE 8000
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 CMD ["/juicer-server", "healthcheck"]
 
 CMD ["/juicer-server"]

@@ -1,4 +1,6 @@
 .git
+.migration-validation
+deploy/backups
 node_modules
 .vscode
 .DS_Store

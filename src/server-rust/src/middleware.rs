@@ -1,7 +1,6 @@
 //! Global middleware: CORS, CSRF, rate limiting and request tracing.
 //!
-//! Port of the middleware stack in `../server/src/index.ts` (Hono `cors`,
-//! `csrf`, `hono-rate-limiter`, `logger`).
+//! Retains the established CORS, CSRF, rate-limit and logging behavior.
 
 use std::collections::HashMap;
 use std::net::SocketAddr;

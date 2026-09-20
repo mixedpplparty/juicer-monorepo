@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Test double for failure-ordering checks. Never contacts a Docker daemon.
+set -eu
+printf '%s\n' "$*" >> "$DOCKER_TEST_LOG"
+case "$*" in
+  'inspect juicer-db') [[ "$DOCKER_TEST_MODE" != missing && "$DOCKER_TEST_MODE" != initialize* ]];;
+  *'index .Config.Labels'*) echo juicer;;
+  *'range .Config.Env'*) printf 'POSTGRES_DB=test\nPOSTGRES_USER=test\nPOSTGRES_PASSWORD=test\nPOSTGRES_PORT=5432\n';;
+  'compose '*'config --environment')
+    if [[ "$DOCKER_TEST_MODE" == identity-change ]]; then printf 'POSTGRES_DB=different\n'; else printf 'POSTGRES_DB=test\nPOSTGRES_USER=test\nPOSTGRES_PASSWORD=test\nPOSTGRES_PORT=5432\n'; fi;;
+  *'{{.Type}} {{.Name}}'*) echo 'volume existing_data';;
+  *'{{.Name}}'*'juicer-db')
+    if [[ "$DOCKER_TEST_MODE" == initialize* ]]; then echo juicer_postgres_data; else echo existing_data; fi;;
+  *'PG_VERSION'*) echo 17;;
+  'volume inspect '*) [[ "$DOCKER_TEST_MODE" != initialize && "$DOCKER_TEST_MODE" != initialize-pull-failure ]];;
+  'compose '*'--profile tools pull') [[ "$DOCKER_TEST_MODE" != initialize-pull-failure ]];;
+  'inspect -f {{.Image}}'*) echo old-image;;
+  'ps -q '*) echo current-writer;;
+  *'pg_dump -Fc'*)
+    [[ "$DOCKER_TEST_MODE" != backup-failure ]] || exit 1
+    echo pretend-backup;;
+  *'pg_restore '*)
+    cat >/dev/null
+    [[ "$DOCKER_TEST_MODE" != restore-failure ]];;
+  *'normalize_verification=true'*) cat >/dev/null; printf 'true\nfingerprint\n';;
+  *'normalize_verification=false'*)
+    cat >/dev/null
+    if [[ "$DOCKER_TEST_MODE" == data-change ]]; then printf 'false\nchanged\n'; else printf 'false\nfingerprint\n'; fi;;
+  'run --rm --network '*'/juicer-server migrate --adopt-legacy') [[ "$DOCKER_TEST_MODE" != clone-migration-failure ]];;
+  'compose '*'run --rm --no-deps migrate /juicer-server migrate --adopt-legacy') [[ "$DOCKER_TEST_MODE" != migration-failure ]];;
+  'compose '*'up -d --no-deps --wait --wait-timeout 120 backend') [[ "$DOCKER_TEST_MODE" != readiness-failure ]];;
+  *) exit 0;;
+esac

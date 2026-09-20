@@ -1,4 +1,4 @@
-//! Port of ../server/src/routes/discord/auth.ts (Hono) to axum.
+//! Discord OAuth and cookie routes.
 //!
 //! Routes: GET /me; GET /callback; POST /refresh; POST /revoke; GET /remove-cookies
 

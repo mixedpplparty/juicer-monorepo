@@ -1,4 +1,4 @@
-//! Port of `../server/src/routes/discord/server/index.ts`.
+//! Discord server registration, settings and access control.
 
 use std::collections::HashSet;
 
