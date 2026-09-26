@@ -16,7 +16,7 @@ export const topicListStyles = {
 		},
 		[`@media (min-width: ${breakpoints.tablet})`]: {
 			display: "grid",
-			gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+			gridTemplateColumns: "repeat(auto-fit, minmax(22rem, 1fr))",
 		},
 	}),
 	item: css({
