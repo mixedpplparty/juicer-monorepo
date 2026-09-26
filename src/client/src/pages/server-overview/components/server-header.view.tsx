@@ -7,6 +7,7 @@ import { IconButton } from "@mixedpplparty/juicer-m3/button";
 import { ArrowBackIcon } from "@mixedpplparty/juicer-m3/icons/arrow-back";
 import { SearchBar } from "@mixedpplparty/juicer-m3/search";
 import { Text } from "@mixedpplparty/juicer-m3/text";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
@@ -18,6 +19,13 @@ export function ServerHeaderView({
 	onSearchQueryChange,
 	appBarScroll,
 }: ServerHeaderViewModel) {
+	const [draftSearchQuery, setDraftSearchQuery] = useState(searchQuery);
+	const isComposingRef = useRef(false);
+
+	useEffect(() => {
+		setDraftSearchQuery(searchQuery);
+	}, [searchQuery]);
+
 	return (
 		<header
 			ref={appBarScroll.ref}
@@ -43,8 +51,21 @@ export function ServerHeaderView({
 				<SearchBar
 					label="주제 검색"
 					placeholder="주제 검색"
-					value={searchQuery}
-					onChange={(event) => onSearchQueryChange(event.target.value)}
+					value={draftSearchQuery}
+					onChange={(event) => {
+						const nextSearchQuery = event.target.value;
+						setDraftSearchQuery(nextSearchQuery);
+						if (!isComposingRef.current) {
+							onSearchQueryChange(nextSearchQuery);
+						}
+					}}
+					onCompositionStart={() => {
+						isComposingRef.current = true;
+					}}
+					onCompositionEnd={(event) => {
+						isComposingRef.current = false;
+						onSearchQueryChange(event.currentTarget.value);
+					}}
 				/>
 			</div>
 
