@@ -99,7 +99,7 @@ export const loadingSkeletonStyles = {
 		gridTemplateColumns: "1fr",
 		gap: "0.75rem",
 		[`@media (min-width: ${breakpoints.tablet})`]: {
-			gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+			gridTemplateColumns: "repeat(auto-fit, minmax(22rem, 1fr))",
 		},
 	}),
 	topicCard: css({
