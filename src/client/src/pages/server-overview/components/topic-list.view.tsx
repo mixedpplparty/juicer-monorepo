@@ -1,28 +1,49 @@
 import { List, ListItem } from "@mixedpplparty/juicer-m3/list";
 import { RoleIndicator } from "@mixedpplparty/juicer-m3/role-indicator";
+import { Switch } from "@mixedpplparty/juicer-m3/switch";
 import { Text } from "@mixedpplparty/juicer-m3/text";
 import type { TopicSearchResult } from "juicer-shared";
 import { Link } from "react-router";
 import type { TopicListViewModel } from "./topic-list.presenter";
 import { topicListStyles } from "./topic-list.styles";
-export function TopicListView({ topics, searchQuery }: TopicListViewModel) {
-	if (topics.length === 0) {
-		return (
-			<Text as="p" typeRole="body" size="medium" css={topicListStyles.status}>
-				{searchQuery ? "검색 결과가 없습니다." : "등록된 주제가 없습니다."}
-			</Text>
-		);
-	}
+export function TopicListView({
+	topics,
+	searchQuery,
+	showOnlyTopicsWithRoles,
+	handleShowOnlyTopicsWithRolesChange,
+}: TopicListViewModel) {
 	return (
-		<List
-			container="transparent"
-			aria-label="주제 목록"
-			css={topicListStyles.list}
-		>
-			{topics.map((topic) => (
-				<TopicListItem key={topic.gameId} topic={topic} />
-			))}
-		</List>
+		<div css={topicListStyles.root}>
+			<div css={topicListStyles.filters}>
+				<Text typeRole="body" size="medium">
+					역할 연동 주제만 보기
+				</Text>
+				<Switch
+					checked={showOnlyTopicsWithRoles}
+					aria-label="역할 연동 주제만 보기"
+					onCheckedChange={handleShowOnlyTopicsWithRolesChange}
+				/>
+			</div>
+			{topics.length === 0 ? (
+				<Text as="p" typeRole="body" size="medium" css={topicListStyles.status}>
+					{showOnlyTopicsWithRoles
+						? "역할이 연동된 주제가 없습니다."
+						: searchQuery
+							? "검색 결과가 없습니다."
+							: "등록된 주제가 없습니다."}
+				</Text>
+			) : (
+				<List
+					container="transparent"
+					aria-label="주제 목록"
+					css={topicListStyles.list}
+				>
+					{topics.map((topic) => (
+						<TopicListItem key={topic.gameId} topic={topic} />
+					))}
+				</List>
+			)}
+		</div>
 	);
 }
 interface TopicListItemProps {

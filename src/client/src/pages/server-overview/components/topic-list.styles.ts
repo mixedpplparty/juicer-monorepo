@@ -2,6 +2,17 @@ import { css } from "@emotion/react";
 import breakpoints from "@/shared/styles/breakpoints";
 
 export const topicListStyles = {
+	root: css({
+		display: "flex",
+		flexDirection: "column",
+		gap: "0.75rem",
+	}),
+	filters: css({
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "space-between",
+		gap: "0.75rem",
+	}),
 	list: css({
 		display: "flex",
 		flexDirection: "column",
