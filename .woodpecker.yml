@@ -17,6 +17,7 @@ steps:
     environment:
       DATABASE_URL: postgres://postgres:migration-test-only@postgres:5432/postgres
     commands:
+      - rustup component add clippy
       - apk add --no-cache musl-dev postgresql-client git
       - sh scripts/test-backend.sh
 
