@@ -5,12 +5,12 @@ function findScrollContainer(element: HTMLElement): HTMLElement | Window {
 
 	while (parent) {
 		const overflowY = window.getComputedStyle(parent).overflowY;
-		if (
-			(overflowY === "auto" || overflowY === "scroll") &&
-			parent.scrollHeight > parent.clientHeight
-		) {
+
+		// Bind before content overflows; async loading may make it scrollable later.
+		if (overflowY === "auto" || overflowY === "scroll") {
 			return parent;
 		}
+
 		parent = parent.parentElement;
 	}
 
