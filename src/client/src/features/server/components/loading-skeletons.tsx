@@ -7,6 +7,7 @@ import { loadingSkeletonStyles } from "@/features/server/components/loading-skel
 import { serverDetailsPageStyles } from "@/features/server/components/server-layout.styles";
 import { serverHeaderStyles } from "@/pages/server-overview/components/server-header.styles";
 import { serverInfoStyles } from "@/pages/server-overview/components/server-info.styles";
+import { topicListStyles } from "@/pages/server-overview/components/topic-list.styles";
 import { appBarStyles } from "@/shared/styles/app-bar";
 import { hideOnDesktop } from "@/shared/styles/responsive";
 
@@ -125,15 +126,21 @@ export function TopicListSkeleton() {
 		<div
 			role="status"
 			aria-label="주제 목록 불러오는 중"
-			css={loadingSkeletonStyles.topicGrid}
+			css={topicListStyles.root}
 		>
-			{topicCards.map((card) => (
-				<div key={card} css={loadingSkeletonStyles.topicCard}>
-					<Skeleton css={loadingSkeletonStyles.mediumLine} />
-					<Skeleton css={loadingSkeletonStyles.shortLine} />
-					<Skeleton css={loadingSkeletonStyles.mediumLine} />
-				</div>
-			))}
+			<div css={topicListStyles.filters}>
+				<Skeleton css={loadingSkeletonStyles.mediumLine} />
+				<Skeleton css={loadingSkeletonStyles.topicFilterSwitch} />
+			</div>
+			<div css={topicListStyles.list}>
+				{topicCards.map((card) => (
+					<div key={card} css={loadingSkeletonStyles.topicCard}>
+						<Skeleton css={loadingSkeletonStyles.mediumLine} />
+						<Skeleton css={loadingSkeletonStyles.shortLine} />
+						<Skeleton css={loadingSkeletonStyles.mediumLine} />
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }
