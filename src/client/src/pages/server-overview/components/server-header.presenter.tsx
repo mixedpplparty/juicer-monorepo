@@ -13,7 +13,12 @@ function useServerHeaderModel({
 	onSearchQueryChange,
 }: ServerHeaderProps) {
 	const appBarScroll = useScrollState<HTMLElement>();
-	return { serverData, searchQuery, onSearchQueryChange, appBarScroll };
+	return {
+		serverData,
+		searchQuery,
+		onSearchQueryChange,
+		appBarScroll,
+	};
 }
 export type ServerHeaderViewModel = ReturnType<typeof useServerHeaderModel>;
 export function ServerHeaderPresenter({

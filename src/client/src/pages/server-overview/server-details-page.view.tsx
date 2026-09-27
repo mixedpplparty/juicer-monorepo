@@ -9,9 +9,9 @@ export function ServerDetailsPageView({
 	refetchServer,
 	serverId,
 	serverData,
+	searchText,
 	searchQuery,
-	normalizedSearchQuery,
-	handleSearchQueryChange,
+	handleSearchChange,
 }: ServerDetailsPageViewModel) {
 	if (!serverData.serverDataDb) {
 		return serverData.admin ? (
@@ -27,14 +27,14 @@ export function ServerDetailsPageView({
 		<>
 			<ServerHeader
 				serverData={serverData}
-				searchQuery={searchQuery}
-				onSearchQueryChange={handleSearchQueryChange}
+				searchQuery={searchText}
+				onSearchQueryChange={handleSearchChange}
 			/>
 			<div css={serverDetailsPageStyles.content}>
 				<ServerInfo
 					serverId={serverId}
 					serverData={serverData}
-					searchQuery={normalizedSearchQuery}
+					searchQuery={searchQuery}
 				/>
 			</div>
 		</>

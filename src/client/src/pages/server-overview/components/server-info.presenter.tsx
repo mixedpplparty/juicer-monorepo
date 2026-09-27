@@ -1,7 +1,6 @@
 import type { ServerData } from "juicer-shared";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { useDebouncedValue } from "../hooks/use-debounced-value";
 export interface ServerInfoProps {
 	serverId: string;
 	serverData: ServerData;
@@ -13,12 +12,11 @@ function useServerInfoModel({
 	serverData,
 	searchQuery,
 }: ServerInfoProps) {
-	const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 	const [isTopicAddDialogOpen, setIsTopicAddDialogOpen] = useState(false);
 	return {
 		serverId,
 		serverData,
-		debouncedSearchQuery,
+		searchQuery,
 		isTopicAddDialogOpen,
 		setIsTopicAddDialogOpen,
 	};

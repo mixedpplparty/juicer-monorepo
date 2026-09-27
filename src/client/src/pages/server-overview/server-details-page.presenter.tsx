@@ -1,36 +1,28 @@
+import { parseAsString, useQueryState } from "nuqs";
 import type { ReactNode } from "react";
-import { useOutletContext, useSearchParams } from "react-router";
+import { useOutletContext } from "react-router";
 import type { ServerDetailsOutletContext } from "@/features/server/model/server-details-context";
+
+import { useDebouncedValue } from "./hooks/use-debounced-value";
 
 export type ServerDetailsPageProps = Record<never, never>;
 function useServerDetailsPageModel() {
 	const { serverId, serverData, refetchServer } =
 		useOutletContext<ServerDetailsOutletContext>();
-	const [searchParams, setSearchParams] = useSearchParams();
-	const searchQuery = searchParams.get("query") ?? "";
-	const normalizedSearchQuery = searchQuery.trim();
-	const handleSearchQueryChange = (query: string) => {
-		setSearchParams(
-			(currentSearchParams) => {
-				const nextSearchParams = new URLSearchParams(currentSearchParams);
-				if (query) {
-					nextSearchParams.set("query", query);
-				} else {
-					nextSearchParams.delete("query");
-				}
-				return nextSearchParams;
-			},
-			{ replace: true },
-		);
-	};
+	const [searchText, setSearchText] = useQueryState(
+		"query",
+		parseAsString.withDefault(""),
+	);
+	// Keep input and URL responsive; only delay the query sent to TopicsFetch.
+	const searchQuery = useDebouncedValue(searchText.trim(), 300);
 
 	return {
 		refetchServer,
 		serverId,
 		serverData,
+		searchText,
 		searchQuery,
-		normalizedSearchQuery,
-		handleSearchQueryChange,
+		handleSearchChange: setSearchText,
 	};
 }
 export type ServerDetailsPageViewModel = ReturnType<

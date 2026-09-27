@@ -15,6 +15,7 @@
 		"@tanstack/react-query": "^5.101.2",
 		"juicer-shared": "workspace:*",
 		"lucide-react": "^1.24.0",
+		"nuqs": "2.10.1",
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7",
 		"react-hook-form": "^7.82.0",

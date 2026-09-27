@@ -44,7 +44,7 @@ export function ServerHeaderView({
 					label="주제 검색"
 					placeholder="주제 검색"
 					value={searchQuery}
-					onChange={(event) => onSearchQueryChange(event.target.value)}
+					onChange={(event) => onSearchQueryChange(event.currentTarget.value)}
 				/>
 			</div>
 
