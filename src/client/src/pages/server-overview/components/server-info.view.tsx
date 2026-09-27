@@ -13,7 +13,7 @@ import TopicList from "./topic-list";
 export function ServerInfoView({
 	serverId,
 	serverData,
-	debouncedSearchQuery,
+	searchQuery,
 	isTopicAddDialogOpen,
 	setIsTopicAddDialogOpen,
 }: ServerInfoViewModel) {
@@ -42,14 +42,14 @@ export function ServerInfoView({
 					주제 목록
 				</Text>
 				<Suspense fallback={<TopicListSkeleton />}>
-					<TopicList serverId={serverId} searchQuery={debouncedSearchQuery} />
+					<TopicList serverId={serverId} searchQuery={searchQuery} />
 				</Suspense>
 			</section>
 			{serverData.admin && (
 				<Suspense fallback={null}>
 					<AdminFabMenu onAddTopic={() => setIsTopicAddDialogOpen(true)} />
 					<TopicAddSection
-						searchQuery={debouncedSearchQuery}
+						searchQuery={searchQuery}
 						open={isTopicAddDialogOpen}
 						serverId={serverId}
 						serverData={serverData}

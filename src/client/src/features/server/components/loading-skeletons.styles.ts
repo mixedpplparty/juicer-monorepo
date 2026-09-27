@@ -94,13 +94,11 @@ export const loadingSkeletonStyles = {
 		height: "2rem",
 		borderRadius: "1rem",
 	}),
-	topicGrid: css({
-		display: "grid",
-		gridTemplateColumns: "1fr",
-		gap: "0.75rem",
-		[`@media (min-width: ${breakpoints.tablet})`]: {
-			gridTemplateColumns: "repeat(auto-fit, minmax(22rem, 1fr))",
-		},
+	topicFilterSwitch: css({
+		width: "3.25rem",
+		height: "2rem",
+		flexShrink: 0,
+		borderRadius: "1rem",
 	}),
 	topicCard: css({
 		display: "flex",
